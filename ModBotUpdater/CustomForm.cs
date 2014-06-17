@@ -17,6 +17,7 @@ namespace ModBotUpdater
         private int iMoveX = 0;
         private int iMoveY = 0;
         private Control.ControlCollection ExcludedControls;
+        public bool bActivated = false;
 
         public CustomForm()
         {
@@ -195,6 +196,8 @@ namespace ModBotUpdater
             {
                 SetItemsColor(BorderActiveColor);
 
+                bActivated = true;
+
                 bMove = false;
             }
         }
@@ -204,6 +207,8 @@ namespace ModBotUpdater
             if (CustomFormBorderStyle == FormBorderStyles.Custom1)
             {
                 SetItemsColor(BorderInactiveColor);
+
+                bActivated = false;
 
                 bMove = false;
             }

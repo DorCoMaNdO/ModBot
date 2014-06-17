@@ -45,9 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Changelog.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="Changelog.cs" />
     <Compile Include="Changelog.Designer.cs">
       <DependentUpon>Changelog.cs</DependentUpon>
     </Compile>
@@ -60,9 +58,7 @@
     <Compile Include="CustomProgressBar.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Updater.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="Updater.cs" />
     <Compile Include="Updater.Designer.cs">
       <DependentUpon>Updater.cs</DependentUpon>
     </Compile>
