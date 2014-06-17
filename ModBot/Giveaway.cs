@@ -108,7 +108,7 @@ namespace ModBot
 
             try
             {
-                List<string> HalfValidUsers = new List<string>();
+                List<string> ValidUsers = new List<string>();
                 int ActiveTime = Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) * 60, CurrentTime = MainForm.IRC.api.GetUnixTimeNow();
                 lock (MainForm.IRC.ActiveUsers)
                 {
@@ -120,23 +120,14 @@ namespace ModBot
                             {
                                 if (CurrentTime - MainForm.IRC.ActiveUsers[MainForm.IRC.capName(user.Key)] <= ActiveTime)
                                 {
-                                    HalfValidUsers.Add(MainForm.IRC.capName(user.Key));
+                                    if ((MainForm.IRC.db.checkCurrency(MainForm.IRC.capName(user.Key)) >= GetMinCurrency()))
+                                    {
+                                        if (MainForm.Giveaway_MustFollowCheckBox.Checked && MainForm.IRC.api.IsFollowingChannel(MainForm.IRC.capName(user.Key)) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
+                                        {
+                                            ValidUsers.Add(MainForm.IRC.capName(user.Key));
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                    }
-                }
-
-                List<string> ValidUsers = new List<string>();
-                lock (HalfValidUsers)
-                {
-                    foreach (string user in HalfValidUsers)
-                    {
-                        if ((MainForm.IRC.db.checkCurrency(MainForm.IRC.capName(user)) >= GetMinCurrency()))
-                        {
-                            if (MainForm.Giveaway_MustFollowCheckBox.Checked && MainForm.IRC.api.IsFollowingChannel(MainForm.IRC.capName(user)) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
-                            {
-                                ValidUsers.Add(MainForm.IRC.capName(user));
                             }
                         }
                     }
@@ -177,7 +168,6 @@ namespace ModBot
                 MainForm.Giveaway_WinnerLabel.Text = "No valid winner found";
                 MainForm.Giveaway_RerollButton.Enabled = true;
             });
-            return;
         }
 
         public String getWinner()
