@@ -1,0 +1,31 @@
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\bin\Release\ModBot.exe
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\bin\Release\ModBot.pdb
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\bin\Release\System.Data.SQLite.dll
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\bin\Release\System.Data.SQLite.xml
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\obj\x86\Release\ModBot.Properties.Resources.resources
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\obj\x86\Release\ModBot.SettingsDialog.resources
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\obj\x86\Release\ModBot.csproj.GenerateResource.Cache
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\obj\x86\Release\ModBot.exe
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\obj\x86\Release\ModBot.pdb
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\obj\x86\Release\ModBot.csprojResolveAssemblyReference.cache
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\bin\Release\Newtonsoft.Json.dll
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\bin\Release\Newtonsoft.Json.pdb
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot\ModBot\bin\Release\Newtonsoft.Json.xml
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\obj\x86\Release\ModBot.exe
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\obj\x86\Release\ModBot.pdb
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\README.txt
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\ModBot.exe.config
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\ModBot.exe
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\ModBot.pdb
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\Newtonsoft.Json.dll
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\System.Data.SQLite.dll
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\Newtonsoft.Json.pdb
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\Newtonsoft.Json.xml
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\System.Data.SQLite.xml
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\obj\x86\Release\ModBot.Properties.Resources.resources
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\obj\x86\Release\ModBot.SettingsDialog.resources
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\obj\x86\Release\ModBot.csproj.GenerateResource.Cache
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\obj\x86\Release\ModBot.csprojResolveAssemblyReference.cache
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\changelog.txt
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\bin\Release\COPYRIGHT.txt
+C:\Users\Jonathan\Desktop\Downloads\C# Projects\ModBot Public\ModBot\obj\x86\Release\ModBot.About.resources

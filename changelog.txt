@@ -1,0 +1,26 @@
+﻿*
+*
+*					ModBot, a Twitch.tv chat bot by Keirathi
+*
+*					
+*					Questions/comments/suggestions? Email me!  twitch.tv.modbot@gmail.com
+*
+*
+*
+*
+*
+*
+************************************************************************************
+
+
+
+-------v1.00
+
+Initial release.
+Current features:
+	Currency system for loyal viewers
+	"Sub" system for people without a sub button.  Increases the currency gain for people you add as subscribers.
+	User level system to customize who has access to which bot commands.
+	Raffles, auctions, and betting with currency.
+	Ability to customize chat commands that the bot will reply to.
+	
