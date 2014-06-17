@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace ModBot
+namespace ModBotUpdater
 {
     static class Program
     {
@@ -15,12 +16,7 @@ namespace ModBot
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            SettingsDialog settings = new SettingsDialog();
-            Application.Run(settings);
-
-            /*while (true)
-            {
-            }*/
+            Application.Run(new Updater());
         }
     }
 }

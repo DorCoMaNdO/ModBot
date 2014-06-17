@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ModBot
 {
-    class Auction
+    public class Auction
     {
         private Database db;
         public String highBidder {get; private set;}

@@ -4,3 +4,9 @@
 bin
 /ModBot/Externals
 /*.dat
+/ModBot/bin
+/ModBot/obj
+/ModBotUpdater/bin
+/ModBotUpdater/obj
+/OneTimeConverter/bin
+/OneTimeConverter/obj

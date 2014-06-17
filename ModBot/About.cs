@@ -4,18 +4,17 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using System.Reflection;
 
 namespace ModBot
 {
-    public partial class About : Form
+    public partial class About : CustomForm
     {
         public About()
         {
             InitializeComponent();
-            version.Text = Assembly.GetExecutingAssembly().GetName().Version.Major.ToString() + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor.ToString() + "." + Assembly.GetExecutingAssembly().GetName().Version.Build.ToString();
+            version.Text = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         }
 
         private void About_Load(object sender, EventArgs e)

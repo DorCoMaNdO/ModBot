@@ -6,11 +6,10 @@ using System.IO;
 
 namespace ModBot
 {    
-    class Commands
+    public class Commands
     {
         private SQLiteConnection myDB;
         private SQLiteCommand cmd;
-
         public Commands()
         {
             InitializeDB();

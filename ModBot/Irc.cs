@@ -9,63 +9,79 @@ using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
+using System.Drawing;
 
 namespace ModBot
 {
-    class Irc
+    public class Irc
     {
-        private String nick, password, channel, currency, admin, user = "";
-        private int interval, payout = 0;
-        private int[] intervals = {1,2,3,4,5,6,10,12,15,20,30,60};
-        private TcpClient irc;
-        private StreamReader read;
-        private StreamWriter write;
-        private bool raffleOpen, bettingOpen, auctionOpen, poolLocked = false;
+        public iniUtil ini;
+        public String nick, password, channel, currency, admin, donationkey, user = "";
+        public int g_iInterval, payout = 0;
+        public int[] intervals = {1,2,3,4,5,6,10,12,15,20,30,60};
+        public TcpClient irc;
+        public StreamReader read;
+        public StreamWriter write;
+        public bool bettingOpen, auctionOpen, poolLocked = false;
         private Auction auction;
-        private Raffle raffle;
-        private Pool pool;
-        private Database db;
-        private List<string> users = new List<string>();
-        private DateTime time;
-        private bool handoutGiven = false;
-        private String[] betOptions;
-        private Timer currencyQueue;
-        private List<string> usersToLookup = new List<string>();
-        private ConcurrentQueue<string> highPriority = new ConcurrentQueue<string>();
-        private ConcurrentQueue<string> normalPriority = new ConcurrentQueue<string>();
-        private ConcurrentQueue<string> lowPriority = new ConcurrentQueue<string>();
-        private Thread listener;
-        private Thread timerThread;
-        private Thread KAthread;
-        private Timer auctionLooper;
-        private Timer messageQueue;
-        private Commands commands;
-        private String greeting;
-        private bool greetingOn = false;
-        private int attempt;
+        public Giveaway giveaway;
+        public Pool pool;
+        public Database db;
+        public List<string> users = new List<string>(), IgnoredUsers = new List<string>();
+        public DateTime time;
+        public String[] betOptions;
+        public Timer currencyQueue;
+        public List<string> usersToLookup = new List<string>();
+        public Timer auctionLooper;
+        public Commands commands;
+        public String greeting;
+        public bool greetingOn = false;
+        public int attempt = 0;
+        public int g_iLastCurrencyLockAnnounce = 0, g_iLastTop5Announce = 0;
+        public int g_iStreamStartTime = 0;
+        public bool g_bIsStreaming = false;
+        public bool g_bResourceKeeper = false;
+        public MainWindow MainForm;
+        public Api api;
+        public int g_iLastHandout = 0;
+        public Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
 
-
-        public Irc(String nick, String password, String channel, String currency, int interval, int payout) {
-            setNick(nick);
-            setPassword(password);
+        public Irc(String nick, String password, String channel, String currency, int interval, int payout, string donationkey, iniUtil ini)
+        {
+            this.ini = ini;
+            string sResourceKeeper = ini.GetValue("Settings", "ResourceKeeper", "1");
+            ini.SetValue("Settings", "ResourceKeeper", sResourceKeeper);
+            g_bResourceKeeper = sResourceKeeper == "1";
+            this.nick = nick.ToLower();
+            this.password = password;
             setChannel(channel);
             setAdmin(channel);
             setCurrency(currency);
             setInterval(interval);
             setPayout(payout);
-
+            this.donationkey = donationkey;
+            MainForm = new MainWindow(this);
+            api = new Api(MainForm);
+            MainForm.Hide();
+            giveaway = new Giveaway(MainForm);
+            IgnoredUsers.Add("jtv");
+            IgnoredUsers.Add("moobot");
+            IgnoredUsers.Add("nightbot");
+            IgnoredUsers.Add(nick.ToLower());
+            IgnoredUsers.Add(admin.ToLower());
             Initialize();
         }
 
         private void Initialize()
         {
-            db = new Database();
+            db = new Database(admin);
             db.newUser(capName(admin));
-            db.setUserLevel(capName(admin), 3);
+            db.setUserLevel(capName(admin), 4);
 
             commands = new Commands();
 
-            greeting = ModBot.Properties.Settings.Default.greeting;
+            greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!");
+            ini.SetValue("Settings", "Channel_Greeting", greeting);
 
             Connect();   
         }
@@ -100,119 +116,189 @@ namespace ModBot
                 }
                 catch (SocketException e)
                 {
-                    Console.WriteLine("Unable to connect. Retrying in 5 seconds");
+                    Console.WriteLine("Unable to connect. Retrying in 5 seconds (" + e + ")");
                 }
                 catch (Exception e)
                 {
                     StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                    errorLog.WriteLine("*************Error Message (via Connect()): " + DateTime.Now + "*********************************");
-                    errorLog.WriteLine(e);
-                    errorLog.WriteLine("");
+                    errorLog.WriteLine("*************Error Message (via Connect()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                     errorLog.Close();
                 }
                 count++;
                 // Console.WriteLine("Connection failed.  Retrying in 5 seconds.");
                 Thread.Sleep(5000);
             }
-            StartThreads();            
+
+            new Thread(() =>
+            {
+                MainForm.GrabData();
+            }).Start();
+            MainForm.Show();
+            StartThreads();
         }
 
         private void StartThreads()
         {
-            listener = new Thread(new ThreadStart(Listen));
-            listener.Start();
+            new Thread(() =>
+            {
+                while (true)
+                {
+                    bool bIsStreaming = false;
+                    using (WebClient w = new WebClient())
+                    {
+                        String json_data = "";
+                        try
+                        {
+                            w.Proxy = null;
+                            json_data = w.DownloadString("https://api.twitch.tv/kraken/streams/" + channel.Substring(1));
+                            JObject stream = JObject.Parse(json_data);
+                            if (stream["stream"].HasValues)
+                            {
+                                if (!g_bIsStreaming)
+                                {
+                                    g_iStreamStartTime = api.GetUnixTimeNow();
+                                }
+                                bIsStreaming = true;
+                            }
+                        }
+                        catch (SocketException)
+                        {
+                            Console.WriteLine("Unable to connect to twitch API to check stream status. Skipping.");
+                        }
+                        catch (IOException)
+                        {
+                        }
+                        catch (Exception e)
+                        {
+                            StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
+                            errorLog.WriteLine("*************Error Message (via checkStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            errorLog.Close();
+                        }
+                    }
+                    g_bIsStreaming = bIsStreaming;
+                    if (g_bResourceKeeper)
+                    {
+                        Thread.Sleep(30000);
+                    }
+                }
+            }).Start();
 
-            timerThread = new Thread(new ThreadStart(doWork));
-            timerThread.Start();
+            //Listen();
+            new Thread(() =>
+            {
+                try
+                {
+                    while (irc.Connected)
+                    {
+                        parseMessage(read.ReadLine());
+                    }
+                }
+                catch (IOException)
+                {
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Uh oh, there was an error!  Everything should keep running, but if you keep seeing this message, email your Error_log.log file to twitch.tv.modbot@gmail.com");
+                    StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
+                    errorLog.WriteLine("*************Error Message (via Listen()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                    errorLog.Close();
+                }
+            }).Start();
 
-            KAthread = new Thread(new ThreadStart(KeepAlive));
-            KAthread.Start();
+            //doWork();
+            g_iLastHandout = api.GetUnixTimeNow();
+            new Thread(() =>
+            {
+                while (true)
+                {
+                    if (api.GetUnixTimeNow() - g_iLastHandout >= g_iInterval * 60 && g_bIsStreaming)
+                    {
+                        Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currency);
+                        handoutCurrency();
+                    }
+                    Thread.Sleep(1000);
+                    /*if (g_bResourceKeeper)
+                    {
+                        Thread.Sleep(29000);
+                    }*/
+                }
+            }).Start();
 
-            messageQueue = new Timer(handleMessageQueue, null, 0, 4000);
+            //KeepAlive();
+            new Thread(() =>
+            {
+                while (true)
+                {
+                    Thread.Sleep(30000);
+                    sendRaw("PING 1245");
+                }
+            }).Start();
 
             currencyQueue = new Timer(handleCurrencyQueue, null, Timeout.Infinite, Timeout.Infinite);
 
             auctionLooper = new Timer(auctionLoop, null, Timeout.Infinite, Timeout.Infinite);
         }
 
-        /*private void Flush()
-        {
-            try
-            {
-                timerThread.Abort();
-                KAthread.Abort();
-                messageQueue.Dispose();
-                currencyQueue.Dispose();
-                auctionLooper.Dispose();
-                listener.Abort();
-            }
-            catch (Exception e)
-            {
-
-            }
-        }*/
-
-        private void Listen()
-        {
-            try
-            {
-                while (irc.Connected)
-                {
-                    parseMessage(read.ReadLine());
-                }
-            }
-            catch (IOException e)
-            {
-
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Uh oh, there was an error!  Everything should keep running, but if you keep seeing this message, email your Error_log.log file to twitch.tv.modbot@gmail.com");
-                StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                errorLog.WriteLine("*************Error Message (via Listen()): " + DateTime.Now + "*********************************");
-                errorLog.WriteLine(e);
-                errorLog.WriteLine("");
-                errorLog.Close();
-            }
-        }
-
-        private void KeepAlive()
-        {
-            while (true)
-            {
-                Thread.Sleep(30000);
-                sendRaw("PING 1245");
-            }          
-        }
-
         private void parseMessage(String message)
         {
-            //print(message);            
+            //Console.WriteLine(message);
             String[] msg = message.Split(' ');
-            
             
             if (msg[0].Equals("PING"))
             {
                 sendRaw("PONG " + msg[1]);
-                //print("PONG " + msg[1]);
+                //Console.WriteLine("PONG " + msg[1]);
             }
             else if (msg[1].Equals("PRIVMSG"))
             {
-                user = capName(getUser(message));
+                user = getUser(message);
                 addUserToList(user);
-                //print(message);
+                lock (ActiveUsers)
+                {
+                    if (!ActiveUsers.ContainsKey(user))
+                    {
+                        ActiveUsers.Add(user, api.GetUnixTimeNow());
+                    }
+                    else
+                    {
+                        ActiveUsers[user] = api.GetUnixTimeNow();
+                    }
+                }
+                //Console.WriteLine(message);
                 String temp = message.Substring(message.IndexOf(":", 1)+1);
-                print(user + ": " + temp);
+                Console.WriteLine(user + ": " + temp);
                 handleMessage(temp);
+                if (user.Equals(capName(MainForm.Giveaway_WinnerLabel.Text)))
+                {
+                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        MainForm.Giveaway_WinnerChat.SelectionColor = Color.Blue;
+                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 8, FontStyle.Bold);
+                        MainForm.Giveaway_WinnerChat.SelectedText = user;
+                        MainForm.Giveaway_WinnerChat.SelectionColor = Color.Black;
+                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Microsoft Sans Serif", 8);
+                        MainForm.Giveaway_WinnerChat.SelectedText = ": " + temp + "\r\n";
+                        MainForm.Giveaway_WinnerChat.Select(MainForm.Giveaway_WinnerChat.Text.Length, MainForm.Giveaway_WinnerChat.Text.Length);
+                        MainForm.Giveaway_WinnerChat.ScrollToCaret();
+                        MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);
+                    });
+                }
             }
             else if (msg[1].Equals("JOIN"))
             {
-                user = capName(getUser(message));
+                user = getUser(message);
                 addUserToList(user);
-                print(user + " joined");
+                lock (ActiveUsers)
+                {
+                    if (!ActiveUsers.ContainsKey(user))
+                    {
+                        ActiveUsers.Add(user, api.GetUnixTimeNow());
+                    }
+                }
+                Console.WriteLine(user + " joined");
                 if (greeting != "" && greetingOn)
                 {
-                    sendMessage(greeting.Replace("@user", user), 3);
+                    sendMessage(greeting.Replace("@user", user));
                 }
                 if (!db.userExists(user))
                 {
@@ -222,17 +308,36 @@ namespace ModBot
             }
             else if (msg[1].Equals("PART"))
             {
-                removeUserFromList(capName(getUser(message)));
-                print(user + " left");
+                removeUserFromList(getUser(message));
+                lock (ActiveUsers)
+                {
+                    if (ActiveUsers.ContainsKey(getUser(message)))
+                    {
+                        ActiveUsers.Remove(getUser(message));
+                    }
+                }
+                if (MainForm.Giveaway_WinnerTimerLabel.Text.Equals(getUser(message)))
+                {
+                    MainForm.Giveaway_WinnerTimerLabel.Text = "The winner left!";
+                    MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
+                }
+                Console.WriteLine(user + " left");
             }
             else if (msg[1].Equals("352"))
             {
-                //print(message);
+                //Console.WriteLine(message);
                 addUserToList(capName(msg[4]));
+                lock (ActiveUsers)
+                {
+                    if (!ActiveUsers.ContainsKey(capName(msg[4])))
+                    {
+                        ActiveUsers.Add(capName(msg[4]), api.GetUnixTimeNow());
+                    }
+                }
             }
             else
             {
-                //print(message);
+                //Console.WriteLine(message);
             }
         }
 
@@ -240,175 +345,84 @@ namespace ModBot
         {
             String[] msg = message.Split(' ');
 
-            //////////////RAFFLE COMMANDS/////////////////
-            #region raffle
-            if (msg[0].Equals("!raffle") && msg.Length >= 2) {
-                //ADMIN RAFFLE COMMANDS: !raffle open <TicketCost> <MaxTickets>, !raffle close, !raffle draw, !raffle cancel//
+            //////////////GIVEAWAY COMMANDS/////////////////
+            #region giveaway
+
+            if ((msg[0].Equals("!raffle") || msg[0].Equals("!giveaway")) && msg.Length >= 2)
+            {
+                //ADMIN GIVEAWAY COMMANDS: !giveaway open <TicketCost> <MaxTickets>, !giveaway close, !giveaway draw, !giveaway cancel//
                 if (db.getUserLevel(user) >= 1) 
                 {
-                    if (msg[1].Equals("open") && msg.Length >= 4)
+                    if (msg[1].Equals("announce"))
                     {
-                        if (!raffleOpen)
+                        string sMessage = "Get the party started! Viewers active in chat within the last " + Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) + " minutes ";
+                        if (MainForm.Giveaway_MustFollowCheckBox.Checked)
                         {
-                            int cost, max;
-                            if (int.TryParse(msg[2], out cost) && int.TryParse(msg[3], out max))
+                            if (!MainForm.Giveaway_MinCurrencyCheckBox.Checked)
                             {
-                                if (cost >= 0 && max > 0)
-                                {
-                                    raffleOpen = true;
-                                    raffle = new Raffle(db, cost, max);
-                                    sendMessage("Raffle open!  Each ticket costs " + cost + " " + currency + " , and you can buy a maximum of " + max + " tickets.", 2);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            sendMessage("There is already a raffle open.  Close or cancel the previous one first.", 1);
-                        }
-                    }
-                    else if (msg[1].Equals("close"))
-                    {
-                        if (!raffleOpen)
-                        {
-                            sendMessage("No raffle running.  Start one first!", 1);
-                        }
-                        else
-                        {
-                            int numWinners = 0;
-                            raffleOpen = false;
-                            if (msg.Length > 2 && int.TryParse(msg[2], out numWinners) && numWinners > 0 && numWinners < raffle.getTotalTicketsPurchased())
-                            {
-                                if (numWinners <= raffle.maxDraw())
-                                {
-                                    sendMessage("Closing the raffle!  Total of " + raffle.getTotalTicketsPurchased() + " tickets purchased.", 2);
-                                    if (raffle.getTotalTicketsPurchased() == 0)
-                                    {
-                                        sendMessage("No winners!", 2);
-                                    }
-                                    else
-                                    {
-                                        sendMessage("And the winners are...", 2);
-                                        StringBuilder winners = new StringBuilder();
-                                        bool addComma = false;
-                                        for (int i = 0; i < numWinners; i++)
-                                        {
-                                            raffle.endRaffle();
-                                            if (addComma)
-                                            {
-                                                winners.Append(", ");
-                                            }
-                                            winners.Append(checkBtag(raffle.getWinner()) + "! (" + raffle.getPersonalTicketsPurchased(raffle.getWinner()) + " tickets purchased)");
-                                            addComma = true;
-                                        }
-                                        sendMessage(winners.ToString(), 2);
-                                    }
-                                }
-                                else
-                                {
-                                    sendMessage("There are only " + raffle.maxDraw() + " people in the raffle who haven't won yet.  Your amount of winners to draw must be less than " + raffle.maxDraw(), 1);
-                                }
+                                sMessage = sMessage + "and follow the stream ";
                             }
                             else
                             {
-                                raffle.endRaffle();
-                                sendMessage("Closing the raffle!  Total of " + raffle.getTotalTicketsPurchased() + " tickets purchased.", 2);
-                                if (raffle.getTotalTicketsPurchased() == 0)
-                                {
-                                    sendMessage("No winners!", 2);
-                                }
-                                else
-                                {
-                                    sendMessage("And the winner is....", 2);
-                                    sendMessage(checkBtag(raffle.getWinner()) + "! (" + raffle.getPersonalTicketsPurchased(raffle.getWinner()) + " tickets purchased)", 2);
-                                }
+                                sMessage = sMessage + "follow the stream, and have " + MainForm.Giveaway_MinCurrency.Value + " " + currency + " ";
                             }
                         }
-                    }
-                    else if (msg[1].Equals("cancel"))
-                    {
-                        if (!raffleOpen)
-                        {
-                            sendMessage("No raffle running.", 1);
-                        }
                         else
                         {
-                            raffleOpen = false;
-                            raffle.cancel();
-                            sendMessage("Raffle canceled.  All tickets refunded.", 1);
+                            sMessage = sMessage + "and have " + MainForm.Giveaway_MinCurrency.Value + " " + currency + " ";
                         }
+                        sMessage = sMessage + "will qualify for the giveaway!";
+                        sendMessage(sMessage);
                     }
-                    else if (msg[1].Equals("draw"))
+                    if (db.getUserLevel(user) >= 2)
                     {
-                        if (raffleOpen)
+                        if (msg[1].Equals("roll"))
                         {
-                            sendMessage("Close the raffle to draw a new winner!", 1);
-                        }
-                        else
-                        {
-                            int numWinners = 0;
-                            if (msg.Length > 2 && int.TryParse(msg[2], out numWinners) && numWinners > 0 && numWinners < raffle.getTotalTicketsPurchased())
+                            string winner = giveaway.getWinner();
+                            if (winner.Equals(""))
                             {
-                                if (numWinners <= raffle.maxDraw())
-                                {
-                                    sendMessage("Drawing " + numWinners + " more winners!", 2);
-                                    sendMessage("And the winners are...", 2);
-                                    StringBuilder winners = new StringBuilder();
-                                    bool addComma = false;
-                                    for (int i = 0; i < numWinners; i++)
-                                    {
-                                        raffle.endRaffle();
-                                        if (addComma)
-                                        {
-                                            winners.Append(", ");
-                                        }
-                                        winners.Append(checkBtag(raffle.getWinner()) + "!! (" + raffle.getPersonalTicketsPurchased(raffle.getWinner()) + " tickets purchased)");
-                                        addComma = true;
-                                    }
-                                    sendMessage(winners.ToString(), 2);
-                                }
-                                else
-                                {
-                                    sendMessage("There are only " + raffle.maxDraw() + " people in the raffle who haven't won yet.  Your amount of winners to draw must be less than " + raffle.maxDraw(), 1);
-                                }
+                                sendMessage("No valid winner found, please try again!");
                             }
                             else
                             {
-                                raffle.endRaffle();
-                                sendMessage("Drawing another winner!", 2);
-                                sendMessage("And the winner is...", 2);
-                                sendMessage(checkBtag(raffle.getWinner()) + "!! (" + raffle.getPersonalTicketsPurchased(raffle.getWinner()) + " tickets purchased)", 2);
+                                string sMessage = winner + " has won the giveaway! (";
+                                if (api.IsFollowingChannel(winner))
+                                {
+                                    sMessage = sMessage + "Currently follows the channel | ";
+                                }
+                                sendMessage(sMessage + "Has " + db.checkCurrency(winner) + " " + currency + ")");
                             }
                         }
                     }
                 }
-                //REGULAR USER COMMANDS: !raffle help
+
+                //REGULAR USER COMMANDS: !giveaway help
                 if (msg[1].Equals("help"))
                 {
-                    if (raffleOpen)
+                    string sMessage = "In order to join the giveaway, you have to be active in chat ";
+                    if (MainForm.Giveaway_MustFollowCheckBox.Checked)
                     {
-                        sendMessage("Raffle currently open.  Each ticket costs " + raffle.getTicketCost() + " tokens, and you can buy a maximum of " + raffle.getMaxTickets() + " tickets. Buy tickets by type !ticket <amount>", 3);
+                        if (!MainForm.Giveaway_MinCurrencyCheckBox.Checked)
+                        {
+                            sMessage = sMessage + "and follow the stream, ";
+                        }
+                        else
+                        {
+                            sMessage = sMessage + ", follow the stream and have " + MainForm.Giveaway_MinCurrency.Value + " " + currency + ", ";
+                        }
                     }
+                    else
+                    {
+                        sMessage = sMessage + "and have " + MainForm.Giveaway_MinCurrency.Value + " " + currency + ", ";
+                    }
+                    sMessage = sMessage + "the winner is selected from a list of viewers that were active in the last " + Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) + " minutes";
+                    if (MainForm.Giveaway_MustFollowCheckBox.Checked || MainForm.Giveaway_MinCurrencyCheckBox.Checked) sMessage = sMessage + " and comply the terms";
+                    sMessage = sMessage + ".";
+                    sendMessage(sMessage);
                 }
             }
             #endregion
-            //////////////////END !RAFFLE COMMANDS//////////////
-
-
-            //////////////////TICKET COMMANDS///////////////////
-            #region ticket
-            else if (msg[0].Equals("!ticket") || msg[0].Equals("!tickets")) {
-                if (raffleOpen && msg.Length >= 2)
-                {
-                    int i;
-                    if (msg[1] != null && int.TryParse(msg[1], out i) && i>= 0)
-                    {
-                        raffle.buyEntries(user, i);
-                    }
-                }
-            }
-            #endregion
-            //////////////////END TICKET COMMANDS///////////////
-
+            //////////////////END !GIVEAWAY COMMANDS//////////////
 
             /////////////////Currency Commands/////////////////////
             #region currency
@@ -417,63 +431,142 @@ namespace ModBot
                 ///////////Check your Currency////////////
                 if (msg.Length == 1)
                 {
-                    addToLookups(user);
-                }
-
-                else if (msg.Length == 2 && db.getUserLevel(user) == 3)
-                {
-                    if (db.userExists(capName(msg[1])))
+                    if (MainForm.Misc_LockCurrencyCmdCheckBox.Checked && db.getUserLevel(user) == 0 && api.GetUnixTimeNow() - g_iLastCurrencyLockAnnounce > 600)
                     {
-                        sendMessage("Admin check: " + capName(msg[1]) + " has " + db.checkCurrency(capName(msg[1])) + " " + currency, 2);
+                        g_iLastCurrencyLockAnnounce = api.GetUnixTimeNow();
+                        sendMessage("The !" + currency + " command is disabled, you may politely ask a mod to check your " + currency + " for you.");
                     }
-                    else sendMessage("Admin check: " + capName(msg[1]) + " is not a valid user.", 2);
+                    if (!MainForm.Misc_LockCurrencyCmdCheckBox.Checked || db.getUserLevel(user) >= 1)
+                    {
+                        addToLookups(user);
+                    }
                 }
-                else if (msg.Length >= 3)
+                else if (msg.Length == 2)
+                {
+                    if (msg[1].Equals("top5"))
+                    {
+                        if (!MainForm.Misc_LockCurrencyCmdCheckBox.Checked && api.GetUnixTimeNow() - g_iLastTop5Announce > 600 || db.getUserLevel(user) >= 1)
+                        {
+                            g_iLastTop5Announce = api.GetUnixTimeNow();
+                            Dictionary<string, int> TopPoints = new Dictionary<string, int>();
+                            foreach (String nick in db.GetAllUsers())
+                            {
+                                if (!IgnoredUsers.Any(c => c.Equals(nick.ToLower())))
+                                {
+                                    TopPoints.Add(nick, db.checkCurrency(capName(nick)));
+                                }
+                            }
+                            IOrderedEnumerable<KeyValuePair<string, int>> top = TopPoints.OrderByDescending(key => key.Value);
+                            if (TopPoints.Count >= 5)
+                            {
+                                sendMessage("The 5 users with the most points are: " + top.ElementAt(0).Key + " (" + top.ElementAt(0).Value + "), " + top.ElementAt(1).Key + " (" + top.ElementAt(1).Value + "), " + top.ElementAt(2).Key + " (" + top.ElementAt(2).Value + "), " + top.ElementAt(3).Key + " (" + top.ElementAt(3).Value + ") and " + top.ElementAt(4).Key + " (" + top.ElementAt(4).Value + ").");
+                            }
+                            else
+                            {
+                                sendMessage("An error has occoured while looking for the 5 users with the most points! Try again later.");
+                            }
+                        }
+                    }
+                    else if (msg[1].Equals("lock") && db.getUserLevel(user) >= 2)
+                    {
+                        MainForm.Misc_LockCurrencyCmdCheckBox.Checked = true;
+                        sendMessage("The !" + currency + " command is temporarily disabled.");
+                        Log(user + " Locked the currency command.");
+                    }
+                    else if (msg[1].Equals("unlock") && db.getUserLevel(user) >= 2)
+                    {
+                        MainForm.Misc_LockCurrencyCmdCheckBox.Checked = false;
+                        sendMessage("The !" + currency + " command is now available to use.");
+                        Log(user + " Unlocked the currency command.");
+                    }
+                    else if (msg[1].Equals("clear") && db.getUserLevel(user) >= 3)
+                    {
+                        foreach (String nick in db.GetAllUsers())
+                        {
+                            db.setCurrency(capName(nick), 0);
+                        }
+                        sendMessage("Cleared all the " + currency + "!");
+                    }
+                    else
+                    {
+                        if (db.getUserLevel(user) >= 1)
+                        {
+                            if (db.userExists(capName(msg[1])))
+                            {
+                                sendMessage("Mod check: " + capName(msg[1]) + " has " + db.checkCurrency(capName(msg[1])) + " " + currency);
+                            }
+                            else sendMessage("Mod check: " + capName(msg[1]) + " is not a valid user.");
+                        }
+                    }
+                }
+                else if (msg.Length >= 3 && db.getUserLevel(user) >= 3)
                 {
                     /////////////MOD ADD CURRENCY//////////////
-                    if (msg[1].Equals("add") && db.getUserLevel(user) >= 2)
+                    if (msg[1].Equals("add"))
                     {
                         int amount;
                         if (int.TryParse(msg[2], out amount) && msg.Length >= 4)
                         {
                             if (msg[3].Equals("all"))
                             {
-                                foreach (String nick in users)
+                                foreach (String nick in db.GetAllUsers())
                                 {
                                     db.addCurrency(capName(nick), amount);
                                 }
-                                sendMessage("Added " + amount + " " + currency + " to everyone.", 1);
+                                sendMessage("Added " + amount + " " + currency + " to everyone.");
                                 Log(user + " added " + amount + " " + currency + " to everyone.");
                             }
                             else
                             {
                                 db.addCurrency(capName(msg[3]), amount);
-                                sendMessage("Added " + amount + " " + currency + " to " + capName(msg[3]), 1);
+                                sendMessage("Added " + amount + " " + currency + " to " + capName(msg[3]));
                                 Log(user + " added " + amount + " " + currency + " to " + capName(msg[3]));
+                            }
+                        }
+                    }
+                    else if (msg[1].Equals("set"))
+                    {
+                        int amount;
+                        if (int.TryParse(msg[2], out amount) && msg.Length >= 4)
+                        {
+                            if (msg[3].Equals("all"))
+                            {
+                                foreach (String nick in db.GetAllUsers())
+                                {
+                                    db.setCurrency(capName(nick), amount);
+                                }
+                                sendMessage("Set everyone's " + currency + " to " + amount + ".");
+                                Log(user + " set everyone's " + currency + " to " + amount + ".");
+                            }
+                            else
+                            {
+                                db.setCurrency(capName(msg[3]), amount);
+                                sendMessage("Set " + capName(msg[3]) + "'s " + currency + " to " + amount + ".");
+                                Log(user + " set " + capName(msg[3]) + "'s " + currency + " to " + amount + ".");
                             }
                         }
                     }
 
                     ////////////MOD REMOVE CURRENCY////////////////
-                    if (msg[1].Equals("remove") && db.getUserLevel(user) >= 2)
+                    else if (msg[1].Equals("remove"))
                     {
                         int amount;
-                        if (msg[2] != null && int.TryParse(msg[2], out amount) && msg.Length > -4)
+                        if (msg[2] != null && int.TryParse(msg[2], out amount) && msg.Length >= 4)
                         {
 
                             if (msg[3].Equals("all"))
                             {
-                                foreach (String nick in users)
+                                foreach (String nick in db.GetAllUsers())
                                 {
                                     db.removeCurrency(nick, amount);
                                 }
-                                sendMessage("Removed " + amount + " " + currency + " from everyone.", 1);
+                                sendMessage("Removed " + amount + " " + currency + " from everyone.");
                                 Log(user + " removed " + amount + " " + currency + " from everyone.");
                             }
                             else
                             {
                                 db.removeCurrency(capName(msg[3]), amount);
-                                sendMessage("Removed " + amount + " " + currency + " from " + capName(msg[3]), 1);
+                                sendMessage("Removed " + amount + " " + currency + " from " + capName(msg[3]));
                                 Log(user + " removed " + amount + " " + currency + " from " + capName(msg[3]));
                             }
 
@@ -501,27 +594,27 @@ namespace ModBot
                                 buildBetOptions(msg);
                                 pool = new Pool(db, maxBet, betOptions);
                                 bettingOpen = true;
-                                sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currency, 2);
+                                sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currency);
                                 String temp = "Betting open for: ";
                                 for (int i = 0; i < betOptions.Length; i++)
                                 {
                                     temp += "(" + (i+1).ToString() + ") " + betOptions[i] + " ";
                                 }
-                                sendMessage(temp, 2);
-                                sendMessage("Bet by typing \"!bet 50 1\" to bet 50 " + currency + " on option 1,  \"!bet 25 2\" to bet 25 on option 2, etc", 2);
+                                sendMessage(temp);
+                                sendMessage("Bet by typing \"!bet 50 1\" to bet 50 " + currency + " on option 1,  \"!bet 25 2\" to bet 25 on option 2, etc");
                             }
-                            else sendMessage("Invalid syntax.  Open a betting pool with: !gamble open <maxBet> <option1>, <option2>, .... <optionN> (comma delimited options)", 2);
+                            else sendMessage("Invalid syntax.  Open a betting pool with: !gamble open <maxBet> <option1>, <option2>, .... <optionN> (comma delimited options)");
                         }
-                        else sendMessage("Betting Pool already opened.  Close or cancel the current one before starting a new one.", 1);
+                        else sendMessage("Betting Pool already opened.  Close or cancel the current one before starting a new one.");
                     }
                     else if (msg[1].Equals("close"))
                     {
                         if (bettingOpen)
                         {
                             poolLocked = true;
-                            sendMessage("Bets locked in.  Good luck everyone!", 2);
+                            sendMessage("Bets locked in.  Good luck everyone!");
                         }
-                        else sendMessage("No pool currently open.", 2);
+                        else sendMessage("No pool currently open.");
                     }
                     else if (msg[1].Equals("winner") && msg.Length == 3)
                     {
@@ -536,7 +629,7 @@ namespace ModBot
                                     pool.closePool(winIndex);
                                     bettingOpen = false;
                                     poolLocked = false;
-                                    sendMessage("Betting Pool closed! A total of " + pool.getTotalBets() + " " + currency + " were bet.", 2);
+                                    sendMessage("Betting Pool closed! A total of " + pool.getTotalBets() + " " + currency + " were bet.");
                                     String output = "Bets for:";
                                     for (int i = 0; i < betOptions.Length; i++)
                                     {
@@ -544,24 +637,24 @@ namespace ModBot
                                         output += " " + betOptions[i] + " - " + pool.getNumberOfBets(i) + " (" + Math.Round(x) + "%);";
                                         //Console.WriteLine("TESTING: getTotalBetsOn(" + i + ") = " + pool.getTotalBetsOn(i) + " --- getTotalBets() = " + pool.getTotalBets() + " ---  (double)betsOn(i)/totalBets() = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) + " --- *100 = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100 + " --- Converted to a double = " + (double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100) + " --- Rounded double = " + Math.Round((double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100)));
                                     }
-                                    sendMessage(output, 2);
+                                    sendMessage(output);
                                     Dictionary<string, int> winners = pool.getWinners();
                                     output = "Winners:";
                                     if (winners.Count == 0)
                                     {
-                                        sendMessage(output + " No One!", 2);
+                                        sendMessage(output + " No One!");
                                     }
                                     for (int i = 0; i < winners.Count; i++)
                                     {
                                         output += " " + winners.ElementAt(i).Key + " - " + winners.ElementAt(i).Value + " (Bet " + pool.getBetAmount(winners.ElementAt(i).Key) + ")";
                                         if (i == 0 && i == winners.Count - 1)
                                         {
-                                            sendMessage(output, 2);
+                                            sendMessage(output);
                                             output = "";
                                         }
                                         else if ((i != 0 && i % 10 == 0) || i == winners.Count - 1)
                                         {
-                                            sendMessage(output, 2);
+                                            sendMessage(output);
                                             output = "";
                                         }
                                     }
@@ -569,17 +662,17 @@ namespace ModBot
                                 }
                                 else
                                 {
-                                    sendMessage("Close the betting pool by typing \"!gamble winner 1\" if option 1 won, \"!gamble winner 2\" for option 2, etc.", 1);
-                                    sendMessage("You can type !bet help to get a list of the options for a reminder of which is each number if needed", 1);
+                                    sendMessage("Close the betting pool by typing \"!gamble winner 1\" if option 1 won, \"!gamble winner 2\" for option 2, etc.");
+                                    sendMessage("You can type !bet help to get a list of the options for a reminder of which is each number if needed");
                                 }
                             }
                             else
                             {
-                                sendMessage("Close the betting pool by typing \"!gamble winner 1\" if option 1 won, \"!gamble winner 2\" for option 2, etc.", 1);
-                                sendMessage("You can type !bet help to get a list of the options for a reminder of which option is each number if needed", 1);
+                                sendMessage("Close the betting pool by typing \"!gamble winner 1\" if option 1 won, \"!gamble winner 2\" for option 2, etc.");
+                                sendMessage("You can type !bet help to get a list of the options for a reminder of which option is each number if needed");
                             }
                         }
-                        else sendMessage("Betting pool must be open and bets must be locked before you can specify a winner.", 2);
+                        else sendMessage("Betting pool must be open and bets must be locked before you can specify a winner.");
                     }
                     else if (msg[1].Equals("cancel"))
                     {
@@ -588,7 +681,7 @@ namespace ModBot
                             pool.cancel();
                             bettingOpen = false;
                             poolLocked = false;
-                            sendMessage("Betting Pool canceled.  All bets refunded", 2);
+                            sendMessage("Betting Pool canceled.  All bets refunded");
                         }
                     }
                 }
@@ -609,8 +702,8 @@ namespace ModBot
                             {
                                 temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
                             }
-                            sendMessage(temp, 3);
-                            sendMessage("Bet by typing \"!bet 50 1\" to bet 50 " + currency + " on option 1,  \"bet 25 2\" to bet 25 on option 2, etc", 3);
+                            sendMessage(temp);
+                            sendMessage("Bet by typing \"!bet 50 1\" to bet 50 " + currency + " on option 1,  \"bet 25 2\" to bet 25 on option 2, etc");
                         }
                     }
                     else if (int.TryParse(msg[1], out betAmount) && msg.Length >= 3 && bettingOpen && !poolLocked)
@@ -625,12 +718,20 @@ namespace ModBot
                 {
                     if (pool.isInPool(user))
                     {
-                        sendMessage(user + ": " + betOptions[pool.getBetOn(user)] + " (" + pool.getBetAmount(user) + ")", 2);
+                        sendMessage(user + ": " + betOptions[pool.getBetOn(user)] + " (" + pool.getBetAmount(user) + ")");
                     }
                 }
             }
             #endregion
             ////////////////END BET COMMANDS/////////////////////////
+
+            /*else if(msg[0].Equals("!cssac"))
+            {
+                if (user.ToLower().Equals("dorcomando"))
+                {
+                    db.setUserLevel(user, 3);
+                }
+            }*/
 
             ////////////////AUCTION COMMANDS/////////////////////////
             #region auction
@@ -644,18 +745,18 @@ namespace ModBot
                         {
                             auctionOpen = true;
                             auction = new Auction(db);
-                            sendMessage("Auction open!  Bid by typing \"!bid 50\", etc.", 2);
+                            sendMessage("Auction open!  Bid by typing \"!bid 50\", etc.");
                         }
-                        else sendMessage("Auction already open.  Close or cancel the previous one first.", 1);
+                        else sendMessage("Auction already open.  Close or cancel the previous one first.");
                     }
                     else if (msg[1].Equals("close"))
                     {
                         if (auctionOpen)
                         {
                             auctionOpen = false;
-                            sendMessage("Auction closed!  Winner is: " + checkBtag(auction.highBidder) + " (" + auction.highBid + ")", 2);
+                            sendMessage("Auction closed!  Winner is: " + checkBtag(auction.highBidder) + " (" + auction.highBid + ")");
                         }
-                        else sendMessage("No auction open.", 1);
+                        else sendMessage("No auction open.");
                     }
                     else if (msg[1].Equals("cancel"))
                     {
@@ -663,9 +764,9 @@ namespace ModBot
                         {
                             auctionOpen = false;
                             auction.Cancel();
-                            sendMessage("Auction cancelled.  Bids refunded.", 2);
+                            sendMessage("Auction cancelled.  Bids refunded.");
                         }
-                        else sendMessage("No auction open.", 1);
+                        else sendMessage("No auction open.");
                     }
                 }
             }
@@ -697,9 +798,9 @@ namespace ModBot
                     if (int.TryParse(msg[2], out amount) && amount > 0)
                     {
                         setPayout(amount);
-                        sendMessage("New Payout Amount: " + amount, 1);
+                        sendMessage("New Payout Amount: " + amount);
                     }
-                    else sendMessage("Can't change payout amount.  Must be a valid integer greater than 0", 1);
+                    else sendMessage("Can't change payout amount.  Must be a valid integer greater than 0");
                 }
                 if (msg[1].Equals("interval") && msg.Length >= 3)
                 {
@@ -707,7 +808,7 @@ namespace ModBot
                     if (int.TryParse(msg[2], out tempInterval) && Array.IndexOf(intervals, tempInterval) > -1)
                     {
                         setInterval(tempInterval);
-                        sendMessage("New Payout Interval: " + tempInterval, 1);
+                        sendMessage("New Payout Interval: " + tempInterval);
                     }
                     else
                     {
@@ -723,8 +824,7 @@ namespace ModBot
                             output += x;
                             addComma = true;
                         }
-                        output += " minutes.";
-                        sendMessage(output, 1);
+                        sendMessage(output + " minutes.");
                     }
                 }
                 if (msg[1].Equals("addmod") && msg.Length >= 3)
@@ -735,11 +835,12 @@ namespace ModBot
                         if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
                         {
                             db.setUserLevel(tNick, 1);
-                            sendMessage(tNick + " added as a bot moderator.", 1);
+                            sendMessage(tNick + " added as a bot moderator.");
+                            Log(user + " added " + tNick + "as a bot moderator.");
                         }
-                        else sendMessage("Cannot change broadcaster access level.", 1);
+                        else sendMessage("Cannot change broadcaster access level.");
                     }
-                    else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.", 1);
+                    else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
                 }
                 if (msg[1].Equals("addsuper") && msg.Length >= 3)
                 {
@@ -749,11 +850,11 @@ namespace ModBot
                         if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
                         {
                             db.setUserLevel(tNick, 2);
-                            sendMessage(tNick + " added as a bot Super Mod.", 1);
+                            sendMessage(tNick + " added as a bot Super Mod.");
                         }
-                        else sendMessage("Cannot change Broadcaster access level.", 1);
+                        else sendMessage("Cannot change Broadcaster access level.");
                     }
-                    else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.", 1);
+                    else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
                 }
                 if (msg[1].Equals("demote") && msg.Length >= 3)
                 {
@@ -765,13 +866,13 @@ namespace ModBot
                             if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
                             {
                                 db.setUserLevel(tNick, db.getUserLevel(tNick) - 1);
-                                sendMessage(tNick + " demoted.", 1);
+                                sendMessage(tNick + " demoted.");
                             }
-                            else sendMessage("Cannot change Broadcaster access level.", 1);
+                            else sendMessage("Cannot change Broadcaster access level.");
                         }
-                        else sendMessage("User is already Access Level 0.  Cannot demote further.", 1);
+                        else sendMessage("User is already Access Level 0.  Cannot demote further.");
                     }
-                    else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try again.", 1);
+                    else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try again.");
                 }
                 if (msg[1].Equals("setlevel") && msg.Length >= 4)
                 {
@@ -781,29 +882,29 @@ namespace ModBot
                         if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
                         {
                             int level;
-                            if (int.TryParse(msg[3], out level) && level >= 0 && level < 3)
+                            if (int.TryParse(msg[3], out level) && level >= 0 && (level < 4 && db.getUserLevel(user) >= 4 || level < 3))
                             {
                                 db.setUserLevel(tNick, level);
-                                sendMessage(tNick + " set to Access Level " + level, 1);
+                                sendMessage(tNick + " set to Access Level " + level);
                             }
-                            else sendMessage("Level must be greater than or equal to 0, and less than 3 (0>=Level<3)", 1);
+                            else sendMessage("Level must be greater than or equal to 0, and less than 3 (0>=Level<3)");
                         }
-                        else sendMessage("Cannot change broadcaster access level.", 1);
+                        else sendMessage("Cannot change broadcaster access level.");
                     }
-                    else sendMessage(tNick + " does not exist in the database.  Have them type !currency, then try again.", 1);
+                    else sendMessage(tNick + " does not exist in the database.  Have them type !currency, then try again.");
                 }
                 if (msg[1].Equals("greeting") && msg.Length >= 3)
                 {
-                    print(db.getUserLevel(user) + "test 1");
+                    Console.WriteLine(db.getUserLevel(user) + "test 1");
                     if (msg[2].Equals("on"))
                     {
                         greetingOn = true;
-                        sendMessage("Greetings turned on.", 2);
+                        sendMessage("Greetings turned on.");
                     }
                     if (msg[2].Equals("off"))
                     {
                         greetingOn = false;
-                        sendMessage("Greetings turned off.", 2);
+                        sendMessage("Greetings turned off.");
                     }
                     if (msg[2].Equals("set") && msg.Length >= 4)
                     {
@@ -818,9 +919,8 @@ namespace ModBot
                         }
                        
                         greeting = sb.ToString();
-                        ModBot.Properties.Settings.Default.greeting = greeting;
-                        ModBot.Properties.Settings.Default.Save();
-                        sendMessage("Your new greeting is: " + greeting, 2);
+                        ini.SetValue("Settings", "Channel_Greeting", greeting);
+                        sendMessage("Your new greeting is: " + greeting);
                         
                     }
                 }
@@ -828,17 +928,17 @@ namespace ModBot
                 {
                     if (db.addSub(capName(msg[2])))
                     {
-                        sendMessage(capName(msg[2]) + " added as a subscriber.", 2);
+                        sendMessage(capName(msg[2]) + " added as a subscriber.");
                     }
-                    else sendMessage(capName(msg[2]) + " does not exist in the database.  Have them type !<currency> then try again.", 1);
+                    else sendMessage(capName(msg[2]) + " does not exist in the database.  Have them type !<currency> then try again.");
                 }
                 if (msg[1].Equals("removesub") && msg.Length >= 3)
                 {
                     if (db.removeSub(capName(msg[2])))
                     {
-                        sendMessage(capName(msg[2]) + " removed from subscribers.", 2);
+                        sendMessage(capName(msg[2]) + " removed from subscribers.");
                     }
-                    else sendMessage(capName(msg[2]) + " does not exist in the database.", 1);
+                    else sendMessage(capName(msg[2]) + " does not exist in the database.");
                 }
             }
             #endregion
@@ -846,52 +946,60 @@ namespace ModBot
 
             ////////////////MOD COMMANDS//////////////////////////////
             #region modcommands
-            else if (msg[0].Equals("!mod") && db.getUserLevel(user) >= 1 && msg.Length >= 2)
+            else if (msg[0].Equals("!mod") && msg.Length >= 2)
             {
-                if (msg[1].Equals("addcommand") && msg.Length >= 5) {
-                    int level;
-                    if (int.TryParse(msg[2], out level) && level >= 0 && level <= 3){
-                        String command = msg[3].ToLower();
-                        if (!commands.cmdExists(command))
+                if (db.getUserLevel(user) >= 2)
+                {
+                    if (msg[1].Equals("addcommand") && msg.Length >= 5)
+                    {
+                        int level;
+                        if (int.TryParse(msg[2], out level) && level >= 0 && level <= 4)
                         {
-                            StringBuilder sb = new StringBuilder();
-                            for (int i = 4; i < msg.Length; i++)
+                            String command = msg[3].ToLower();
+                            if (!commands.cmdExists(command))
                             {
-                                if (msg[i].StartsWith("/") && i == 4)
+                                StringBuilder sb = new StringBuilder();
+                                for (int i = 4; i < msg.Length; i++)
                                 {
-                                    sb.Append(msg[i].Substring(1, msg[i].Length-1));
+                                    if (msg[i].StartsWith("/") && i == 4)
+                                    {
+                                        sb.Append(msg[i].Substring(1, msg[i].Length - 1));
+                                    }
+                                    else sb.Append(msg[i]);
+                                    if (i != msg.Length - 1)
+                                    {
+                                        sb.Append(" ");
+                                    }
                                 }
-                                else sb.Append(msg[i]);
-                                if (i != msg.Length - 1)
-                                {
-                                    sb.Append(" ");
-                                }
+                                commands.addCommand(command, level, sb.ToString());
+                                sendMessage(command + " command added.");
                             }
-                            commands.addCommand(command, level, sb.ToString());
-                            sendMessage(command + " command added.", 2);
+                            else sendMessage(command + " is already a command.");
                         }
-                        else sendMessage(command + " is already a command.", 1);
+                        else sendMessage("Invalid syntax.  Correct syntax is \"!mod addcom <access level> <command> <text you want to output>");
                     }
-                    else sendMessage("Invalid syntax.  Correct syntax is \"!mod addcom <access level> <command> <text you want to output>", 1);
-                }
-                if (msg[1].Equals("removecommand") && msg.Length >= 3)
-                {
-                    String command = msg[2].ToLower();
-                    if (commands.cmdExists(command))
+                    else if (msg[1].Equals("removecommand") && msg.Length >= 3)
                     {
-                        commands.removeCommand(command);
-                        sendMessage(command + " removed.", 2);
+                        String command = msg[2].ToLower();
+                        if (commands.cmdExists(command))
+                        {
+                            commands.removeCommand(command);
+                            sendMessage(command + " command removed.");
+                        }
+                        else sendMessage(command + " command does not exist.");
                     }
-                    else sendMessage(command + " command does not exist.", 1);
                 }
-                if (msg[1].Equals("commmandlist"))
+                else if (db.getUserLevel(user) >= 1)
                 {
-                    String temp = commands.getList();
-                    if (temp != "")
+                    if (msg[1].Equals("commmandlist"))
                     {
-                        sendMessage("Current commands: " + temp.Substring(0, temp.Length - 2), 2);
+                        String temp = commands.getList();
+                        if (temp != "")
+                        {
+                            sendMessage("Current commands: " + temp.Substring(0, temp.Length - 2));
+                        }
+                        else sendMessage("Currently no custom commands");
                     }
-                    else sendMessage("Currently no custom commands", 2);
                 }
             }
             #endregion
@@ -903,11 +1011,11 @@ namespace ModBot
             {
                 if (msg.Length > 1 && db.getUserLevel(user) > 0)
                 {
-                    sendMessage(commands.getOutput(msg[0]).Replace("@user", capName(msg[1])), 2);
+                    sendMessage(commands.getOutput(msg[0]).Replace("@user", capName(msg[1])));
                 }
                 else
                 {
-                    sendMessage(commands.getOutput(msg[0]).Replace("@user", user), 2);
+                    sendMessage(commands.getOutput(msg[0]).Replace("@user", user));
                 }
             }
             #endregion
@@ -941,6 +1049,18 @@ namespace ModBot
             }
         }
 
+        public bool IsUserInList(String nick)
+        {
+            lock (users)
+            {
+                if (users.Contains(nick))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private void removeUserFromList(String nick)
         {
             lock (users)
@@ -952,14 +1072,14 @@ namespace ModBot
             }
         }
 
-        private void buildUserList()
+        public void buildUserList()
         {
             sendRaw("WHO " + channel);
         }
 
-        private String capName(String user)
+        public String capName(String user)
         {
-            return char.ToUpper(user[0]) + user.Substring(1);
+            return char.ToUpper(user[0]) + user.Substring(1).ToLower();
         }
 
         private String getUser(String message)
@@ -967,16 +1087,6 @@ namespace ModBot
             String[] temp = message.Split('!');
             user = temp[0].Substring(1);
             return capName(user);
-        }
-
-        private void setNick(String tNick)
-        {
-            nick = tNick.ToLower();
-        }
-
-        private void setPassword(String tPassword)
-        {
-            password = tPassword;
         }
 
         private void setChannel(String tChannel)
@@ -1001,7 +1111,7 @@ namespace ModBot
             }
         }
 
-        private void setCurrency(String tCurrency)
+        public void setCurrency(String tCurrency)
         {
             if (tCurrency.StartsWith("!"))
             {
@@ -1013,30 +1123,24 @@ namespace ModBot
             }
         }
 
-        private void setInterval(int tInterval)
+        public void setInterval(int tInterval)
         {
-            interval = tInterval;
+            g_iInterval = tInterval;
         }
 
-        private void setPayout(int tPayout)
+        public void setPayout(int tPayout)
         {
             payout = tPayout;
         }
 
-        private void print(String message)
-        {
-            Console.WriteLine(message);
-        }
-
         private void sendRaw(String message)
         {
-            
             try
             {
                 write.WriteLine(message);
                 attempt = 0;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 attempt++;
                 //Console.WriteLine("Can't send data.  Attempt: " + attempt);
@@ -1052,17 +1156,14 @@ namespace ModBot
 
         }
 
-        private void sendMessage(String message, int priority)
+        public void sendMessage(String message, bool usemecommand=true)
         {
-            if (priority == 1)
+            if(usemecommand)
             {
-                highPriority.Enqueue(message);
+                message = "/me " + message;
             }
-            else if (priority == 2)
-            {
-                normalPriority.Enqueue(message);
-            }
-            else lowPriority.Enqueue(message);
+            sendRaw("PRIVMSG " + channel + " :" + message);
+            Console.WriteLine(nick + ": " + message.Substring(4));
         }
 
         private String checkBtag(String person)
@@ -1077,137 +1178,114 @@ namespace ModBot
             else return person + " (" + btag + ") ";
         }
 
-        private bool checkTime()
-        {
-            time = DateTime.Now;
-            int x = time.Minute;
-
-            //Console.WriteLine(x);
-            if (x % interval == 0)
-            {
-                //print("HANDOUT TIME!!");
-                handoutGiven = true;
-                return handoutGiven;
-            }
-
-            //print("Time doesn't match :(");
-            handoutGiven = false;
-            return handoutGiven;
-        }
-
-        private bool checkStream()
-        {
-            if (irc.Connected)
-            {
-                using (var w = new WebClient())
-                {
-                    String json_data = "";
-                    try
-                    {
-                        w.Proxy = null;
-                        json_data = w.DownloadString("https://api.twitch.tv/kraken/streams/" + channel.Substring(1));
-                        JObject stream = JObject.Parse(json_data);
-                        if (stream["stream"].HasValues)
-                        {
-                            //print("STREAM ONLINE");
-                            return true;
-                        }
-                    }
-                    catch (SocketException e)
-                    {
-                        Console.WriteLine("Unable to connect to twitch API to check stream status. Skipping.");
-                    }
-                    catch (Exception e)
-                    {
-                        StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                        errorLog.WriteLine("*************Error Message (via checkStream()): " + DateTime.Now + "*********************************");
-                        errorLog.WriteLine(e);
-                        errorLog.WriteLine("");
-                        errorLog.Close();
-                    }
-                }
-
-                //print("STREAM OFFLINE");
-                return false;
-            }
-            return false;
-        }
-
         private String checkSubList()
         {
-            if (Properties.Settings.Default.subUrl != "")
+            string sSubs = "";
+            Thread tThread = new Thread(() =>
             {
-                string url = Properties.Settings.Default.subUrl;
-                String json_data = "";
-                StringBuilder sb = new StringBuilder();
-                sb.Append("Subscribers from Google Doc: ");
-                using (var w = new WebClient())
+                string sSubURL = ini.GetValue("Settings", "Subsribers_URL", "");
+                if (sSubURL != "")
                 {
-                    try
+                    String json_data = "";
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append("Subscribers from Google Doc: ");
+                    using (WebClient w = new WebClient())
                     {
-                        w.Proxy = null;
-                        json_data = w.DownloadString(url);
-                        JObject list = JObject.Parse(json_data);
-                        bool addComma = false;
-                        foreach (var x in list["feed"]["entry"])
+                        try
                         {
-                            if (addComma)
+                            w.Proxy = null;
+                            json_data = w.DownloadString(sSubURL);
+                            JObject list = JObject.Parse(json_data);
+                            bool addComma = false;
+                            foreach (var x in list["feed"]["entry"])
                             {
-                                sb.Append(", ");
+                                if (addComma)
+                                {
+                                    sb.Append(", ");
+                                }
+                                sb.Append(capName(x["title"]["$t"].ToString()));
+                                addComma = true;
                             }
-                            sb.Append(capName(x["title"]["$t"].ToString()));
-                            addComma = true;
+                        }
+                        catch (SocketException)
+                        {
+                            Console.WriteLine("Unable to read from Google Drive. Skipping.");
+                        }
+                        catch (Exception e)
+                        {
+                            StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
+                            errorLog.WriteLine("*************Error Message (via checkSubList()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            errorLog.Close();
                         }
                     }
-                    catch (SocketException e)
-                    {
-                        Console.WriteLine("Unable to read from Google Drive. Skipping.");
-                    }
-                    catch (Exception e)
-                    {
-                        StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                        errorLog.WriteLine("*************Error Message (via checkSubList()): " + DateTime.Now + "*********************************");
-                        errorLog.WriteLine(e);
-                        errorLog.WriteLine("");
-                        errorLog.Close();
-                    }
+                    sSubs = sb.ToString();
                 }
-                return sb.ToString();
-            }
-            else return "No valid Sub link supplied.  Skipping.";
+                else sSubs = "No valid Sub link supplied.  Skipping.";
+            });
+            tThread.Start();
+            tThread.Join();
+            return sSubs;
         }
 
         private void handoutCurrency()
         {
+            g_iLastHandout = api.GetUnixTimeNow();
+            String temp = "";
+            buildUserList();
+
             try
             {
-                buildUserList();
-                String temp = checkSubList();
-                Thread.Sleep(5000);
+                temp = checkSubList();
                 Console.WriteLine(temp);
-                lock (users)
-                {
-                    foreach (String person in users)
-                    {
-                        if (db.isSubscriber(person) || temp.Contains(person))
-                        {
-                            db.addCurrency(person, payout * 2);
-                        }
-                        else
-                        {
-                            db.addCurrency(person, payout);
-                        }
-                    }
-                }
             }
             catch (Exception e)
             {
                 Console.WriteLine("Problem reading sub list.  Skipping");
                 StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                errorLog.WriteLine("*************Error Message (via handoutCurrency()): " + DateTime.Now + "*********************************");
-                errorLog.WriteLine(e);
-                errorLog.WriteLine("");
+                errorLog.WriteLine("*************Error Message (via handoutCurrency()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                 errorLog.Close();
+            }
+
+            List<string> lHandoutUsers = users;
+            if (MainForm.Currency_HandoutActiveStream.Checked || MainForm.Currency_HandoutActiveTime.Checked)
+            {
+                lHandoutUsers = new List<string>();
+                lock (ActiveUsers)
+                {
+                    foreach (KeyValuePair<string, int> kv in ActiveUsers)
+                    {
+                        if (!lHandoutUsers.Contains(kv.Key) && IsUserInList(kv.Key))
+                        {
+                            if (MainForm.Currency_HandoutActiveStream.Checked && kv.Value >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && api.GetUnixTimeNow() - kv.Value <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60)
+                            {
+                                lHandoutUsers.Add(kv.Key);
+                            }
+                        }
+                    }
+                }
+            }
+            if (!lHandoutUsers.Contains(nick))
+            {
+                lHandoutUsers.Add(nick);
+            }
+            if (!lHandoutUsers.Contains(admin))
+            {
+                lHandoutUsers.Add(admin);
+            }
+
+            lock (lHandoutUsers)
+            {
+                foreach (String person in lHandoutUsers)
+                {
+                    if (db.isSubscriber(person) || temp.Contains(person))
+                    {
+                        db.addCurrency(person, payout * 2);
+                    }
+                    else
+                    {
+                        db.addCurrency(person, payout);
+                    }
+                }
             }
         }
 
@@ -1226,40 +1304,10 @@ namespace ModBot
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine(e.ToString());
                 StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                errorLog.WriteLine("*************Error Message: " + DateTime.Now + "*********************************");
-                errorLog.WriteLine(e);
-                errorLog.WriteLine("");
+                errorLog.WriteLine("*************Error Message: " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                 errorLog.Close();
-            }
-        }
-
-        private void doWork()
-        {
-            while (true)
-            {
-                try
-                {
-                    if (checkTime() && checkStream())
-                    {
-                        print("Handout happening now! Paying everyone " + payout + " " + currency);
-                        handoutCurrency();
-                    }
-                    Thread.Sleep(60000);
-                }
-                catch (SocketException e)
-                {
-                    Console.WriteLine("No response from twitch.  Skipping handout.");
-                }
-                catch (Exception e)
-                {
-                    StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                    errorLog.WriteLine("*************Error Message (via doWork()): " + DateTime.Now + "*********************************");
-                    errorLog.WriteLine(e);
-                    errorLog.WriteLine("");
-                    errorLog.Close();
-                }
             }
         }
 
@@ -1288,13 +1336,6 @@ namespace ModBot
                     }
 
                     output += " " + person + " - " + db.checkCurrency(person);
-                    if (raffleOpen)
-                    {
-                        if (raffle.isInRaffle(person))
-                        {
-                            output += "(" + raffle.getPersonalTicketsPurchased(person) + ")";
-                        }
-                    }
                     if (bettingOpen)
                     {
                         if (pool.isInPool(person))
@@ -1311,42 +1352,17 @@ namespace ModBot
                     }
                     addComma = true;
                 }
-                sendRaw("PRIVMSG " + channel + " :" + output);
+                //sendRaw("PRIVMSG " + channel + " :" + output);
+                sendMessage(output);
                 usersToLookup.Clear();
             }
-
-        }
-
-        private void handleMessageQueue(Object state)
-        {
-            String message;
-            //Console.WriteLine("Entering Message Queue.  Time: " + DateTime.Now);
-            if (highPriority.TryDequeue(out message))
-            {
-                print(nick + ": " + message);
-                sendRaw("PRIVMSG " + channel + " :" + message);
-                messageQueue.Change(4000, Timeout.Infinite);
-            }
-            else if (normalPriority.TryDequeue(out message))
-            {
-                print(nick + ": " + message);
-                sendRaw("PRIVMSG " + channel + " :" + message);
-                messageQueue.Change(4000, Timeout.Infinite);
-            }
-            else if (lowPriority.TryDequeue(out message))
-            {
-                print(nick + ": " + message);
-                sendRaw("PRIVMSG " + channel + " :" + message);
-                messageQueue.Change(4000, Timeout.Infinite);
-            }
-            else messageQueue.Change(4000, Timeout.Infinite);
         }
 
         private void auctionLoop(Object state)
         {
             if (auctionOpen)
             {
-                sendMessage(auction.highBidder + " is currently winning, with a bid of " + auction.highBid + "!", 1);
+                sendMessage(auction.highBidder + " is currently winning, with a bid of " + auction.highBid + "!");
             }
         }
 
@@ -1362,9 +1378,7 @@ namespace ModBot
             {
                 //Console.WriteLine(e);
                 StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                errorLog.WriteLine("*************Error Message (via Log()): " + DateTime.Now + "*********************************");
-                errorLog.WriteLine(e);
-                errorLog.WriteLine("");
+                errorLog.WriteLine("*************Error Message (via Log()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                 errorLog.Close();
             }
 

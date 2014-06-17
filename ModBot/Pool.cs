@@ -5,8 +5,7 @@ using System.Text;
 
 namespace ModBot
 {
-
-    class Pool
+    public class Pool
     {
         private Dictionary<string, int> winners;
         private Dictionary<string, PoolUser> bets = new Dictionary<string, PoolUser>();

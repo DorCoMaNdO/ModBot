@@ -3,18 +3,19 @@ using System.Linq;
 using System.Text;
 using System.Data.SQLite;
 using System.IO;
+using System.Collections.Generic;
 
 namespace ModBot
 {
-    class Database
+    public class Database
     {
         private SQLiteConnection myDB;
         private SQLiteCommand cmd;
         private string channel;
 
-        public Database()
+        public Database(string channel)
         {
-            channel = ModBot.Properties.Settings.Default.channel;
+            this.channel = channel;
             InitializeDB();
         }
 
@@ -76,6 +77,42 @@ namespace ModBot
                     cmd.ExecuteNonQuery();
                 }
             }
+        }
+
+        public List<string> GetAllUsers()
+        {
+            List<string> users = new List<string>();
+            String sql = "SELECT * FROM '" + channel + "';";
+            using (cmd = new SQLiteCommand(sql, myDB))
+            {
+                using (SQLiteDataReader r = cmd.ExecuteReader())
+                {
+                    while (r.Read())
+                    {
+                        if (users.Contains(r["user"].ToString()))
+                        {
+                            break;
+                        }
+                        users.Add(r["user"].ToString());
+                    }
+
+                }
+            }
+            return users;
+        }
+
+        public void setCurrency(String user, int amount)
+        {
+            if (!userExists(user))
+            {
+                newUser(user);
+            }
+            String sql = "UPDATE '" + channel + "' SET currency = " + amount + " WHERE user = \"" + user + "\";";
+            using (cmd = new SQLiteCommand(sql, myDB))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
         }
 
         public int checkCurrency(String user)
