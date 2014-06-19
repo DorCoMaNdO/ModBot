@@ -53,7 +53,18 @@ namespace ModBotUpdater
             CurrentVersionLabel.Text = "Not Found";
             if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
             {
-                CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe").FileVersion.ToString();
+                try
+                {
+                    CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe").FileVersion.ToString();
+                }
+                catch (NullReferenceException)
+                {
+                    while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+                    {
+                        MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    File.Delete(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe");
+                }
             }
 
             if (!Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "Updater"))
@@ -205,7 +216,18 @@ namespace ModBotUpdater
             CurrentVersionLabel.Text = "Not Found";
             if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
             {
-                CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe").FileVersion.ToString();
+                try
+                {
+                    CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe").FileVersion.ToString();
+                }
+                catch (NullReferenceException)
+                {
+                    while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+                    {
+                        MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    File.Delete(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe");
+                }
             }
 
             string sLatestVersion = "Error!", sFileSizeSuffix = "Bytes";
