@@ -13,12 +13,11 @@ namespace ModBotUpdater
 {
     public partial class Updater : CustomForm
     {
-        Changelog changelog;
+        Changelog changelog = new Changelog();
         public Updater()
         {
             InitializeComponent();
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
-            changelog = new Changelog(this);
             CheckUpdates();
         }
 

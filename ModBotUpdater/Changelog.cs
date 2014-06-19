@@ -11,11 +11,9 @@ namespace ModBotUpdater
 {
     public partial class Changelog : CustomForm
     {
-        Updater updater;
-        public Changelog(Updater updater)
+        public Changelog()
         {
             InitializeComponent();
-            this.updater = updater;
         }
     }
 }

@@ -11,11 +11,18 @@ namespace ModBot
     public class Api
     {
         private MainWindow MainForm;
-        public List<string> Followers = new List<string>();
+        private Irc IRC;
+        public Dictionary<string, string> g_dDisplayNames = new Dictionary<string, string>();
+        private Dictionary<string, Thread> g_lCheckingDisplayName = new Dictionary<string, Thread>();
 
-        public Api(MainWindow MainForm)
+        public Api()
+        {
+        }
+
+        public void SetMainForm(MainWindow MainForm)
         {
             this.MainForm = MainForm;
+            IRC = MainForm.IRC;
         }
 
         public int GetUnixTimeNow()
@@ -23,7 +30,79 @@ namespace ModBot
             return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
 
-        public bool IsFollowingChannel(String user)
+        public string GetDisplayName(string user, bool bWait=false)
+        {
+            user = user.ToLower();
+            if (!g_lCheckingDisplayName.ContainsKey(user))
+            {
+                if (!g_dDisplayNames.ContainsKey(user))
+                {
+                    Thread thread = new Thread(
+                    () =>
+                    {
+                        using (WebClient w = new WebClient())
+                        {
+                            string json_data = "";
+                            try
+                            {
+                                w.Proxy = null;
+                                json_data = w.DownloadString("https://api.twitch.tv/kraken/users/" + user);
+                                JObject stream = JObject.Parse(json_data);
+                                g_dDisplayNames.Add(user, stream["display_name"].ToString());
+                            }
+                            catch (SocketException)
+                            {
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+                        if (g_lCheckingDisplayName.ContainsKey(user))
+                        {
+                            g_lCheckingDisplayName.Remove(user);
+                        }
+                    });
+                    g_lCheckingDisplayName.Add(user, thread);
+                    thread.Start();
+                    if (bWait)
+                    {
+                        thread.Join();
+                    }
+                }
+            }
+            else
+            {
+                if (bWait)
+                {
+                    g_lCheckingDisplayName[user].Join();
+                }
+            }
+            /*else
+            {
+                if(bWait)
+                {
+                    for(int i = 0; i < 20; i++)
+                    {
+                        if (!g_dDisplayNames.ContainsKey(user))
+                        {
+                            Thread.Sleep(100);
+                        }
+                    }
+                }
+            }*/
+            if (!g_dDisplayNames.ContainsKey(user))
+            {
+                return capName(user);
+            }
+            return g_dDisplayNames[user];
+        }
+
+        public string capName(string name)
+        {
+            return char.ToUpper(name[0]) + name.Substring(1).ToLower();
+        }
+
+        public bool IsFollowingChannel(string user)
         {
             bool bFollowing = false;
             Thread thread = new Thread(
@@ -31,12 +110,12 @@ namespace ModBot
                 {
                     using (WebClient w = new WebClient())
                     {
-                        String json_data = "";
+                        string sData = "";
                         try
                         {
                             w.Proxy = null;
-                            json_data = w.DownloadString("https://api.twitch.tv/kraken/users/" + user + "/follows/channels/" + MainForm.IRC.channel.Substring(1));
-                            if (json_data.Contains("\"" + MainForm.IRC.channel.Substring(1) + "\""))
+                            sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + user + "/follows/channels/" + IRC.admin);
+                            if (sData.Contains("\"" + IRC.admin + "\""))
                             {
                                 bFollowing = true;
                             }
@@ -59,11 +138,11 @@ namespace ModBot
             List<Transaction> Transactions = new List<Transaction>();
             using (WebClient w = new WebClient())
             {
-                String json_data = "";
+                string json_data = "";
                 try
                 {
                     w.Proxy = null;
-                    json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + MainForm.IRC.channel.Substring(1).ToLower() + "&key=" + MainForm.IRC.donationkey);
+                    json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + IRC.admin.ToLower() + "&key=" + IRC.donationkey);
                     while (json_data.Contains("\"DT_RowId\""))
                     {
                         string date = "Donated at some point", name = "Unknown", amount = "0.00", notes = "", transaction = "";

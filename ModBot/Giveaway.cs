@@ -13,12 +13,16 @@ namespace ModBot
     public class Giveaway
     {
         private MainWindow MainForm;
+        private Irc IRC;
+        private Api api;
         public string winner;
         public int iLastWin;
 
         public Giveaway(MainWindow MainForm)
         {
             this.MainForm = MainForm;
+            IRC = MainForm.IRC;
+            api = IRC.api;
         }
 
         public void startGiveaway()
@@ -103,28 +107,28 @@ namespace ModBot
                 MainForm.Giveaway_WinTimeLabel.Text = "0:00";
                 MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
                 MainForm.Giveaway_WinnerChat.Clear();
-                MainForm.IRC.buildUserList();
+                IRC.buildUserList();
             });
 
             try
             {
                 List<string> ValidUsers = new List<string>();
-                int ActiveTime = Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) * 60, CurrentTime = MainForm.IRC.api.GetUnixTimeNow();
-                lock (MainForm.IRC.ActiveUsers)
+                int ActiveTime = Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) * 60, CurrentTime = api.GetUnixTimeNow();
+                lock (IRC.ActiveUsers)
                 {
-                    foreach (KeyValuePair<string, int> user in MainForm.IRC.ActiveUsers)
+                    foreach (KeyValuePair<string, int> user in IRC.ActiveUsers)
                     {
-                        if (!MainForm.IRC.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && MainForm.IRC.IsUserInList(MainForm.IRC.capName(user.Key)))
+                        if (!IRC.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && IRC.IsUserInList(api.capName(user.Key)))
                         {
-                            if (!MainForm.Giveaway_BanListListBox.Items.Contains(MainForm.IRC.capName(user.Key)))
+                            if (!MainForm.Giveaway_BanListListBox.Items.Contains(api.capName(user.Key)))
                             {
-                                if (CurrentTime - MainForm.IRC.ActiveUsers[MainForm.IRC.capName(user.Key)] <= ActiveTime)
+                                if (CurrentTime - IRC.ActiveUsers[api.capName(user.Key)] <= ActiveTime)
                                 {
-                                    if ((MainForm.IRC.db.checkCurrency(MainForm.IRC.capName(user.Key)) >= GetMinCurrency()))
+                                    if ((IRC.db.checkCurrency(api.capName(user.Key)) >= GetMinCurrency()))
                                     {
-                                        if (MainForm.Giveaway_MustFollowCheckBox.Checked && MainForm.IRC.api.IsFollowingChannel(MainForm.IRC.capName(user.Key)) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
+                                        if (MainForm.Giveaway_MustFollowCheckBox.Checked && api.IsFollowingChannel(api.capName(user.Key)) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
                                         {
-                                            ValidUsers.Add(MainForm.IRC.capName(user.Key));
+                                            ValidUsers.Add(api.capName(user.Key));
                                         }
                                     }
                                 }
@@ -135,12 +139,12 @@ namespace ModBot
 
                 if (ValidUsers.Count > 0)
                 {
-                    winner = ValidUsers[new Random().Next(0, ValidUsers.Count - 1)];
+                    winner = api.GetDisplayName(ValidUsers[new Random().Next(0, ValidUsers.Count - 1)]);
                     MainForm.BeginInvoke((MethodInvoker)delegate
                     {
                         string WinnerLabel = "Winner : ";
-                        if (MainForm.IRC.api.IsFollowingChannel(winner)) WinnerLabel = WinnerLabel + "Following | ";
-                        MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel + MainForm.IRC.db.checkCurrency(winner) + " " + MainForm.IRC.currency;
+                        if (api.IsFollowingChannel(winner)) WinnerLabel = WinnerLabel + "Following | ";
+                        MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel + IRC.db.checkCurrency(winner) + " " + IRC.currency;
                         MainForm.Giveaway_WinnerLabel.Text = winner;
                         MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);
                         MainForm.Giveaway_WinTimeLabel.ForeColor = Color.FromArgb(0, 200, 0);
@@ -148,9 +152,17 @@ namespace ModBot
                         MainForm.Giveaway_CopyWinnerButton.Enabled = true;
                         MainForm.Giveaway_AnnounceWinnerButton.Enabled = true;
                         MainForm.Giveaway_RerollButton.Enabled = true;
-                        iLastWin = MainForm.IRC.api.GetUnixTimeNow();
+                        iLastWin = api.GetUnixTimeNow();
                         if (MainForm.Giveaway_AutoBanWinnerCheckBox.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(winner)) MainForm.Giveaway_BanListListBox.Items.Add(winner);
                     });
+                    new Thread(() =>
+                    {
+                        winner = api.GetDisplayName(winner, true);
+                        MainForm.BeginInvoke((MethodInvoker)delegate
+                        {
+                            MainForm.Giveaway_WinnerLabel.Text = winner;
+                        });
+                    }).Start();
                     return;
                 }
             }

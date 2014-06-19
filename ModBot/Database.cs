@@ -11,11 +11,13 @@ namespace ModBot
     {
         private SQLiteConnection myDB;
         private SQLiteCommand cmd;
+        private Api api;
         private string channel;
 
-        public Database(string channel)
+        public Database(Irc IRC)
         {
-            this.channel = channel;
+            channel = IRC.admin;
+            api = IRC.api;
             InitializeDB();
         }
 
@@ -69,6 +71,7 @@ namespace ModBot
 
         public void newUser(String user)
         {
+            user = api.capName(user);
             if (!userExists(user))
             {
                 String sql = "INSERT INTO '"+channel+"' (user) VALUES ('" + user + "');";
@@ -103,6 +106,7 @@ namespace ModBot
 
         public void setCurrency(String user, int amount)
         {
+            user = api.capName(user);
             if (!userExists(user))
             {
                 newUser(user);
@@ -117,6 +121,7 @@ namespace ModBot
 
         public int checkCurrency(String user)
         {
+            user = api.capName(user);
             if (userExists(user)) {
                 String sql = "SELECT * FROM '" + channel + "' WHERE user = \"" + user + "\";";
                 using (cmd = new SQLiteCommand(sql, myDB))
@@ -140,6 +145,7 @@ namespace ModBot
 
         public void addCurrency(String user, int amount)
         {
+            user = api.capName(user);
             if (!userExists(user))
             {
                 newUser(user);
@@ -153,6 +159,7 @@ namespace ModBot
 
         public void removeCurrency(String user, int amount)
         {
+            user = api.capName(user);
             if (!userExists(user))
             {
                 newUser(user);
@@ -166,6 +173,7 @@ namespace ModBot
 
         public bool userExists(String user)
         {
+            user = api.capName(user);
             String sql = "SELECT * FROM '" + channel + "';";
             using (cmd = new SQLiteCommand(sql, myDB))
             {
@@ -185,6 +193,7 @@ namespace ModBot
 
         public String getBtag(String user)
         {
+            user = api.capName(user);
             if (userExists(user))
             {
                 String sql = "SELECT * FROM '" + channel + "' WHERE user = \"" + user + "\";";
@@ -214,6 +223,7 @@ namespace ModBot
 
         public void setBtag(String user, String btag)
         {
+            user = api.capName(user);
             if (!userExists(user))
             {
                 newUser(user);
@@ -227,6 +237,7 @@ namespace ModBot
 
         public bool isSubscriber(String user)
         {
+            user = api.capName(user);
             if (!userExists(user))
             {
                 newUser(user);
@@ -255,6 +266,7 @@ namespace ModBot
 
         public bool addSub(String user)
         {
+            user = api.capName(user);
             if (userExists(user))
             {
                 String sql = String.Format("UPDATE '" + channel + "' SET subscriber = 1 WHERE user = \"{0}\";", user);
@@ -269,6 +281,7 @@ namespace ModBot
 
         public bool removeSub(String user)
         {
+            user = api.capName(user);
             if (userExists(user))
             {
                 String sql = String.Format("UPDATE '" + channel + "' SET subscriber = 0 WHERE user = \"{0}\";", user);
@@ -283,6 +296,7 @@ namespace ModBot
 
         public int getUserLevel(String user)
         {
+            user = api.capName(user);
             if (!userExists(user))
             {
                 newUser(user);
@@ -312,7 +326,7 @@ namespace ModBot
 
         public void setUserLevel(String user, int level)
         {
-
+            user = api.capName(user);
             String sql = "UPDATE '" + channel + "' SET userlevel = \"" + level + "\" WHERE user = \"" + user + "\";";
             using (cmd = new SQLiteCommand(sql, myDB))
             {
