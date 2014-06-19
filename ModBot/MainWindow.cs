@@ -27,14 +27,9 @@ namespace ModBot
         private bool bUpdateNote = false;
         private string sCurrentVersion = "";
         private bool g_bLoaded = false;
-        private List<Control> g_cBaseControls = new List<Control>();
 
         public MainWindow(Irc IRC)
         {
-            foreach(Control ctrl in Controls)
-            {
-                g_cBaseControls.Add(ctrl);
-            }
             InitializeComponent();
             sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             Text = "ModBot v" + sCurrentVersion.Replace("." + Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
@@ -75,7 +70,7 @@ namespace ModBot
                 {
                     foreach (Control ctrl in Controls)
                     {
-                        if (!g_cBaseControls.Contains(ctrl) && !dState.ContainsKey(ctrl))
+                        if (!BaseControls.Contains(ctrl) && !dState.ContainsKey(ctrl))
                         {
                             dState.Add(ctrl, ctrl.Enabled);
                             BeginInvoke((MethodInvoker)delegate
@@ -123,7 +118,7 @@ namespace ModBot
                                     if (iLatestMajor > iCurrentMajor || iLatestMajor == iCurrentMajor && iLatestMinor > iCurrentMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild > iCurrentBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iLatestRev > iCurrentRev)
                                     {
                                         Console.WriteLine("\r\n********************************************************************************\r\nAn update to ModBot is available, please use the updater to update! (Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\n\r\n********************************************************************************\r\n");
-                                        if (IsHandleCreated && bActivated && !bUpdateNote)
+                                        if (IsHandleCreated && IsActivated && !bUpdateNote)
                                         {
                                             BeginInvoke((MethodInvoker)delegate
                                             {
@@ -165,7 +160,7 @@ namespace ModBot
                 Dictionary<Control, bool> dState = new Dictionary<Control, bool>();
                 foreach (Control ctrl in Controls)
                 {
-                    if (!g_cBaseControls.Contains(ctrl) && !dState.ContainsKey(ctrl))
+                    if (!BaseControls.Contains(ctrl) && !dState.ContainsKey(ctrl))
                     {
                         dState.Add(ctrl, ctrl.Enabled);
                         ctrl.Enabled = false;
@@ -501,7 +496,7 @@ namespace ModBot
             }
             using (WebClient w = new WebClient())
             {
-                String json_data = "";
+                string json_data = "";
                 try
                 {
                     w.Proxy = null;
