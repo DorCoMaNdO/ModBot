@@ -18,7 +18,6 @@ namespace ModBot
     public partial class MainWindow : CustomForm
     {
         public Irc IRC;
-        private Api api;
         public Dictionary<string, Dictionary<string, string>> dSettings = new Dictionary<string, Dictionary<string, string>>();
         public iniUtil ini;
         private bool bIgnoreUpdates = false;
@@ -34,7 +33,6 @@ namespace ModBot
             sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             Text = "ModBot v" + sCurrentVersion.Replace("." + Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
             this.IRC = IRC;
-            api = IRC.api;
             ini = IRC.ini;
 
             Giveaway_WinnerChat.Select(0, 7);
@@ -314,9 +312,9 @@ namespace ModBot
                                     foreach (string ban in bans)
                                     {
                                         //Console.WriteLine(ban);
-                                        if (!ban.Equals("") && !Giveaway_BanListListBox.Items.Contains(api.capName(ban)))
+                                        if (!ban.Equals("") && !Giveaway_BanListListBox.Items.Contains(Api.capName(ban)))
                                         {
-                                            Giveaway_BanListListBox.Items.Add(api.capName(ban));
+                                            Giveaway_BanListListBox.Items.Add(Api.capName(ban));
                                         }
                                     }
                                 }
@@ -362,7 +360,7 @@ namespace ModBot
 
         public void GrabData()
         {
-            List<Transaction> transactions = api.UpdateTransactions();
+            List<Transaction> transactions = Api.UpdateTransactions();
             if (transactions.Count > 0)
             {
                 IOrderedEnumerable<Transaction> Trans = transactions.OrderByDescending(key => key.date);
@@ -481,7 +479,7 @@ namespace ModBot
                 }
             }
 
-            string sName = api.capName(IRC.channel.Substring(1)), sTitle = "Unavailable...", sGame = "Unavailable...", sViewers = "";
+            string sName = Api.capName(IRC.channel.Substring(1)), sTitle = "Unavailable...", sGame = "Unavailable...", sViewers = "";
             int iStatus = 0;
             if (IRC.irc.Connected)
             {
@@ -618,7 +616,7 @@ namespace ModBot
         private void Giveaway_AnnounceWinnerButton_Click(object sender, EventArgs e)
         {
             string sMessage = Giveaway_WinnerLabel.Text + " has won the giveaway!";
-            if (api.IsFollowingChannel(Giveaway_WinnerLabel.Text))
+            if (Api.IsFollowingChannel(Giveaway_WinnerLabel.Text))
             {
                 sMessage = sMessage + " (Currently follows the channel";
                 sMessage = sMessage + " | Has " + IRC.db.checkCurrency(Giveaway_WinnerLabel.Text) + " " + IRC.currency + ")";
@@ -695,9 +693,12 @@ namespace ModBot
 
         public void SaveSettings(int SettingsPresent=-2)
         {
-            if (iSettingsPresent != -2)
+            if (SettingsPresent == -2)
             {
-                SettingsPresent = iSettingsPresent;
+                if (iSettingsPresent != -2)
+                {
+                    SettingsPresent = iSettingsPresent;
+                }
             }
             if (!bIgnoreUpdates)
             {
@@ -729,7 +730,7 @@ namespace ModBot
         {
             if (IRC.ActiveUsers.ContainsKey(Giveaway_WinnerLabel.Text))
             {
-                int time = api.GetUnixTimeNow() - IRC.ActiveUsers[Giveaway_WinnerLabel.Text];
+                int time = Api.GetUnixTimeNow() - IRC.ActiveUsers[Giveaway_WinnerLabel.Text];
                 int color = time - 120;
                 if (color >= 0 && color < 120)
                 {
@@ -772,7 +773,7 @@ namespace ModBot
 
             if (IRC.giveaway.iLastWin > 0)
             {
-                int time = api.GetUnixTimeNow() - IRC.giveaway.iLastWin;
+                int time = Api.GetUnixTimeNow() - IRC.giveaway.iLastWin;
                 int color = time;
                 if (color >= 0 && color < 60)
                 {

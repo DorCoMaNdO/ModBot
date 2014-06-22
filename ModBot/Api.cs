@@ -8,29 +8,25 @@ using System.Threading;
 
 namespace ModBot
 {
-    public class Api
+    public static class Api
     {
-        private MainWindow MainForm;
-        private Irc IRC;
-        public Dictionary<string, string> g_dDisplayNames = new Dictionary<string, string>();
-        private Dictionary<string, Thread> g_lCheckingDisplayName = new Dictionary<string, Thread>();
+        private static MainWindow MainForm;
+        private static Irc IRC;
+        public static Dictionary<string, string> g_dDisplayNames = new Dictionary<string, string>();
+        private static Dictionary<string, Thread> g_lCheckingDisplayName = new Dictionary<string, Thread>();
 
-        public Api()
+        public static void SetMainForm(MainWindow Form)
         {
-        }
-
-        public void SetMainForm(MainWindow MainForm)
-        {
-            this.MainForm = MainForm;
+            MainForm = Form;
             IRC = MainForm.IRC;
         }
 
-        public int GetUnixTimeNow()
+        public static int GetUnixTimeNow()
         {
             return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
 
-        public string GetDisplayName(string user, bool bWait=false)
+        public static string GetDisplayName(string user, bool bWait = false)
         {
             user = user.ToLower();
             if (!g_lCheckingDisplayName.ContainsKey(user))
@@ -97,12 +93,12 @@ namespace ModBot
             return g_dDisplayNames[user];
         }
 
-        public string capName(string name)
+        public static string capName(string name)
         {
             return char.ToUpper(name[0]) + name.Substring(1).ToLower();
         }
 
-        public bool IsFollowingChannel(string user)
+        public static bool IsFollowingChannel(string user)
         {
             bool bFollowing = false;
             Thread thread = new Thread(
@@ -133,7 +129,7 @@ namespace ModBot
             return bFollowing;
         }
 
-        public List<Transaction> UpdateTransactions()
+        public static List<Transaction> UpdateTransactions()
         {
             List<Transaction> Transactions = new List<Transaction>();
             using (WebClient w = new WebClient())

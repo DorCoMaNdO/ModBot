@@ -42,7 +42,6 @@ namespace ModBot
         public bool g_bIsStreaming = false;
         public bool g_bResourceKeeper = false;
         public MainWindow MainForm;
-        public Api api;
         public int g_iLastHandout = 0;
         public Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
 
@@ -60,9 +59,8 @@ namespace ModBot
             setInterval(interval);
             setPayout(payout);
             this.donationkey = donationkey;
-            api = new Api();
             MainForm = new MainWindow(this);
-            api.SetMainForm(MainForm);
+            Api.SetMainForm(MainForm);
             MainForm.Hide();
             giveaway = new Giveaway(MainForm);
             IgnoredUsers.Add("jtv");
@@ -76,8 +74,8 @@ namespace ModBot
         private void Initialize()
         {
             db = new Database(this);
-            db.newUser(api.capName(admin));
-            db.setUserLevel(api.capName(admin), 4);
+            db.newUser(admin);
+            db.setUserLevel(admin, 4);
 
             commands = new Commands();
 
@@ -157,7 +155,7 @@ namespace ModBot
                             {
                                 if (!g_bIsStreaming)
                                 {
-                                    g_iStreamStartTime = api.GetUnixTimeNow();
+                                    g_iStreamStartTime = Api.GetUnixTimeNow();
                                 }
                                 bIsStreaming = true;
                             }
@@ -207,12 +205,12 @@ namespace ModBot
             }).Start();
 
             //doWork();
-            g_iLastHandout = api.GetUnixTimeNow();
+            g_iLastHandout = Api.GetUnixTimeNow();
             new Thread(() =>
             {
                 while (true)
                 {
-                    if (api.GetUnixTimeNow() - g_iLastHandout >= g_iInterval * 60 && g_bIsStreaming)
+                    if (Api.GetUnixTimeNow() - g_iLastHandout >= g_iInterval * 60 && g_bIsStreaming)
                     {
                         Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currency);
                         handoutCurrency();
@@ -258,19 +256,19 @@ namespace ModBot
                 {
                     if (!ActiveUsers.ContainsKey(user))
                     {
-                        ActiveUsers.Add(user, api.GetUnixTimeNow());
+                        ActiveUsers.Add(user, Api.GetUnixTimeNow());
                     }
                     else
                     {
-                        ActiveUsers[user] = api.GetUnixTimeNow();
+                        ActiveUsers[user] = Api.GetUnixTimeNow();
                     }
                 }
                 //Console.WriteLine(message);
                 String temp = message.Substring(message.IndexOf(":", 1)+1);
-                string sUser = api.GetDisplayName(user);
+                string sUser = Api.GetDisplayName(user);
                 Console.WriteLine(sUser + ": " + temp);
                 handleMessage(temp);
-                if (user.Equals(api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                 {
                     MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                     {
@@ -294,11 +292,11 @@ namespace ModBot
                 {
                     if (!ActiveUsers.ContainsKey(user))
                     {
-                        ActiveUsers.Add(user, api.GetUnixTimeNow());
+                        ActiveUsers.Add(user, Api.GetUnixTimeNow());
                     }
                 }
                 Console.WriteLine(user + " joined");
-                api.GetDisplayName(user);
+                Api.GetDisplayName(user);
                 if (greeting != "" && greetingOn)
                 {
                     sendMessage(greeting.Replace("@user", user));
@@ -329,12 +327,12 @@ namespace ModBot
             else if (msg[1].Equals("352"))
             {
                 //Console.WriteLine(message);
-                addUserToList(api.capName(msg[4]));
+                addUserToList(Api.capName(msg[4]));
                 lock (ActiveUsers)
                 {
-                    if (!ActiveUsers.ContainsKey(api.capName(msg[4])))
+                    if (!ActiveUsers.ContainsKey(Api.capName(msg[4])))
                     {
-                        ActiveUsers.Add(api.capName(msg[4]), api.GetUnixTimeNow());
+                        ActiveUsers.Add(Api.capName(msg[4]), Api.GetUnixTimeNow());
                     }
                 }
             }
@@ -389,7 +387,7 @@ namespace ModBot
                             else
                             {
                                 string sMessage = winner + " has won the giveaway! (";
-                                if (api.IsFollowingChannel(winner))
+                                if (Api.IsFollowingChannel(winner))
                                 {
                                     sMessage = sMessage + "Currently follows the channel | ";
                                 }
@@ -434,9 +432,9 @@ namespace ModBot
                 ///////////Check your Currency////////////
                 if (msg.Length == 1)
                 {
-                    if (MainForm.Misc_LockCurrencyCmdCheckBox.Checked && db.getUserLevel(user) == 0 && api.GetUnixTimeNow() - g_iLastCurrencyLockAnnounce > 600)
+                    if (MainForm.Misc_LockCurrencyCmdCheckBox.Checked && db.getUserLevel(user) == 0 && Api.GetUnixTimeNow() - g_iLastCurrencyLockAnnounce > 600)
                     {
-                        g_iLastCurrencyLockAnnounce = api.GetUnixTimeNow();
+                        g_iLastCurrencyLockAnnounce = Api.GetUnixTimeNow();
                         sendMessage("The !" + currency + " command is disabled, you may politely ask a mod to check your " + currency + " for you.");
                     }
                     if (!MainForm.Misc_LockCurrencyCmdCheckBox.Checked || db.getUserLevel(user) >= 1)
@@ -448,15 +446,15 @@ namespace ModBot
                 {
                     if (msg[1].Equals("top5"))
                     {
-                        if (!MainForm.Misc_LockCurrencyCmdCheckBox.Checked && api.GetUnixTimeNow() - g_iLastTop5Announce > 600 || db.getUserLevel(user) >= 1)
+                        if (!MainForm.Misc_LockCurrencyCmdCheckBox.Checked && Api.GetUnixTimeNow() - g_iLastTop5Announce > 600 || db.getUserLevel(user) >= 1)
                         {
-                            g_iLastTop5Announce = api.GetUnixTimeNow();
+                            g_iLastTop5Announce = Api.GetUnixTimeNow();
                             Dictionary<string, int> TopPoints = new Dictionary<string, int>();
                             foreach (String nick in db.GetAllUsers())
                             {
                                 if (!IgnoredUsers.Any(c => c.Equals(nick.ToLower())))
                                 {
-                                    TopPoints.Add(nick, db.checkCurrency(api.capName(nick)));
+                                    TopPoints.Add(nick, db.checkCurrency(nick));
                                 }
                             }
                             IOrderedEnumerable<KeyValuePair<string, int>> top = TopPoints.OrderByDescending(key => key.Value);
@@ -486,7 +484,7 @@ namespace ModBot
                     {
                         foreach (String nick in db.GetAllUsers())
                         {
-                            db.setCurrency(api.capName(nick), 0);
+                            db.setCurrency(nick, 0);
                         }
                         sendMessage("Cleared all the " + currency + "!");
                     }
@@ -494,11 +492,11 @@ namespace ModBot
                     {
                         if (db.getUserLevel(user) >= 1)
                         {
-                            if (db.userExists(api.capName(msg[1])))
+                            if (db.userExists(msg[1]))
                             {
-                                sendMessage("Mod check: " + api.GetDisplayName(msg[1], true) + " has " + db.checkCurrency(api.capName(msg[1])) + " " + currency);
+                                sendMessage("Mod check: " + Api.GetDisplayName(msg[1], true) + " has " + db.checkCurrency(msg[1]) + " " + currency);
                             }
-                            else sendMessage("Mod check: " + api.GetDisplayName(msg[1]) + " is not a valid user.");
+                            else sendMessage("Mod check: " + Api.GetDisplayName(msg[1]) + " is not a valid user.");
                         }
                     }
                 }
@@ -514,16 +512,16 @@ namespace ModBot
                             {
                                 foreach (String nick in db.GetAllUsers())
                                 {
-                                    db.addCurrency(api.capName(nick), amount);
+                                    db.addCurrency(nick, amount);
                                 }
                                 sendMessage("Added " + amount + " " + currency + " to everyone.");
                                 Log(user + " added " + amount + " " + currency + " to everyone.");
                             }
                             else
                             {
-                                db.addCurrency(api.capName(msg[3]), amount);
-                                sendMessage("Added " + amount + " " + currency + " to " + api.capName(msg[3]));
-                                Log(user + " added " + amount + " " + currency + " to " + api.capName(msg[3]));
+                                db.addCurrency(msg[3], amount);
+                                sendMessage("Added " + amount + " " + currency + " to " + Api.capName(msg[3]));
+                                Log(user + " added " + amount + " " + currency + " to " + Api.capName(msg[3]));
                             }
                         }
                     }
@@ -536,16 +534,16 @@ namespace ModBot
                             {
                                 foreach (String nick in db.GetAllUsers())
                                 {
-                                    db.setCurrency(api.capName(nick), amount);
+                                    db.setCurrency(nick, amount);
                                 }
                                 sendMessage("Set everyone's " + currency + " to " + amount + ".");
                                 Log(user + " set everyone's " + currency + " to " + amount + ".");
                             }
                             else
                             {
-                                db.setCurrency(api.capName(msg[3]), amount);
-                                sendMessage("Set " + api.capName(msg[3]) + "'s " + currency + " to " + amount + ".");
-                                Log(user + " set " + api.capName(msg[3]) + "'s " + currency + " to " + amount + ".");
+                                db.setCurrency(msg[3], amount);
+                                sendMessage("Set " + Api.capName(msg[3]) + "'s " + currency + " to " + amount + ".");
+                                Log(user + " set " + Api.capName(msg[3]) + "'s " + currency + " to " + amount + ".");
                             }
                         }
                     }
@@ -568,9 +566,9 @@ namespace ModBot
                             }
                             else
                             {
-                                db.removeCurrency(api.capName(msg[3]), amount);
-                                sendMessage("Removed " + amount + " " + currency + " from " + api.capName(msg[3]));
-                                Log(user + " removed " + amount + " " + currency + " from " + api.capName(msg[3]));
+                                db.removeCurrency(msg[3], amount);
+                                sendMessage("Removed " + amount + " " + currency + " from " + Api.capName(msg[3]));
+                                Log(user + " removed " + amount + " " + currency + " from " + Api.capName(msg[3]));
                             }
 
                         }
@@ -832,7 +830,7 @@ namespace ModBot
                 }
                 if (msg[1].Equals("addmod") && msg.Length >= 3)
                 {
-                    string tNick = api.capName(msg[2]);
+                    string tNick = Api.capName(msg[2]);
                     if (db.userExists(tNick))
                     {
                         if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
@@ -847,7 +845,7 @@ namespace ModBot
                 }
                 if (msg[1].Equals("addsuper") && msg.Length >= 3)
                 {
-                    String tNick = api.capName(msg[2]);
+                    String tNick = Api.capName(msg[2]);
                     if (db.userExists(tNick))
                     {
                         if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
@@ -861,7 +859,7 @@ namespace ModBot
                 }
                 if (msg[1].Equals("demote") && msg.Length >= 3)
                 {
-                    string tNick = api.capName(msg[2]);
+                    string tNick = Api.capName(msg[2]);
                     if (db.userExists(tNick))
                     {
                         if (db.getUserLevel(tNick) > 0)
@@ -879,7 +877,7 @@ namespace ModBot
                 }
                 if (msg[1].Equals("setlevel") && msg.Length >= 4)
                 {
-                    string tNick = api.capName(msg[2]);
+                    string tNick = Api.capName(msg[2]);
                     if (db.userExists(tNick))
                     {
                         if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
@@ -929,19 +927,19 @@ namespace ModBot
                 }
                 if (msg[1].Equals("addsub") && msg.Length >= 3)
                 {
-                    if (db.addSub(api.capName(msg[2])))
+                    if (db.addSub(msg[2]))
                     {
-                        sendMessage(api.capName(msg[2]) + " added as a subscriber.");
+                        sendMessage(Api.capName(msg[2]) + " added as a subscriber.");
                     }
-                    else sendMessage(api.capName(msg[2]) + " does not exist in the database.  Have them type !<currency> then try again.");
+                    else sendMessage(Api.capName(msg[2]) + " does not exist in the database.  Have them type !<currency> then try again.");
                 }
                 if (msg[1].Equals("removesub") && msg.Length >= 3)
                 {
-                    if (db.removeSub(api.capName(msg[2])))
+                    if (db.removeSub(msg[2]))
                     {
-                        sendMessage(api.capName(msg[2]) + " removed from subscribers.");
+                        sendMessage(Api.capName(msg[2]) + " removed from subscribers.");
                     }
-                    else sendMessage(api.capName(msg[2]) + " does not exist in the database.");
+                    else sendMessage(Api.capName(msg[2]) + " does not exist in the database.");
                 }
             }
             #endregion
@@ -1014,7 +1012,7 @@ namespace ModBot
             {
                 if (msg.Length > 1 && db.getUserLevel(user) > 0)
                 {
-                    sendMessage(commands.getOutput(msg[0]).Replace("@user", api.capName(msg[1])));
+                    sendMessage(commands.getOutput(msg[0]).Replace("@user", Api.capName(msg[1])));
                 }
                 else
                 {
@@ -1084,7 +1082,7 @@ namespace ModBot
         {
             String[] temp = message.Split('!');
             user = temp[0].Substring(1);
-            return api.capName(user);
+            return Api.capName(user);
         }
 
         private void setChannel(String tChannel)
@@ -1201,7 +1199,7 @@ namespace ModBot
                                 {
                                     sb.Append(", ");
                                 }
-                                sb.Append(api.capName(x["title"]["$t"].ToString()));
+                                sb.Append(Api.capName(x["title"]["$t"].ToString()));
                                 addComma = true;
                             }
                         }
@@ -1227,7 +1225,7 @@ namespace ModBot
 
         private void handoutCurrency()
         {
-            g_iLastHandout = api.GetUnixTimeNow();
+            g_iLastHandout = Api.GetUnixTimeNow();
             String temp = "";
             buildUserList();
 
@@ -1254,7 +1252,7 @@ namespace ModBot
                     {
                         if (!lHandoutUsers.Contains(kv.Key) && IsUserInList(kv.Key))
                         {
-                            if (MainForm.Currency_HandoutActiveStream.Checked && kv.Value >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && api.GetUnixTimeNow() - kv.Value <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60)
+                            if (MainForm.Currency_HandoutActiveStream.Checked && kv.Value >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - kv.Value <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60)
                             {
                                 lHandoutUsers.Add(kv.Key);
                             }
@@ -1333,7 +1331,7 @@ namespace ModBot
                         output += ", ";
                     }
 
-                    output += " " + api.GetDisplayName(person) + " - " + db.checkCurrency(person);
+                    output += " " + Api.GetDisplayName(person) + " - " + db.checkCurrency(person);
                     if (bettingOpen)
                     {
                         if (pool.isInPool(person))
