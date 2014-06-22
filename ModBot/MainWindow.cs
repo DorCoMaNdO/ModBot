@@ -728,9 +728,9 @@ namespace ModBot
 
         private void Giveaway_WinnerTimer_Tick(object sender, EventArgs e)
         {
-            if (IRC.ActiveUsers.ContainsKey(Giveaway_WinnerLabel.Text))
+            if (IRC.ActiveUsers.ContainsKey(Api.capName(Giveaway_WinnerLabel.Text)))
             {
-                int time = Api.GetUnixTimeNow() - IRC.ActiveUsers[Giveaway_WinnerLabel.Text];
+                int time = Api.GetUnixTimeNow() - IRC.ActiveUsers[Api.capName(Giveaway_WinnerLabel.Text)];
                 int color = time - 120;
                 if (color >= 0 && color < 120)
                 {

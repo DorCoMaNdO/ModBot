@@ -116,17 +116,17 @@ namespace ModBot
                 {
                     foreach (KeyValuePair<string, int> user in IRC.ActiveUsers)
                     {
-                        if (!IRC.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && IRC.IsUserInList(Api.capName(user.Key)))
+                        if (!IRC.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && IRC.IsUserInList(user.Key))
                         {
-                            if (!MainForm.Giveaway_BanListListBox.Items.Contains(Api.capName(user.Key)))
+                            if (!MainForm.Giveaway_BanListListBox.Items.Contains(user.Key))
                             {
-                                if (CurrentTime - IRC.ActiveUsers[Api.capName(user.Key)] <= ActiveTime)
+                                if (CurrentTime - user.Value <= ActiveTime)
                                 {
                                     if ((IRC.db.checkCurrency(user.Key) >= GetMinCurrency()))
                                     {
-                                        if (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollowingChannel(Api.capName(user.Key)) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
+                                        if (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollowingChannel(user.Key) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
                                         {
-                                            ValidUsers.Add(Api.capName(user.Key));
+                                            ValidUsers.Add(user.Key);
                                         }
                                     }
                                 }

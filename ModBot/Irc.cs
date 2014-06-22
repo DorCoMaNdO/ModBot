@@ -1054,7 +1054,7 @@ namespace ModBot
         {
             lock (users)
             {
-                if (users.Contains(nick))
+                if (users.Contains(Api.capName(nick)))
                 {
                     return true;
                 }
