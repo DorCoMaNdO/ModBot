@@ -496,9 +496,9 @@ namespace ModBot
                         {
                             if (db.userExists(api.capName(msg[1])))
                             {
-                                sendMessage("Mod check: " + api.capName(msg[1]) + " has " + db.checkCurrency(api.capName(msg[1])) + " " + currency);
+                                sendMessage("Mod check: " + api.GetDisplayName(msg[1], true) + " has " + db.checkCurrency(api.capName(msg[1])) + " " + currency);
                             }
-                            else sendMessage("Mod check: " + api.capName(msg[1]) + " is not a valid user.");
+                            else sendMessage("Mod check: " + api.GetDisplayName(msg[1]) + " is not a valid user.");
                         }
                     }
                 }
@@ -1333,7 +1333,7 @@ namespace ModBot
                         output += ", ";
                     }
 
-                    output += " " + person + " - " + db.checkCurrency(person);
+                    output += " " + api.GetDisplayName(person) + " - " + db.checkCurrency(person);
                     if (bettingOpen)
                     {
                         if (pool.isInPool(person))
