@@ -132,47 +132,50 @@ namespace ModBot
         public static List<Transaction> UpdateTransactions()
         {
             List<Transaction> Transactions = new List<Transaction>();
-            using (WebClient w = new WebClient())
+            if (IRC.donationkey != "")
             {
-                string json_data = "";
-                try
+                using (WebClient w = new WebClient())
                 {
-                    w.Proxy = null;
-                    json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + IRC.admin.ToLower() + "&key=" + IRC.donationkey);
-                    while (json_data.Contains("\"DT_RowId\""))
+                    string json_data = "";
+                    try
                     {
-                        string date = "Donated at some point", name = "Unknown", amount = "0.00", notes = "", transaction = "";
-                        json_data = json_data.Substring(json_data.IndexOf("\"0\":") + 4);
-                        if (!json_data.StartsWith("null"))
+                        w.Proxy = null;
+                        json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + IRC.admin.ToLower() + "&key=" + IRC.donationkey);
+                        while (json_data.Contains("\"DT_RowId\""))
                         {
-                            name = json_data.Substring(1, json_data.IndexOf("\",") - 1);
-                        }
-                        json_data = json_data.Substring(json_data.IndexOf(",\"1\":") + 4);
-                        if (!json_data.StartsWith("null"))
-                        {
-                            notes = json_data.Substring(2, json_data.IndexOf("\",") - 2).Replace("&lt;", "<").Replace("&gt;", ">");
-                        }
-                        json_data = json_data.Substring(json_data.IndexOf(",\"2\":") + 4);
-                        if (!json_data.StartsWith("null"))
-                        {
-                            date = json_data.Substring(2, json_data.IndexOf("\",") - 2);
-                        }
-                        json_data = json_data.Substring(json_data.IndexOf(",\"3\":") + 4);
-                        if (!json_data.StartsWith("null"))
-                        {
-                            amount = json_data.Substring(2, json_data.IndexOf("\",") - 2);
-                        }
+                            string date = "Donated at some point", name = "Unknown", amount = "0.00", notes = "", transaction = "";
+                            json_data = json_data.Substring(json_data.IndexOf("\"0\":") + 4);
+                            if (!json_data.StartsWith("null"))
+                            {
+                                name = json_data.Substring(1, json_data.IndexOf("\",") - 1);
+                            }
+                            json_data = json_data.Substring(json_data.IndexOf(",\"1\":") + 4);
+                            if (!json_data.StartsWith("null"))
+                            {
+                                notes = json_data.Substring(2, json_data.IndexOf("\",") - 2).Replace("&lt;", "<").Replace("&gt;", ">");
+                            }
+                            json_data = json_data.Substring(json_data.IndexOf(",\"2\":") + 4);
+                            if (!json_data.StartsWith("null"))
+                            {
+                                date = json_data.Substring(2, json_data.IndexOf("\",") - 2);
+                            }
+                            json_data = json_data.Substring(json_data.IndexOf(",\"3\":") + 4);
+                            if (!json_data.StartsWith("null"))
+                            {
+                                amount = json_data.Substring(2, json_data.IndexOf("\",") - 2);
+                            }
 
-                        json_data = json_data.Substring(json_data.IndexOf("\"DT_RowId\":\"") + 12);
-                        transaction = json_data.Substring(0, json_data.IndexOf("\""));
-                        Transactions.Add(new Transaction(transaction, date, amount, name, notes));
+                            json_data = json_data.Substring(json_data.IndexOf("\"DT_RowId\":\"") + 12);
+                            transaction = json_data.Substring(0, json_data.IndexOf("\""));
+                            Transactions.Add(new Transaction(transaction, date, amount, name, notes));
+                        }
                     }
-                }
-                catch (SocketException)
-                {
-                }
-                catch (Exception)
-                {
+                    catch (SocketException)
+                    {
+                    }
+                    catch (Exception)
+                    {
+                    }
                 }
             }
             return Transactions;

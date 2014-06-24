@@ -128,6 +128,10 @@ namespace ModBot
                 Thread.Sleep(5000);
             }
 
+            if (donationkey == "")
+            {
+                MainForm.Donations_ManageButton.Enabled = false;
+            }
             new Thread(() =>
             {
                 MainForm.GrabData();
@@ -296,15 +300,15 @@ namespace ModBot
                     }
                 }
                 Console.WriteLine(user + " joined");
-                Api.GetDisplayName(user);
-                if (greeting != "" && greetingOn)
+                string name = Api.GetDisplayName(user);
+                if (greetingOn && greeting != "")
                 {
-                    sendMessage(greeting.Replace("@user", user));
+                    sendMessage(greeting.Replace("@user", name));
                 }
                 if (!db.userExists(user))
                 {
                     db.newUser(user);
-                    db.addCurrency(user, payout);
+                    //db.addCurrency(user, payout);
                 }
             }
             else if (msg[1].Equals("PART"))
@@ -833,7 +837,7 @@ namespace ModBot
                     string tNick = Api.capName(msg[2]);
                     if (db.userExists(tNick))
                     {
-                        if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
+                        if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (db.getUserLevel(tNick) < 3 && db.getUserLevel(user) == 3 || db.getUserLevel(user) >= 4))
                         {
                             db.setUserLevel(tNick, 1);
                             sendMessage(tNick + " added as a bot moderator.");
@@ -848,7 +852,7 @@ namespace ModBot
                     String tNick = Api.capName(msg[2]);
                     if (db.userExists(tNick))
                     {
-                        if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
+                        if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (db.getUserLevel(tNick) < 3 && db.getUserLevel(user) == 3 || db.getUserLevel(user) >= 4))
                         {
                             db.setUserLevel(tNick, 2);
                             sendMessage(tNick + " added as a bot Super Mod.");
@@ -864,7 +868,7 @@ namespace ModBot
                     {
                         if (db.getUserLevel(tNick) > 0)
                         {
-                            if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
+                            if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (db.getUserLevel(tNick) < 3 && db.getUserLevel(user) == 3 || db.getUserLevel(user) >= 4))
                             {
                                 db.setUserLevel(tNick, db.getUserLevel(tNick) - 1);
                                 sendMessage(tNick + " demoted.");
@@ -880,7 +884,7 @@ namespace ModBot
                     string tNick = Api.capName(msg[2]);
                     if (db.userExists(tNick))
                     {
-                        if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase))
+                        if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (db.getUserLevel(tNick) < 3 && db.getUserLevel(user) == 3 || db.getUserLevel(user) >= 4))
                         {
                             int level;
                             if (int.TryParse(msg[3], out level) && level >= 0 && (level < 4 && db.getUserLevel(user) >= 4 || level < 3))
@@ -890,7 +894,7 @@ namespace ModBot
                             }
                             else sendMessage("Level must be greater than or equal to 0, and less than 3 (0>=Level<3)");
                         }
-                        else sendMessage("Cannot change broadcaster access level.");
+                        else sendMessage("Cannot change that mod's access level.");
                     }
                     else sendMessage(tNick + " does not exist in the database.  Have them type !currency, then try again.");
                 }
