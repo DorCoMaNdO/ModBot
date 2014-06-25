@@ -105,8 +105,8 @@ namespace ModBot
                 MainForm.Giveaway_WinTimeLabel.Text = "0:00";
                 MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
                 MainForm.Giveaway_WinnerChat.Clear();
-                IRC.buildUserList();
             });
+            IRC.buildUserList();
 
             try
             {

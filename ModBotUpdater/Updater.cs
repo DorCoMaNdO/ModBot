@@ -231,7 +231,7 @@ namespace ModBotUpdater
                 }
             }
 
-            string sLatestVersion = "Error!", sFileSizeSuffix = "Bytes";
+            string sLatestVersion = "", sFileSizeSuffix = "Bytes";
             double iFileSize = 0;
             LatestVersionLabel.Text = "Checking...";
             StateLabel.Text = "Checking for updates...";
@@ -277,7 +277,7 @@ namespace ModBotUpdater
             }
 
             LatestVersionLabel.Text = sLatestVersion;
-            if (sLatestVersion != "Error!")
+            if (sLatestVersion != "")
             {
                 if (CurrentVersionLabel.Text != "Not Found")
                 {

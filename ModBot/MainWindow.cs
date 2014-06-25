@@ -121,7 +121,7 @@ namespace ModBot
                                             BeginInvoke((MethodInvoker)delegate
                                             {
                                                 bUpdateNote = true;
-                                                if (MessageBox.Show("An update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
+                                                if (MessageBox.Show("An update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
                                                 {
                                                     Process.Start(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe");
                                                     Environment.Exit(0);

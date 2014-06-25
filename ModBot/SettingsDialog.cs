@@ -54,7 +54,7 @@ namespace ModBot
 
             if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe"))
             {
-                string sLatestVersion = "Error", sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                string sLatestVersion = "", sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
                 Thread thread = new Thread(
                 () =>
                 {
@@ -76,7 +76,7 @@ namespace ModBot
                 thread.Start();
                 thread.Join();
 
-                if (sLatestVersion != "Error")
+                if (sLatestVersion != "")
                 {
                     string[] sCurrent = sCurrentVersion.Split('.');
                     string[] sLatest = sLatestVersion.Split('.');
@@ -85,7 +85,7 @@ namespace ModBot
                     if (iLatestMajor > iCurrentMajor || iLatestMajor == iCurrentMajor && iLatestMinor > iCurrentMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild > iCurrentBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iLatestRev > iCurrentRev)
                     {
                         Console.WriteLine("\r\n********************************************************************************\r\nAn update to ModBot is available, please use the updater to update!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\n\r\n********************************************************************************\r\n");
-                        if (MessageBox.Show("An update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
+                        if (MessageBox.Show("An update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
                         {
                             if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe"))
                             {
@@ -114,7 +114,7 @@ namespace ModBot
                 {
                     while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe"))
                     {
-                        MessageBox.Show("Please close ModBot's Updater, a new version of the updater is available and will be extracted.", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Please close ModBot's Updater, a new version of the updater is available and will be extracted.", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
 
                     File.Delete(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe");
@@ -125,7 +125,7 @@ namespace ModBot
                         fsUpdater.Write(rawUpdater, 0, rawUpdater.Length);
                     }
 
-                    MessageBox.Show("ModBot Updater has been updated from v" + sCurrentVersion + " to v" + sLatestVersion + " sucessfully.", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("ModBot Updater has been updated from v" + sCurrentVersion + " to v" + sLatestVersion + " sucessfully.", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             else
@@ -134,7 +134,7 @@ namespace ModBot
                 {
                     fsUpdater.Write(rawUpdater, 0, rawUpdater.Length);
                 }
-                MessageBox.Show("ModBot Updater has been extracted sucessfully (v" + sLatestVersion + ").", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("ModBot Updater has been extracted sucessfully (v" + sLatestVersion + ").", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 

@@ -146,6 +146,15 @@ namespace ModBot
             {
                 while (true)
                 {
+                    buildUserList();
+                    Thread.Sleep(10000);
+                }
+            }).Start();
+
+            new Thread(() =>
+            {
+                while (true)
+                {
                     bool bIsStreaming = false;
                     using (WebClient w = new WebClient())
                     {
@@ -331,7 +340,7 @@ namespace ModBot
             else if (msg[1].Equals("352"))
             {
                 //Console.WriteLine(message);
-                addUserToList(Api.capName(msg[4]));
+                addUserToList(msg[4]);
                 lock (ActiveUsers)
                 {
                     if (!ActiveUsers.ContainsKey(Api.capName(msg[4])))
@@ -1047,9 +1056,9 @@ namespace ModBot
         {
             lock (users)
             {
-                if (!users.Contains(nick))
+                if (!users.Contains(Api.capName(nick)))
                 {
-                    users.Add(nick);
+                    users.Add(Api.capName(nick));
                 }
             }
         }
@@ -1070,16 +1079,63 @@ namespace ModBot
         {
             lock (users)
             {
-                if (users.Contains(nick))
+                if (users.Contains(Api.capName(nick)))
                 {
-                    users.Remove(nick);
+                    users.Remove(Api.capName(nick));
                 }
             }
         }
 
         public void buildUserList()
         {
-            sendRaw("WHO " + channel);
+            //sendRaw("WHO " + channel);
+            Thread thread = new Thread(() =>
+            {
+                using (WebClient w = new WebClient())
+                {
+                    string json_data = "";
+                    try
+                    {
+                        w.Proxy = null;
+                        json_data = w.DownloadString("http://tmi.twitch.tv/group/user/" + channel.Substring(1) + "/chatters");
+                        //users.Clear();
+                        List<string> lUsers = new List<string>();
+                        if (json_data.Replace("\"", "") != "")
+                        {
+                            JObject stream = JObject.Parse(JObject.Parse(json_data)["chatters"].ToString());
+                            string[] sUsers = (stream["moderators"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["staff"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["admins"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["viewers"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "")).Split(',');
+                            foreach(string user in sUsers)
+                            {
+                                if (user != "")
+                                {
+                                    if (!lUsers.Contains(Api.capName(user)))
+                                    {
+                                        lUsers.Add(Api.capName(user));
+                                    }
+                                }
+                            }
+                        }
+                        lock (users)
+                        {
+                            users = lUsers;
+                        }
+                    }
+                    catch (SocketException)
+                    {
+                        Console.WriteLine("Unable to connect to twitch API to build the user list.");
+                    }
+                    catch (Exception e)
+                    {
+                        StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
+                        errorLog.WriteLine("*************Error Message (via buildUserList()): " + DateTime.Now + "*********************************");
+                        errorLog.WriteLine(e);
+                        errorLog.WriteLine("");
+                        errorLog.Close();
+                    }
+                }
+            });
+            thread.Start();
+            thread.Join();
         }
 
         private String getUser(String message)
@@ -1264,17 +1320,18 @@ namespace ModBot
                     }
                 }
             }
-            if (!lHandoutUsers.Contains(nick))
-            {
-                lHandoutUsers.Add(nick);
-            }
-            if (!lHandoutUsers.Contains(admin))
-            {
-                lHandoutUsers.Add(admin);
-            }
 
             lock (lHandoutUsers)
             {
+                if (!lHandoutUsers.Contains(Api.capName(nick)))
+                {
+                    lHandoutUsers.Add(Api.capName(nick));
+                }
+                if (!lHandoutUsers.Contains(Api.capName(admin)))
+                {
+                    lHandoutUsers.Add(Api.capName(admin));
+                }
+
                 foreach (String person in lHandoutUsers)
                 {
                     if (db.isSubscriber(person) || temp.Contains(person))
