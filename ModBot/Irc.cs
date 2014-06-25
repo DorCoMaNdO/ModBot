@@ -473,7 +473,7 @@ namespace ModBot
                             IOrderedEnumerable<KeyValuePair<string, int>> top = TopPoints.OrderByDescending(key => key.Value);
                             if (TopPoints.Count >= 5)
                             {
-                                sendMessage("The 5 users with the most points are: " + top.ElementAt(0).Key + " (" + top.ElementAt(0).Value + "), " + top.ElementAt(1).Key + " (" + top.ElementAt(1).Value + "), " + top.ElementAt(2).Key + " (" + top.ElementAt(2).Value + "), " + top.ElementAt(3).Key + " (" + top.ElementAt(3).Value + ") and " + top.ElementAt(4).Key + " (" + top.ElementAt(4).Value + ").");
+                                sendMessage("The 5 users with the most points are: " + Api.GetDisplayName(top.ElementAt(0).Key) + " (" + top.ElementAt(0).Value + "), " + Api.GetDisplayName(top.ElementAt(1).Key) + " (" + top.ElementAt(1).Value + "), " + Api.GetDisplayName(top.ElementAt(2).Key) + " (" + top.ElementAt(2).Value + "), " + Api.GetDisplayName(top.ElementAt(3).Key) + " (" + top.ElementAt(3).Value + ") and " + Api.GetDisplayName(top.ElementAt(4).Key) + " (" + top.ElementAt(4).Value + ").");
                             }
                             else
                             {
@@ -1108,6 +1108,7 @@ namespace ModBot
                             {
                                 if (user != "")
                                 {
+                                    Api.GetDisplayName(user);
                                     if (!lUsers.Contains(Api.capName(user)))
                                     {
                                         lUsers.Add(Api.capName(user));
