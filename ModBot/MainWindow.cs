@@ -99,7 +99,7 @@ namespace ModBot
             {
                 while (true)
                 {
-                    Program.Updates.CheckUpdate(true, !bUpdateNote);
+                    Program.Updates.CheckUpdate(true, (IsActivated && !bUpdateNote));
                     Thread.Sleep(60000);
                 }
             }).Start();
