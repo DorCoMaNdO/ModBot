@@ -16,6 +16,7 @@ namespace ModBot
         public Database(Irc IRC)
         {
             channel = IRC.admin;
+            IRC.db = this;
             InitializeDB();
         }
 
@@ -25,20 +26,44 @@ namespace ModBot
             {
                 myDB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
                 myDB.Open();
-                String sql;
-                sql = "CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0);";
 
-
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null);", myDB))
                 {
                     cmd.ExecuteNonQuery();
                 }
 
+                using (cmd = new SQLiteCommand("SELECT display_name FROM '" + channel + "';", myDB))
+                {
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                        /*using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", myDB))
+                        {
+                            using (SQLiteDataReader r = cmd.ExecuteReader())
+                            {
+                                while (r.Read())
+                                {
+                                    if (r["display_name"].ToString() == "")
+                                    {
+                                        Console.WriteLine(r["user"].ToString());
+                                        Api.GetDisplayName(r["user"].ToString(), true);
+                                    }
+                                }
+                            }
+                        }*/
+                    }
+                    catch(SQLiteException)
+                    {
+                        using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN display_name TEXT DEFAULT null;", myDB))
+                        {
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+
                 if (tableExists("transfers") && !tableHasData(channel))
                 {
-                    sql = "INSERT INTO '" + channel + "' SELECT * FROM transfers;";
-
-                    using (cmd = new SQLiteCommand(sql, myDB))
+                    using (cmd = new SQLiteCommand("INSERT INTO '" + channel + "' SELECT * FROM transfers;", myDB))
                     {
                         cmd.ExecuteNonQuery();
                     }
@@ -58,24 +83,25 @@ namespace ModBot
                 myDB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
                 myDB.Open();
 
-                String sql = "CREATE TABLE IF NOT EXISTS '"+channel+"' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0);";
-                
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null);", myDB))
                 {
                     cmd.ExecuteNonQuery();
                 }
             }
         }
 
-        public void newUser(String user)
+        public void newUser(String user, bool bCheckDisplayName=true)
         {
             user = Api.capName(user);
             if (!userExists(user))
             {
-                String sql = "INSERT INTO '"+channel+"' (user) VALUES ('" + user + "');";
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("INSERT INTO '" + channel + "' (user) VALUES ('" + user + "');", myDB))
                 {
                     cmd.ExecuteNonQuery();
+                }
+                if (bCheckDisplayName)
+                {
+                    Api.GetDisplayName(user);
                 }
             }
         }
@@ -83,8 +109,7 @@ namespace ModBot
         public List<string> GetAllUsers()
         {
             List<string> users = new List<string>();
-            String sql = "SELECT * FROM '" + channel + "';";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", myDB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -92,14 +117,50 @@ namespace ModBot
                     {
                         if (users.Contains(r["user"].ToString()))
                         {
-                            break;
+                            continue;
                         }
                         users.Add(r["user"].ToString());
                     }
-
                 }
             }
             return users;
+        }
+
+        public void setDisplayName(String user, string name)
+        {
+            user = Api.capName(user);
+            if (!userExists(user))
+            {
+                newUser(user, false);
+            }
+            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET display_name = '" + name + "' WHERE user = '" + user + "';", myDB))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public string getDisplayName(String user)
+        {
+            user = Api.capName(user);
+            if (userExists(user))
+            {
+                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", myDB))
+                {
+                    using (SQLiteDataReader r = cmd.ExecuteReader())
+                    {
+                        if (r.Read())
+                        {
+                            return r["display_name"].ToString();
+                        }
+                        else return "";
+                    }
+                }
+            }
+            else
+            {
+                newUser(user);
+                return "";
+            }
         }
 
         public void setCurrency(String user, int amount)
@@ -109,8 +170,7 @@ namespace ModBot
             {
                 newUser(user);
             }
-            String sql = "UPDATE '" + channel + "' SET currency = " + amount + " WHERE user = \"" + user + "\";";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET currency = " + amount + " WHERE user = '" + user + "';", myDB))
             {
                 cmd.ExecuteNonQuery();
             }
@@ -121,8 +181,7 @@ namespace ModBot
         {
             user = Api.capName(user);
             if (userExists(user)) {
-                String sql = "SELECT * FROM '" + channel + "' WHERE user = \"" + user + "\";";
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", myDB))
                 {
                     using (SQLiteDataReader r = cmd.ExecuteReader())
                     {
@@ -148,8 +207,7 @@ namespace ModBot
             {
                 newUser(user);
             }
-            String sql = "UPDATE '" + channel + "' SET currency = currency + " + amount + " WHERE user = \"" + user + "\";";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET currency = currency + " + amount + " WHERE user = '" + user + "';", myDB))
             {
                 cmd.ExecuteNonQuery();
             }
@@ -162,8 +220,7 @@ namespace ModBot
             {
                 newUser(user);
             }
-            String sql = "UPDATE '" + channel + "' SET currency = currency - " + amount + " WHERE user = \"" + user + "\";";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET currency = currency - " + amount + " WHERE user = '" + user + "';", myDB))
             {
                 cmd.ExecuteNonQuery();
             }
@@ -172,8 +229,7 @@ namespace ModBot
         public bool userExists(String user)
         {
             user = Api.capName(user);
-            String sql = "SELECT * FROM '" + channel + "';";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", myDB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -194,8 +250,7 @@ namespace ModBot
             user = Api.capName(user);
             if (userExists(user))
             {
-                String sql = "SELECT * FROM '" + channel + "' WHERE user = \"" + user + "\";";
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", myDB))
                 {
                     using (SQLiteDataReader r = cmd.ExecuteReader())
                     {
@@ -209,14 +264,13 @@ namespace ModBot
                             }
                             else return r["btag"].ToString();
                         }
-                        else return null;
                     }
                 }
             }
             else {
                 newUser(user);
-                return null;
             }
+            return null;
         }
 
         public void setBtag(String user, String btag)
@@ -226,8 +280,7 @@ namespace ModBot
             {
                 newUser(user);
             }
-            String sql = "UPDATE '" + channel + "' SET btag = \"" + btag + "\" WHERE user = \"" + user + "\";";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET btag = '" + btag + "' WHERE user = '" + user + "';", myDB))
             {
                 cmd.ExecuteNonQuery();
             }
@@ -239,12 +292,10 @@ namespace ModBot
             if (!userExists(user))
             {
                 newUser(user);
-                return false;
             }
             else
             {
-                String sql = "SELECT * FROM '" + channel + "' WHERE user = \"" + user + "\";";
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", myDB))
                 {
                     using (SQLiteDataReader r = cmd.ExecuteReader())
                     {
@@ -254,12 +305,11 @@ namespace ModBot
                             {
                                 return true;
                             }
-                            else return false;
                         }
-                        else return false;
                     }
                 }
             }
+            return false;
         }
 
         public bool addSub(String user)
@@ -267,12 +317,11 @@ namespace ModBot
             user = Api.capName(user);
             if (userExists(user))
             {
-                String sql = String.Format("UPDATE '" + channel + "' SET subscriber = 1 WHERE user = \"{0}\";", user);
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET subscriber = 1 WHERE user = '" + user + "';", myDB))
                 {
                     cmd.ExecuteNonQuery();
+                    return true;
                 }
-                return true;
             }
             return false;
         }
@@ -282,8 +331,7 @@ namespace ModBot
             user = Api.capName(user);
             if (userExists(user))
             {
-                String sql = String.Format("UPDATE '" + channel + "' SET subscriber = 0 WHERE user = \"{0}\";", user);
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET subscriber = 0 WHERE user = '" + user + "';", myDB))
                 {
                     cmd.ExecuteNonQuery();
                 }
@@ -298,12 +346,10 @@ namespace ModBot
             if (!userExists(user))
             {
                 newUser(user);
-                return 0;
             }
             else
             {
-                String sql = "SELECT * FROM '" + channel + "' WHERE user = \"" + user + "\";";
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", myDB))
                 {
                     using (SQLiteDataReader r = cmd.ExecuteReader())
                     {
@@ -314,19 +360,17 @@ namespace ModBot
                             {
                                 return level;
                             }
-                            else return 0;
                         }
-                        else return 0;
                     }
                 }
             }
+            return 0;
         }
 
         public void setUserLevel(String user, int level)
         {
             user = Api.capName(user);
-            String sql = "UPDATE '" + channel + "' SET userlevel = \"" + level + "\" WHERE user = \"" + user + "\";";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET userlevel = " + level + " WHERE user = '" + user + "';", myDB))
             {
                 cmd.ExecuteNonQuery();
             }
@@ -334,10 +378,9 @@ namespace ModBot
 
         private bool tableExists(String table)
         {
-            String sql = "SELECT COUNT(*) FROM sqlite_master WHERE name = '" + table + "';";
             try
             {
-                using (cmd = new SQLiteCommand(sql, myDB))
+                using (cmd = new SQLiteCommand("SELECT COUNT(*) FROM sqlite_master WHERE name = '" + table + "';", myDB))
                 {
                     using (SQLiteDataReader r = cmd.ExecuteReader())
                     {
@@ -348,22 +391,19 @@ namespace ModBot
                                 return true;
                             }
                         }
-                        return false;
                     }
                 }
             }
             catch (SQLiteException e)
             {
                 Console.WriteLine(e);
-                return false;
             }
+            return false;
         }
 
         private bool tableHasData(String table)
         {
-            String sql = "SELECT * FROM '" + table + "';";
-
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand("SELECT * FROM '" + table + "';", myDB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {

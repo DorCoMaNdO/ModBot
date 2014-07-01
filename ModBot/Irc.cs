@@ -73,7 +73,7 @@ namespace ModBot
 
         private void Initialize()
         {
-            db = new Database(this);
+            new Database(this);
             db.newUser(admin);
             db.setUserLevel(admin, 4);
 

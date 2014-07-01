@@ -12,7 +12,6 @@ namespace ModBot
     {
         private static MainWindow MainForm;
         private static Irc IRC;
-        public static Dictionary<string, string> g_dDisplayNames = new Dictionary<string, string>();
         private static Dictionary<string, Thread> g_lCheckingDisplayName = new Dictionary<string, Thread>();
 
         public static void SetMainForm(MainWindow Form)
@@ -31,7 +30,7 @@ namespace ModBot
             user = user.ToLower();
             if (!g_lCheckingDisplayName.ContainsKey(user))
             {
-                if (!g_dDisplayNames.ContainsKey(user))
+                if (IRC.db.getDisplayName(user) == "")
                 {
                     Thread thread = new Thread(
                     () =>
@@ -43,8 +42,7 @@ namespace ModBot
                             {
                                 w.Proxy = null;
                                 json_data = w.DownloadString("https://api.twitch.tv/kraken/users/" + user);
-                                JObject stream = JObject.Parse(json_data);
-                                g_dDisplayNames.Add(user, stream["display_name"].ToString());
+                                IRC.db.setDisplayName(user, JObject.Parse(json_data)["display_name"].ToString());
                             }
                             catch (SocketException)
                             {
@@ -86,11 +84,11 @@ namespace ModBot
                     }
                 }
             }*/
-            if (!g_dDisplayNames.ContainsKey(user))
+            if (IRC.db.getDisplayName(user) == "")
             {
                 return capName(user);
             }
-            return g_dDisplayNames[user];
+            return IRC.db.getDisplayName(user);
         }
 
         public static string capName(string name)
