@@ -49,9 +49,6 @@ namespace ModBot
             string sDonationKey = ini.GetValue("Settings", "Donations_Key", "");
             ini.SetValue("Settings", "Donations_Key", sDonationKey);
             DonationsKeyBox.Text = sDonationKey;
-
-            Program.Updates.ExtractUpdater();
-            Program.Updates.CheckUpdate();
         }
 
         private void startButton_Click(object sender, EventArgs e)

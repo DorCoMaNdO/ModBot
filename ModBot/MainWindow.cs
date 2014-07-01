@@ -99,46 +99,7 @@ namespace ModBot
             {
                 while (true)
                 {
-                    if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe"))
-                    {
-                        using (WebClient w = new WebClient())
-                        {
-                            try
-                            {
-                                w.Proxy = null;
-                                string sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot.txt");
-                                if (sLatestVersion != "")
-                                {
-                                    string[] sCurrent = sCurrentVersion.Split('.');
-                                    string[] sLatest = sLatestVersion.Split('.');
-                                    int iCurrentMajor = Convert.ToInt32(sCurrent[0]), iCurrentMinor = Convert.ToInt32(sCurrent[1]), iCurrentBuild = Convert.ToInt32(sCurrent[2]), iCurrentRev = Convert.ToInt32(sCurrent[3]);
-                                    int iLatestMajor = Convert.ToInt32(sLatest[0]), iLatestMinor = Convert.ToInt32(sLatest[1]), iLatestBuild = Convert.ToInt32(sLatest[2]), iLatestRev = Convert.ToInt32(sLatest[3]);
-                                    if (iLatestMajor > iCurrentMajor || iLatestMajor == iCurrentMajor && iLatestMinor > iCurrentMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild > iCurrentBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iLatestRev > iCurrentRev)
-                                    {
-                                        Console.WriteLine("\r\n********************************************************************************\r\nAn update to ModBot is available, please use the updater to update!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\n\r\n********************************************************************************\r\n");
-                                        if (IsHandleCreated && IsActivated && !bUpdateNote)
-                                        {
-                                            BeginInvoke((MethodInvoker)delegate
-                                            {
-                                                bUpdateNote = true;
-                                                if (MessageBox.Show("An update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
-                                                {
-                                                    Process.Start(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe");
-                                                    Environment.Exit(0);
-                                                }
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                            catch (SocketException)
-                            {
-                            }
-                            catch (Exception)
-                            {
-                            }
-                        }
-                    }
+                    Program.Updates.CheckUpdate(true, !bUpdateNote);
                     Thread.Sleep(60000);
                 }
             }).Start();
