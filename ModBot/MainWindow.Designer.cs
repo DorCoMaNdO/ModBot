@@ -96,7 +96,7 @@
             this.ChannelLabel.Name = "ChannelLabel";
             this.ChannelLabel.Size = new System.Drawing.Size(553, 19);
             this.ChannelLabel.TabIndex = 12;
-            this.ChannelLabel.Text = "Channel";
+            this.ChannelLabel.Text = "Loading...";
             this.ChannelLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Giveaway_MustFollowCheckBox
@@ -546,10 +546,9 @@
             this.Currency_HandoutActiveTime.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Currency_HandoutActiveTime.Location = new System.Drawing.Point(13, 176);
             this.Currency_HandoutActiveTime.Name = "Currency_HandoutActiveTime";
-            this.Currency_HandoutActiveTime.Size = new System.Drawing.Size(387, 17);
+            this.Currency_HandoutActiveTime.Size = new System.Drawing.Size(393, 17);
             this.Currency_HandoutActiveTime.TabIndex = 54;
-            this.Currency_HandoutActiveTime.Text = "Anyone in the stream who joined / said something in the last               minute" +
-    "s";
+            this.Currency_HandoutActiveTime.Text = "Anyone in the stream who joined / said something in the last                 minutes";
             this.Currency_HandoutActiveTime.UseVisualStyleBackColor = true;
             this.Currency_HandoutActiveTime.CheckedChanged += new System.EventHandler(this.Currency_HandoutActiveTime_CheckedChanged);
             // 
@@ -558,7 +557,7 @@
             this.Currency_HandoutLastActive.Enabled = false;
             this.Currency_HandoutLastActive.Location = new System.Drawing.Point(316, 176);
             this.Currency_HandoutLastActive.Maximum = new decimal(new int[] {
-            90,
+            2880,
             0,
             0,
             0});
@@ -568,7 +567,7 @@
             0,
             0});
             this.Currency_HandoutLastActive.Name = "Currency_HandoutLastActive";
-            this.Currency_HandoutLastActive.Size = new System.Drawing.Size(38, 20);
+            this.Currency_HandoutLastActive.Size = new System.Drawing.Size(44, 20);
             this.Currency_HandoutLastActive.TabIndex = 55;
             this.Currency_HandoutLastActive.Value = new decimal(new int[] {
             5,

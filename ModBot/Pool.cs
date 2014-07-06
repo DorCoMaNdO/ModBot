@@ -9,13 +9,11 @@ namespace ModBot
     {
         private Dictionary<string, int> winners;
         private Dictionary<string, PoolUser> bets = new Dictionary<string, PoolUser>();
-        private Database db;
         private int maxBet, totalBets;
         private String[] options;
 
-        public Pool(Database db, int maxBet, String[] options)
+        public Pool(int maxBet, String[] options)
         {
-            this.db = db;
             this.maxBet = maxBet;
             this.options = options;
             totalBets = 0;
@@ -27,17 +25,17 @@ namespace ModBot
             {
                 if (bets.ContainsKey(nick))
                 {
-                    if (db.checkCurrency(nick) + bets[nick].betAmount >= amount)
+                    if (Database.checkCurrency(nick) + bets[nick].betAmount >= amount)
                     {
                         if (bets[nick].betAmount < amount)
                         {
-                            db.addCurrency(nick, bets[nick].betAmount - amount);
+                            Database.addCurrency(nick, bets[nick].betAmount - amount);
                             bets[nick].betAmount = amount;
                             bets[nick].betOn = option;
                         }
                         else
                         {
-                            db.removeCurrency(nick, amount - bets[nick].betAmount);
+                            Database.removeCurrency(nick, amount - bets[nick].betAmount);
                             bets[nick].betAmount = amount;
                             bets[nick].betOn = option;
                         }
@@ -45,9 +43,9 @@ namespace ModBot
                 }
                 else
                 {
-                    if (db.checkCurrency(nick) >= amount)
+                    if (Database.checkCurrency(nick) >= amount)
                     {
-                        db.removeCurrency(nick, amount);
+                        Database.removeCurrency(nick, amount);
                         bets.Add(nick, new PoolUser(option, amount));
                     }
                 }
@@ -77,7 +75,7 @@ namespace ModBot
                     else
                     {
                         winners.Add(nick, payout);
-                        db.addCurrency(nick, payout);
+                        Database.addCurrency(nick, payout);
                     }
                 }
             }
@@ -143,7 +141,7 @@ namespace ModBot
         {
             foreach (String nick in bets.Keys)
             {
-                db.addCurrency(nick, bets[nick].betAmount);
+                Database.addCurrency(nick, bets[nick].betAmount);
             }
             bets.Clear();
         }

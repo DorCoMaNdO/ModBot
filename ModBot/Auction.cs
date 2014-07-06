@@ -7,27 +7,25 @@ namespace ModBot
 {
     public class Auction
     {
-        private Database db;
         public String highBidder {get; private set;}
         public int highBid { get; private set; }
 
-        public Auction(Database d)
+        public Auction()
         {
-            db = d;
             highBidder = "";
             highBid = 0;
         }
 
         public bool placeBid(String nick, int amount)
         {
-            if (db.checkCurrency(nick) >= amount)
+            if (Database.checkCurrency(nick) >= amount)
             {
                 if (amount > highBid)
                 {
-                    db.addCurrency(highBidder, highBid);
+                    Database.addCurrency(highBidder, highBid);
                     highBid = amount;
                     highBidder = nick;
-                    db.removeCurrency(highBidder, highBid);
+                    Database.removeCurrency(highBidder, highBid);
                     return true;
                 }
                 return false;
@@ -37,7 +35,7 @@ namespace ModBot
 
         public void Cancel()
         {
-            db.addCurrency(highBidder, highBid);
+            Database.addCurrency(highBidder, highBid);
             highBidder = "";
             highBid = 0;
         }

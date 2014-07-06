@@ -5,19 +5,18 @@ using System.Net.Sockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading;
+using System.IO;
 
 namespace ModBot
 {
     public static class Api
     {
         private static MainWindow MainForm;
-        private static Irc IRC;
         private static Dictionary<string, Thread> g_lCheckingDisplayName = new Dictionary<string, Thread>();
 
         public static void SetMainForm(MainWindow Form)
         {
             MainForm = Form;
-            IRC = MainForm.IRC;
         }
 
         public static int GetUnixTimeNow()
@@ -30,7 +29,7 @@ namespace ModBot
             user = user.ToLower();
             if (!g_lCheckingDisplayName.ContainsKey(user))
             {
-                if (IRC.db.getDisplayName(user) == "")
+                if (Database.getDisplayName(user) == "")
                 {
                     Thread thread = new Thread(
                     () =>
@@ -42,7 +41,7 @@ namespace ModBot
                             {
                                 w.Proxy = null;
                                 json_data = w.DownloadString("https://api.twitch.tv/kraken/users/" + user);
-                                IRC.db.setDisplayName(user, JObject.Parse(json_data)["display_name"].ToString());
+                                Database.setDisplayName(user, JObject.Parse(json_data)["display_name"].ToString());
                             }
                             catch (SocketException)
                             {
@@ -56,7 +55,10 @@ namespace ModBot
                             g_lCheckingDisplayName.Remove(user);
                         }
                     });
-                    g_lCheckingDisplayName.Add(user, thread);
+                    if (!g_lCheckingDisplayName.ContainsKey(user))
+                    {
+                        g_lCheckingDisplayName.Add(user, thread);
+                    }
                     thread.Start();
                     if (bWait)
                     {
@@ -84,11 +86,11 @@ namespace ModBot
                     }
                 }
             }*/
-            if (IRC.db.getDisplayName(user) == "")
+            if (Database.getDisplayName(user) == "")
             {
                 return capName(user);
             }
-            return IRC.db.getDisplayName(user);
+            return Database.getDisplayName(user);
         }
 
         public static string capName(string name)
@@ -108,8 +110,8 @@ namespace ModBot
                         try
                         {
                             w.Proxy = null;
-                            sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + user + "/follows/channels/" + IRC.admin);
-                            if (sData.Contains("\"" + IRC.admin + "\""))
+                            sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + user + "/follows/channels/" + Irc.admin);
+                            if (sData.Contains("\"" + Irc.admin + "\""))
                             {
                                 bFollowing = true;
                             }
@@ -130,7 +132,7 @@ namespace ModBot
         public static List<Transaction> UpdateTransactions()
         {
             List<Transaction> Transactions = new List<Transaction>();
-            if (IRC.donationkey != "")
+            if (Irc.donationkey != "")
             {
                 using (WebClient w = new WebClient())
                 {
@@ -138,7 +140,7 @@ namespace ModBot
                     try
                     {
                         w.Proxy = null;
-                        json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + IRC.admin.ToLower() + "&key=" + IRC.donationkey);
+                        json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + Irc.admin.ToLower() + "&key=" + Irc.donationkey);
                         while (json_data.Contains("\"DT_RowId\""))
                         {
                             string date = "Donated at some point", name = "Unknown", amount = "0.00", notes = "", transaction = "";
@@ -170,9 +172,13 @@ namespace ModBot
                     }
                     catch (SocketException)
                     {
+                        Console.WriteLine("Unable to connect to Stream Dontaions to check the transactions.");
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
+                        StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
+                        errorLog.WriteLine("*************Error Message (via UpdateTransactions()): " + DateTime.Now + "*********************************\r\nUnable to connect to Stream Dontaions to check the transactions.\r\n" + e + "\r\n");
+                        errorLog.Close();
                     }
                 }
             }

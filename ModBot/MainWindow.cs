@@ -17,23 +17,20 @@ namespace ModBot
 {
     public partial class MainWindow : CustomForm
     {
-        public Irc IRC;
         public Dictionary<string, Dictionary<string, string>> dSettings = new Dictionary<string, Dictionary<string, string>>();
         public iniUtil ini;
         private bool bIgnoreUpdates = false;
         public int iSettingsPresent = -2;
         private Donations donations;
-        private bool bUpdateNote = false;
         private string sCurrentVersion = "";
         private bool g_bLoaded = false;
 
-        public MainWindow(Irc IRC)
+        public MainWindow()
         {
             InitializeComponent();
             sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             Text = "ModBot v" + sCurrentVersion.Replace("." + Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
-            this.IRC = IRC;
-            ini = IRC.ini;
+            ini = Irc.ini;
 
             Giveaway_WinnerChat.Select(0, 7);
             Giveaway_WinnerChat.SelectionColor = Color.Blue;
@@ -60,7 +57,6 @@ namespace ModBot
         private void MainWindow_Load(object sender, EventArgs e)
         {
             //Settings loading
-            ChannelLabel.Text = "Loading...";
             Dictionary<Control, bool> dState = new Dictionary<Control, bool>();
             Thread tLoad = new Thread(() =>
             {
@@ -97,9 +93,15 @@ namespace ModBot
             //Update checking
             new Thread(() =>
             {
+                bool bUpdateNote = false, bNote = false;
                 while (true)
                 {
-                    Program.Updates.CheckUpdate(true, (IsActivated && !bUpdateNote));
+                    bNote = false;
+                    if (IsActivated && !bUpdateNote)
+                    {
+                        bUpdateNote = bNote = true;
+                    }
+                    Program.Updates.CheckUpdate(true, bNote);
                     Thread.Sleep(60000);
                 }
             }).Start();
@@ -391,7 +393,7 @@ namespace ModBot
                     {
                         if (!sTopIgnores.Contains(transaction.id))
                         {
-                            if (!Donors.Any(c => c.donor == transaction.donor))
+                            if (!Donors.Any(c => c.donor.ToLower() == transaction.donor.ToLower()))
                             {
                                 Donors.Add(transaction);
                             }
@@ -399,7 +401,7 @@ namespace ModBot
                             {
                                 foreach (Transaction trans in Donors)
                                 {
-                                    if (transaction.donor == trans.donor)
+                                    if (transaction.donor.ToLower() == trans.donor.ToLower())
                                     {
                                         trans.amount = (float.Parse(trans.amount, CultureInfo.InvariantCulture.NumberFormat) + float.Parse(transaction.amount, CultureInfo.InvariantCulture.NumberFormat)).ToString("0.00");
                                         break;
@@ -440,11 +442,11 @@ namespace ModBot
                 }
             }
 
-            string sName = Api.capName(IRC.channel.Substring(1)), sTitle = "Unavailable...", sGame = "Unavailable...", sViewers = "";
+            string sName = Api.capName(Irc.channel.Substring(1)), sTitle = "Unavailable...", sGame = "Unavailable...", sViewers = "";
             int iStatus = 0;
-            if (IRC.irc.Connected)
+            if (Irc.irc.Connected)
             {
-                if (IRC.g_bIsStreaming)
+                if (Irc.g_bIsStreaming)
                 {
                     iStatus = 2;
                 }
@@ -459,18 +461,18 @@ namespace ModBot
                 try
                 {
                     w.Proxy = null;
-                    json_data = w.DownloadString("https://api.twitch.tv/kraken/channels/" + IRC.channel.Substring(1));
+                    json_data = w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1));
                     JObject stream = JObject.Parse(json_data);
                     if (!stream["display_name"].ToString().Equals("")) sName = stream["display_name"].ToString();
                     if (!stream["status"].ToString().Equals("")) sTitle = stream["status"].ToString();
                     if (!stream["game"].ToString().Equals("")) sGame = stream["game"].ToString();
 
-                    json_data = w.DownloadString("http://tmi.twitch.tv/group/user/" + IRC.channel.Substring(1) + "/chatters");
+                    json_data = w.DownloadString("http://tmi.twitch.tv/group/user/" + Irc.channel.Substring(1) + "/chatters");
                     if (json_data.Replace("\"", "") != "")
                     {
                         stream = JObject.Parse(json_data);
                         int iViewers = int.Parse(stream["chatter_count"].ToString());
-                        foreach (string user in IRC.IgnoredUsers)
+                        foreach (string user in Irc.IgnoredUsers)
                         {
                             if (json_data.Contains("\"" + user + "\""))
                             {
@@ -487,9 +489,7 @@ namespace ModBot
                 catch (Exception e)
                 {
                     StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                    errorLog.WriteLine("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************");
-                    errorLog.WriteLine(e);
-                    errorLog.WriteLine("");
+                    errorLog.WriteLine("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************\r\nUnable to connect to twitch API to check stream data.\r\n" + e + "\r\n");
                     errorLog.Close();
                 }
             }
@@ -498,9 +498,9 @@ namespace ModBot
             {
                 BeginInvoke((MethodInvoker)delegate
                 {
-                    Currency_HandoutLabel.Text = "Handout " + IRC.currency + " to :";
+                    Currency_HandoutLabel.Text = "Handout " + Irc.currency + " to :";
 
-                    Giveaway_MinCurrencyCheckBox.Text = "Min. " + IRC.currency;
+                    Giveaway_MinCurrencyCheckBox.Text = "Min. " + Irc.currency;
 
                     ChannelLabel.Text = sName;
                     ChannelLabel.ForeColor = Color.Red;
@@ -515,9 +515,11 @@ namespace ModBot
                     }
                     ChannelTitleTextBox.Text = sTitle;
                     ChannelGameTextBox.Text = sGame;
+
+                    g_bLoaded = true;
                 });
             }
-            else
+            /*else
             {
                 Currency_HandoutLabel.Text = "Handout " + IRC.currency + " to :";
 
@@ -536,10 +538,9 @@ namespace ModBot
                 }
                 ChannelTitleTextBox.Text = sTitle;
                 ChannelGameTextBox.Text = sGame;
-            }
+            }*/
 
-            g_bLoaded = true;
-            if (IRC.g_bResourceKeeper)
+            if (Irc.g_bResourceKeeper)
             {
                 Thread.Sleep(30000);
             }
@@ -561,32 +562,27 @@ namespace ModBot
 
         private void Giveaway_RerollButton_Click(object sender, EventArgs e)
         {
-            IRC.giveaway.getWinner();
+            Giveaway.getWinner();
         }
 
         private void Giveaway_StartButton_Click(object sender, EventArgs e)
         {
-            IRC.giveaway.startGiveaway();
+            Giveaway.startGiveaway();
         }
 
         private void Giveaway_StopButton_Click(object sender, EventArgs e)
         {
-            IRC.giveaway.endGiveaway();
+            Giveaway.endGiveaway();
         }
 
         private void Giveaway_AnnounceWinnerButton_Click(object sender, EventArgs e)
         {
-            string sMessage = Giveaway_WinnerLabel.Text + " has won the giveaway!";
+            string sMessage = Giveaway_WinnerLabel.Text + " has won the giveaway! (";
             if (Api.IsFollowingChannel(Giveaway_WinnerLabel.Text))
             {
-                sMessage = sMessage + " (Currently follows the channel";
-                sMessage = sMessage + " | Has " + IRC.db.checkCurrency(Giveaway_WinnerLabel.Text) + " " + IRC.currency + ")";
+                sMessage += "Currently follows the channel | ";
             }
-            else
-            {
-                sMessage = sMessage + " (Has " + IRC.db.checkCurrency(Giveaway_WinnerLabel.Text) + " " + IRC.currency + ")";
-            }
-            IRC.sendMessage(sMessage);
+            Irc.sendMessage(sMessage + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currency + " | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
         }
 
         private void Giveaway_BanButton_Click(object sender, EventArgs e)
@@ -634,7 +630,7 @@ namespace ModBot
         private void Misc_LockCurrencyCmdCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             SaveSettings();
-            IRC.g_iLastCurrencyLockAnnounce = 0;
+            Irc.g_iLastCurrencyLockAnnounce = 0;
         }
 
         private void Giveaway_MinCurrency_ValueChanged(object sender, EventArgs e)
@@ -689,9 +685,9 @@ namespace ModBot
 
         private void Giveaway_WinnerTimer_Tick(object sender, EventArgs e)
         {
-            if (IRC.ActiveUsers.ContainsKey(Api.capName(Giveaway_WinnerLabel.Text)))
+            if (Irc.ActiveUsers.ContainsKey(Api.capName(Giveaway_WinnerLabel.Text)))
             {
-                int time = Api.GetUnixTimeNow() - IRC.ActiveUsers[Api.capName(Giveaway_WinnerLabel.Text)];
+                int time = Api.GetUnixTimeNow() - Irc.ActiveUsers[Api.capName(Giveaway_WinnerLabel.Text)];
                 int color = time - 120;
                 if (color >= 0 && color < 120)
                 {
@@ -732,9 +728,9 @@ namespace ModBot
                 }
             }
 
-            if (IRC.giveaway.iLastWin > 0)
+            if (Giveaway.iLastWin > 0)
             {
-                int time = Api.GetUnixTimeNow() - IRC.giveaway.iLastWin;
+                int time = Api.GetUnixTimeNow() - Giveaway.iLastWin;
                 int color = time;
                 if (color >= 0 && color < 60)
                 {
@@ -793,7 +789,7 @@ namespace ModBot
         {
             if (!bIgnoreUpdates)
             {
-                IRC.giveaway.endGiveaway();
+                Giveaway.endGiveaway();
                 ini.SetValue("Settings", "SelectedPresent", SettingsPresents.TabPages[SettingsPresents.SelectedIndex].Text);
                 SaveSettings(iSettingsPresent);
                 iSettingsPresent = SettingsPresents.SelectedIndex;

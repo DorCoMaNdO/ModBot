@@ -70,7 +70,7 @@ namespace ModBot
             ////
 
             //Console.WriteLine(nick + ' ' + password + ' ' + channel + ' ' + currency + ' ' + interval);
-            Irc IRC = new Irc(botNameBox.Text.ToLower(), passwordBox.Text, channelBox.Text.ToLower(), currencyBox.Text, int.Parse(intervalBox.SelectedItem.ToString()), int.Parse(payoutBox.SelectedItem.ToString()), DonationsKeyBox.Text, ini);
+            Irc.Initialize(botNameBox.Text.ToLower(), passwordBox.Text, channelBox.Text.ToLower(), currencyBox.Text, int.Parse(intervalBox.SelectedItem.ToString()), int.Parse(payoutBox.SelectedItem.ToString()), DonationsKeyBox.Text, ini);
         }
 
         private void aboutButton_Click(object sender, EventArgs e)
