@@ -22,14 +22,13 @@ namespace ModBot
             MainForm = Form;
         }
 
-
         public static void startGiveaway()
         {
             MainForm.BeginInvoke((MethodInvoker)delegate
             {
-                MainForm.Giveaway_StartButton.Visible = false;
-                MainForm.Giveaway_RerollButton.Visible = true;
-                MainForm.Giveaway_AnnounceWinnerButton.Visible = true;
+                MainForm.Giveaway_StartButton.Enabled = false;
+                MainForm.Giveaway_RerollButton.Enabled = true;
+                MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
                 MainForm.Giveaway_StopButton.Enabled = true;
                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
                 MainForm.Giveaway_MustFollowCheckBox.Enabled = false;
@@ -54,9 +53,9 @@ namespace ModBot
         {
             MainForm.BeginInvoke((MethodInvoker)delegate
             {
-                MainForm.Giveaway_StartButton.Visible = true;
-                MainForm.Giveaway_RerollButton.Visible = false;
-                MainForm.Giveaway_AnnounceWinnerButton.Visible = false;
+                MainForm.Giveaway_StartButton.Enabled = true;
+                MainForm.Giveaway_RerollButton.Enabled = false;
+                MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
                 MainForm.Giveaway_StopButton.Enabled = false;
                 MainForm.Giveaway_MustFollowCheckBox.Enabled = true;
                 MainForm.Giveaway_MinCurrencyCheckBox.Enabled = true;
@@ -144,7 +143,7 @@ namespace ModBot
                         //string WinnerLabel = "Winner : ";
                         string WinnerLabel = "";
                         if (Api.IsFollowingChannel(sWinner)) WinnerLabel += "Following | ";
-                        WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currency + " | Chance : " + fChance.ToString("0.00") + "%";
+                        WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currency + " | Watched : " + TimeSpan.FromMinutes(Database.getTimeWatched(sWinner)).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + fChance.ToString("0.00") + "%";
                         MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel;
                         MainForm.Giveaway_WinnerLabel.Text = sWinner;
                         MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);

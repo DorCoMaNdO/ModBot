@@ -144,6 +144,23 @@ namespace ModBot
         {
             new Thread(() =>
             {
+                while(true)
+                {
+                    Thread.Sleep(60000);
+                    if(irc.Connected)
+                    {
+                        if(g_bIsStreaming)
+                        {
+                            foreach(string user in users)
+                            {
+                                Database.addTimeWatched(user, 1);
+                            }
+                        }
+                    }
+                }
+            });
+            new Thread(() =>
+            {
                 while (true)
                 {
                     buildUserList();
@@ -399,7 +416,8 @@ namespace ModBot
                                 {
                                     sMessage = sMessage + "Currently follows the channel | ";
                                 }
-                                sendMessage(sMessage + "Has " + Database.checkCurrency(winner) + " " + currency + " | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
+                                TimeSpan t = TimeSpan.FromMinutes(Database.getTimeWatched(winner));
+                                sendMessage(sMessage + "Has " + Database.checkCurrency(winner) + " " + currency + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
                             }
                         }
                     }
@@ -1008,22 +1026,6 @@ namespace ModBot
             }
             #endregion
             ///////////////END MOD COMMANDS//////////////////////////
-
-            /*///////////////CUSTOM COMMANDS//////////////////////////
-            #region custom
-            if (Commands.cmdExists(msg[0].ToLower()) && Database.getUserLevel(user) >= Commands.LevelRequired(msg[0])) // ToDo : Implement to the new system (create the commands on initialization and add / remove commands at runtime)
-            {
-                if (msg.Length > 1 && Database.getUserLevel(user) > 0)
-                {
-                    sendMessage(Commands.getOutput(msg[0]).Replace("@user", Api.capName(msg[1])));
-                }
-                else
-                {
-                    sendMessage(Commands.getOutput(msg[0]).Replace("@user", user));
-                }
-            }
-            #endregion
-            //////////////END CUSTOM COMMANDS///////////////////////*/
 
             ////////////////ADD BATTLETAG///////////////////////////
             if ((msg[0].Equals("!btag")|| msg[0].Equals("!battletag")) && msg.Length == 2 && msg[1].Contains("#"))

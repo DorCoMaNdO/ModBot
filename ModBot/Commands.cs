@@ -174,7 +174,7 @@ namespace ModBot
             {
                 if (call)
                 {
-                    if (Database.getUserLevel(user) >= LevelRequired(cmd[0])) // ToDo : Implement to the new system (create the commands on initialization and add / remove commands at runtime)
+                    if (Database.getUserLevel(user) >= LevelRequired(cmd[0]))
                     {
                         if (cmd.Length > 1 && Database.getUserLevel(user) > 0)
                         {

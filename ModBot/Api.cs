@@ -58,11 +58,11 @@ namespace ModBot
                     if (!g_lCheckingDisplayName.ContainsKey(user))
                     {
                         g_lCheckingDisplayName.Add(user, thread);
-                    }
-                    thread.Start();
-                    if (bWait)
-                    {
-                        thread.Join();
+                        thread.Start();
+                        if (bWait)
+                        {
+                            thread.Join();
+                        }
                     }
                 }
             }

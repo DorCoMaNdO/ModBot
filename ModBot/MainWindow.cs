@@ -323,184 +323,209 @@ namespace ModBot
 
         public void GrabData()
         {
-            List<Transaction> transactions = Api.UpdateTransactions();
-            if (transactions.Count > 0)
+            while (true)
             {
-                IOrderedEnumerable<Transaction> Trans = transactions.OrderByDescending(key => key.date);
-
-                string sDonationsIgnoreRecent = ini.GetValue("Settings", "Donations_Ignore_Recent", "");
-                ini.SetValue("Settings", "Donations_Ignore_Recent", sDonationsIgnoreRecent);
-                string[] sRecentIgnores = sDonationsIgnoreRecent.Split(',');
-                string sDonationsIgnoreLatest = ini.GetValue("Settings", "Donations_Ignore_Latest", "");
-                ini.SetValue("Settings", "Donations_Ignore_Latest", sDonationsIgnoreLatest);
-                string[] sLatestIgnores = sDonationsIgnoreLatest.Split(',');
-                string sDonationsIgnoreTop = ini.GetValue("Settings", "Donations_Ignore_Top", "");
-                ini.SetValue("Settings", "Donations_Ignore_Top", sDonationsIgnoreTop);
-                string[] sTopIgnores = sDonationsIgnoreTop.Split(',');
-
-                if (!donations.Visible)
+                List<Transaction> transactions = Api.UpdateTransactions();
+                if (transactions.Count > 0)
                 {
-                    if (donations.IsHandleCreated)
+                    IOrderedEnumerable<Transaction> Trans = transactions.OrderByDescending(key => key.date);
+
+                    string sDonationsIgnoreRecent = ini.GetValue("Settings", "Donations_Ignore_Recent", "");
+                    ini.SetValue("Settings", "Donations_Ignore_Recent", sDonationsIgnoreRecent);
+                    string[] sRecentIgnores = sDonationsIgnoreRecent.Split(',');
+                    string sDonationsIgnoreLatest = ini.GetValue("Settings", "Donations_Ignore_Latest", "");
+                    ini.SetValue("Settings", "Donations_Ignore_Latest", sDonationsIgnoreLatest);
+                    string[] sLatestIgnores = sDonationsIgnoreLatest.Split(',');
+                    string sDonationsIgnoreTop = ini.GetValue("Settings", "Donations_Ignore_Top", "");
+                    ini.SetValue("Settings", "Donations_Ignore_Top", sDonationsIgnoreTop);
+                    string[] sTopIgnores = sDonationsIgnoreTop.Split(',');
+
+                    if (!donations.Visible)
                     {
-                        donations.BeginInvoke((MethodInvoker)delegate
+                        if (donations.IsHandleCreated)
+                        {
+                            donations.BeginInvoke((MethodInvoker)delegate
+                            {
+                                donations.Donations_List.Rows.Clear();
+                                for (int i = 0; i < transactions.Count; i++)
+                                {
+                                    donations.Donations_List.Rows.Add(Trans.ElementAt(i).date, Trans.ElementAt(i).donor, Trans.ElementAt(i).amount, Trans.ElementAt(i).id, Trans.ElementAt(i).notes, !sRecentIgnores.Contains(Trans.ElementAt(i).id), !sLatestIgnores.Contains(Trans.ElementAt(i).id), !sTopIgnores.Contains(Trans.ElementAt(i).id), true);
+                                }
+                            });
+                        }
+                        else
                         {
                             donations.Donations_List.Rows.Clear();
                             for (int i = 0; i < transactions.Count; i++)
                             {
                                 donations.Donations_List.Rows.Add(Trans.ElementAt(i).date, Trans.ElementAt(i).donor, Trans.ElementAt(i).amount, Trans.ElementAt(i).id, Trans.ElementAt(i).notes, !sRecentIgnores.Contains(Trans.ElementAt(i).id), !sLatestIgnores.Contains(Trans.ElementAt(i).id), !sTopIgnores.Contains(Trans.ElementAt(i).id), true);
                             }
-                        });
-                    }
-                    else
-                    {
-                        donations.Donations_List.Rows.Clear();
-                        for (int i = 0; i < transactions.Count; i++)
-                        {
-                            donations.Donations_List.Rows.Add(Trans.ElementAt(i).date, Trans.ElementAt(i).donor, Trans.ElementAt(i).amount, Trans.ElementAt(i).id, Trans.ElementAt(i).notes, !sRecentIgnores.Contains(Trans.ElementAt(i).id), !sLatestIgnores.Contains(Trans.ElementAt(i).id), !sTopIgnores.Contains(Trans.ElementAt(i).id), true);
-                        }
-                        //donations.FirstDonationLabel.Text = Trans.ElementAt(Trans.Count() - 1).date;
-                    }
-                }
-
-                int count = Convert.ToInt32(donations.RecentDonorsLimit.Value);
-                if (transactions.Count < count)
-                {
-                    count = transactions.Count;
-                }
-                string sTopDonors = "", sRecentDonors = "", sLatestDonor = "";
-                int iCount = 0;
-                List<Transaction> Donors = new List<Transaction>();
-                foreach (Transaction transaction in Trans)
-                {
-                    if (donations.UpdateRecentDonorsCheckBox.Checked)
-                    {
-                        if (!sRecentIgnores.Contains(transaction.id) && iCount < count)
-                        {
-                            if (iCount > 0)
-                            {
-                                sRecentDonors += ", ";
-                            }
-                            sRecentDonors += transaction.ToString("$AMOUNT - DONOR");
-                            iCount++;
+                            //donations.FirstDonationLabel.Text = Trans.ElementAt(Trans.Count() - 1).date;
                         }
                     }
-                    if (donations.UpdateLastDonorCheckBox.Checked && !sLatestIgnores.Contains(transaction.id) && sLatestDonor == "")
-                    {
-                        File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "LatestDonation.txt", (sLatestDonor = transaction.ToString("$AMOUNT - DONOR")));
-                    }
 
-                    if (donations.UpdateTopDonorsCheckBox.Checked)
+                    int count = Convert.ToInt32(donations.RecentDonorsLimit.Value);
+                    if (transactions.Count < count)
                     {
-                        if (!sTopIgnores.Contains(transaction.id))
+                        count = transactions.Count;
+                    }
+                    string sTopDonors = "", sRecentDonors = "", sLatestDonor = "";
+                    int iCount = 0;
+                    List<Transaction> Donors = new List<Transaction>();
+                    foreach (Transaction transaction in Trans)
+                    {
+                        if (donations.UpdateRecentDonorsCheckBox.Checked)
                         {
-                            if (!Donors.Any(c => c.donor.ToLower() == transaction.donor.ToLower()))
+                            if (!sRecentIgnores.Contains(transaction.id) && iCount < count)
                             {
-                                Donors.Add(transaction);
-                            }
-                            else
-                            {
-                                foreach (Transaction trans in Donors)
+                                if (iCount > 0)
                                 {
-                                    if (transaction.donor.ToLower() == trans.donor.ToLower())
+                                    sRecentDonors += ", ";
+                                }
+                                sRecentDonors += transaction.ToString("$AMOUNT - DONOR");
+                                iCount++;
+                            }
+                        }
+                        if (donations.UpdateLastDonorCheckBox.Checked && !sLatestIgnores.Contains(transaction.id) && sLatestDonor == "")
+                        {
+                            File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "LatestDonation.txt", (sLatestDonor = transaction.ToString("$AMOUNT - DONOR")));
+                        }
+
+                        if (donations.UpdateTopDonorsCheckBox.Checked)
+                        {
+                            if (!sTopIgnores.Contains(transaction.id))
+                            {
+                                if (!Donors.Any(c => c.donor.ToLower() == transaction.donor.ToLower()))
+                                {
+                                    Donors.Add(transaction);
+                                }
+                                else
+                                {
+                                    foreach (Transaction trans in Donors)
                                     {
-                                        trans.amount = (float.Parse(trans.amount, CultureInfo.InvariantCulture.NumberFormat) + float.Parse(transaction.amount, CultureInfo.InvariantCulture.NumberFormat)).ToString("0.00");
-                                        break;
+                                        if (transaction.donor.ToLower() == trans.donor.ToLower())
+                                        {
+                                            trans.amount = (float.Parse(trans.amount, CultureInfo.InvariantCulture.NumberFormat) + float.Parse(transaction.amount, CultureInfo.InvariantCulture.NumberFormat)).ToString("0.00");
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                if (donations.UpdateRecentDonorsCheckBox.Checked)
-                {
-                    File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "RecentDonors.txt", sRecentDonors);
-                }
-
-                Trans = Donors.OrderByDescending(key => float.Parse(key.amount));
-                if (donations.UpdateTopDonorsCheckBox.Checked)
-                {
-                    count = Convert.ToInt32(donations.TopDonorsLimit.Value);
-                    if (Donors.Count < count)
+                    if (donations.UpdateRecentDonorsCheckBox.Checked)
                     {
-                        count = Donors.Count;
+                        File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "RecentDonors.txt", sRecentDonors);
                     }
-                    iCount = 0;
-                    foreach (Transaction transaction in Donors)
+
+                    Trans = Donors.OrderByDescending(key => float.Parse(key.amount));
+                    if (donations.UpdateTopDonorsCheckBox.Checked)
                     {
-                        if (iCount < count)
+                        count = Convert.ToInt32(donations.TopDonorsLimit.Value);
+                        if (Donors.Count < count)
                         {
-                            if (iCount > 0)
-                            {
-                                sTopDonors += "\r\n";
-                            }
-                            sTopDonors += Trans.ElementAt(iCount).ToString("$AMOUNT - DONOR");
-                            iCount++;
+                            count = Donors.Count;
                         }
-                    }
-                    File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "TopDonors.txt", sTopDonors);
-                }
-            }
-
-            string sName = Api.capName(Irc.channel.Substring(1)), sTitle = "Unavailable...", sGame = "Unavailable...", sViewers = "";
-            int iStatus = 0;
-            if (Irc.irc.Connected)
-            {
-                if (Irc.g_bIsStreaming)
-                {
-                    iStatus = 2;
-                }
-                else
-                {
-                    iStatus = 1;
-                }
-            }
-            using (WebClient w = new WebClient())
-            {
-                string json_data = "";
-                try
-                {
-                    w.Proxy = null;
-                    json_data = w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1));
-                    JObject stream = JObject.Parse(json_data);
-                    if (!stream["display_name"].ToString().Equals("")) sName = stream["display_name"].ToString();
-                    if (!stream["status"].ToString().Equals("")) sTitle = stream["status"].ToString();
-                    if (!stream["game"].ToString().Equals("")) sGame = stream["game"].ToString();
-
-                    json_data = w.DownloadString("http://tmi.twitch.tv/group/user/" + Irc.channel.Substring(1) + "/chatters");
-                    if (json_data.Replace("\"", "") != "")
-                    {
-                        stream = JObject.Parse(json_data);
-                        int iViewers = int.Parse(stream["chatter_count"].ToString());
-                        foreach (string user in Irc.IgnoredUsers)
+                        iCount = 0;
+                        foreach (Transaction transaction in Donors)
                         {
-                            if (json_data.Contains("\"" + user + "\""))
+                            if (iCount < count)
                             {
-                                iViewers--;
+                                if (iCount > 0)
+                                {
+                                    sTopDonors += "\r\n";
+                                }
+                                sTopDonors += Trans.ElementAt(iCount).ToString("$AMOUNT - DONOR");
+                                iCount++;
                             }
                         }
-                        sViewers += " (" + iViewers + ")";
+                        File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "TopDonors.txt", sTopDonors);
                     }
                 }
-                catch (SocketException)
-                {
-                    Console.WriteLine("Unable to connect to twitch API to check stream data.");
-                }
-                catch (Exception e)
-                {
-                    StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                    errorLog.WriteLine("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************\r\nUnable to connect to twitch API to check stream data.\r\n" + e + "\r\n");
-                    errorLog.Close();
-                }
-            }
 
-            if (IsHandleCreated)
-            {
-                BeginInvoke((MethodInvoker)delegate
+                string sName = Api.capName(Irc.channel.Substring(1)), sTitle = "Unavailable...", sGame = "Unavailable...", sViewers = "";
+                int iStatus = 0;
+                if (Irc.irc.Connected)
                 {
-                    Currency_HandoutLabel.Text = "Handout " + Irc.currency + " to :";
+                    if (Irc.g_bIsStreaming)
+                    {
+                        iStatus = 2;
+                    }
+                    else
+                    {
+                        iStatus = 1;
+                    }
+                }
+                using (WebClient w = new WebClient())
+                {
+                    string json_data = "";
+                    try
+                    {
+                        w.Proxy = null;
+                        json_data = w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1));
+                        JObject stream = JObject.Parse(json_data);
+                        if (!stream["display_name"].ToString().Equals("")) sName = stream["display_name"].ToString();
+                        if (!stream["status"].ToString().Equals("")) sTitle = stream["status"].ToString();
+                        if (!stream["game"].ToString().Equals("")) sGame = stream["game"].ToString();
 
-                    Giveaway_MinCurrencyCheckBox.Text = "Min. " + Irc.currency;
+                        json_data = w.DownloadString("http://tmi.twitch.tv/group/user/" + Irc.channel.Substring(1) + "/chatters");
+                        if (json_data.Replace("\"", "") != "")
+                        {
+                            stream = JObject.Parse(json_data);
+                            int iViewers = int.Parse(stream["chatter_count"].ToString());
+                            foreach (string user in Irc.IgnoredUsers)
+                            {
+                                if (json_data.Contains("\"" + user + "\""))
+                                {
+                                    iViewers--;
+                                }
+                            }
+                            sViewers += " (" + iViewers + ")";
+                        }
+                    }
+                    catch (SocketException)
+                    {
+                        Console.WriteLine("Unable to connect to twitch API to check stream data.");
+                    }
+                    catch (Exception e)
+                    {
+                        StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
+                        errorLog.WriteLine("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************\r\nUnable to connect to twitch API to check stream data.\r\n" + e + "\r\n");
+                        errorLog.Close();
+                    }
+                }
+
+                if (IsHandleCreated)
+                {
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        Currency_HandoutLabel.Text = "Handout " + Irc.currency + " to :";
+
+                        Giveaway_MinCurrencyCheckBox.Text = "Min. " + Irc.currency;
+
+                        ChannelLabel.Text = sName;
+                        ChannelLabel.ForeColor = Color.Red;
+                        if (iStatus == 2)
+                        {
+                            ChannelLabel.ForeColor = Color.Green;
+                            ChannelLabel.Text += sViewers;
+                        }
+                        else if (iStatus == 1)
+                        {
+                            ChannelLabel.ForeColor = Color.Blue;
+                        }
+                        ChannelTitleTextBox.Text = sTitle;
+                        ChannelGameTextBox.Text = sGame;
+
+                        g_bLoaded = true;
+                    });
+                }
+                /*else
+                {
+                    Currency_HandoutLabel.Text = "Handout " + IRC.currency + " to :";
+
+                    Giveaway_MinCurrencyCheckBox.Text = "Min. " + IRC.currency;
 
                     ChannelLabel.Text = sName;
                     ChannelLabel.ForeColor = Color.Red;
@@ -515,36 +540,13 @@ namespace ModBot
                     }
                     ChannelTitleTextBox.Text = sTitle;
                     ChannelGameTextBox.Text = sGame;
+                }*/
 
-                    g_bLoaded = true;
-                });
-            }
-            /*else
-            {
-                Currency_HandoutLabel.Text = "Handout " + IRC.currency + " to :";
-
-                Giveaway_MinCurrencyCheckBox.Text = "Min. " + IRC.currency;
-
-                ChannelLabel.Text = sName;
-                ChannelLabel.ForeColor = Color.Red;
-                if (iStatus == 2)
+                if (Irc.g_bResourceKeeper)
                 {
-                    ChannelLabel.ForeColor = Color.Green;
-                    ChannelLabel.Text += sViewers;
+                    Thread.Sleep(30000);
                 }
-                else if (iStatus == 1)
-                {
-                    ChannelLabel.ForeColor = Color.Blue;
-                }
-                ChannelTitleTextBox.Text = sTitle;
-                ChannelGameTextBox.Text = sGame;
-            }*/
-
-            if (Irc.g_bResourceKeeper)
-            {
-                Thread.Sleep(30000);
             }
-            GrabData();
         }
 
         private void aboutButton_Click(object sender, EventArgs e)
@@ -582,7 +584,8 @@ namespace ModBot
             {
                 sMessage += "Currently follows the channel | ";
             }
-            Irc.sendMessage(sMessage + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currency + " | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
+            TimeSpan t = TimeSpan.FromMinutes(Database.getTimeWatched(Giveaway_WinnerLabel.Text));
+            Irc.sendMessage(sMessage + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currency + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
         }
 
         private void Giveaway_BanButton_Click(object sender, EventArgs e)

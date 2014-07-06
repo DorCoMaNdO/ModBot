@@ -22,7 +22,7 @@ namespace ModBot
                 DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
                 DB.Open();
 
-                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null);", DB))
+                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB))
                 {
                     cmd.ExecuteNonQuery();
                 }
@@ -61,6 +61,21 @@ namespace ModBot
                     }
                 }
 
+                using (cmd = new SQLiteCommand("SELECT time_watched FROM '" + channel + "';", DB))
+                {
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                    catch (SQLiteException)
+                    {
+                        using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN time_watched INTEGER DEFAULT 0;", DB))
+                        {
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+
                 if (tableExists("transfers") && !tableHasData(channel))
                 {
                     using (cmd = new SQLiteCommand("INSERT INTO '" + channel + "' SELECT * FROM transfers;", DB))
@@ -83,7 +98,7 @@ namespace ModBot
                 DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
                 DB.Open();
 
-                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null);", DB))
+                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB))
                 {
                     cmd.ExecuteNonQuery();
                 }
@@ -367,11 +382,7 @@ namespace ModBot
                     {
                         if (r.Read())
                         {
-                            int level;
-                            if (int.TryParse(r["userlevel"].ToString(), out level))
-                            {
-                                return level;
-                            }
+                            return Convert.ToInt32(r["userlevel"].ToString());
                         }
                     }
                 }
@@ -383,6 +394,38 @@ namespace ModBot
         {
             user = Api.capName(user);
             using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET userlevel = " + level + " WHERE user = '" + user + "';", DB))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static int getTimeWatched(String user)
+        {
+            user = Api.capName(user);
+            if (!userExists(user))
+            {
+                newUser(user);
+            }
+            else
+            {
+                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
+                {
+                    using (SQLiteDataReader r = cmd.ExecuteReader())
+                    {
+                        if (r.Read())
+                        {
+                            return Convert.ToInt32(r["time_watched"].ToString());
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
+
+        public static void addTimeWatched(String user, int time)
+        {
+            user = Api.capName(user);
+            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", DB))
             {
                 cmd.ExecuteNonQuery();
             }
