@@ -11,13 +11,8 @@ namespace ModBot
 {
     public static class Api
     {
-        private static MainWindow MainForm;
+        private static MainWindow MainForm = Irc.MainForm;
         private static Dictionary<string, Thread> g_lCheckingDisplayName = new Dictionary<string, Thread>();
-
-        public static void SetMainForm(MainWindow Form)
-        {
-            MainForm = Form;
-        }
 
         public static int GetUnixTimeNow()
         {

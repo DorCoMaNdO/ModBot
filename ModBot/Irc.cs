@@ -15,7 +15,7 @@ namespace ModBot
 {
     public static class Irc
     {
-        public static iniUtil ini;
+        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini");
         public static String nick, password, channel, currency, admin, donationkey, user = "";
         public static int g_iInterval, payout = 0;
         public static int[] intervals = { 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 };
@@ -38,7 +38,7 @@ namespace ModBot
         public static int g_iStreamStartTime = 0;
         public static bool g_bIsStreaming = false;
         public static bool g_bResourceKeeper = false;
-        public static MainWindow MainForm;
+        public static MainWindow MainForm = new MainWindow();
         public static int g_iLastHandout = 0;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
 
@@ -56,10 +56,6 @@ namespace ModBot
             setPayout(Payout);
             donationkey = DonationKey;
             Database.Initialize();
-            MainForm = new MainWindow();
-            MainForm.Hide();
-            Api.SetMainForm(MainForm);
-            Giveaway.SetMainForm(MainForm);
             IgnoredUsers.Add("jtv");
             IgnoredUsers.Add("moobot");
             IgnoredUsers.Add("nightbot");
@@ -498,11 +494,24 @@ namespace ModBot
                     {
                         if (Database.getUserLevel(user) >= 1)
                         {
-                            if (Database.userExists(args[0]))
+                            if (!args[0].Contains(","))
                             {
-                                sendMessage("Mod check: " + Api.GetDisplayName(args[0], true) + " has " + Database.checkCurrency(args[0]) + " " + currency + " (" + Database.getTimeWatched(args[0]).ToString(@"d\d\ hh\h\ mm\m") + ")");
+                                if (Database.userExists(args[0]))
+                                {
+                                    sendMessage("Mod check: " + Api.GetDisplayName(args[0], true) + " has " + Database.checkCurrency(args[0]) + " " + currency + " (" + Database.getTimeWatched(args[0]).ToString(@"d\d\ hh\h\ mm\m") + ")");
+                                }
+                                else
+                                {
+                                    sendMessage("Mod check: " + Api.GetDisplayName(args[0]) + " is not a valid user.");
+                                }
                             }
-                            else sendMessage("Mod check: " + Api.GetDisplayName(args[0]) + " is not a valid user.");
+                            else
+                            {
+                                foreach(string usr in args[0].Split(','))
+                                {
+                                    addToLookups(usr);
+                                }
+                            }
                         }
                     }
                 }
@@ -1373,26 +1382,30 @@ namespace ModBot
                 bool addComma = false;
                 foreach (String person in usersToLookup)
                 {
-                    if (addComma){
-                        output += ", ";
-                    }
+                    if (Database.userExists(person))
+                    {
+                        if (addComma)
+                        {
+                            output += ", ";
+                        }
 
-                    output += " " + Api.GetDisplayName(person) + " (" + Database.getTimeWatched(person).ToString(@"d\d\ hh\h\ mm\m") + ")" + " - " + Database.checkCurrency(person);
-                    if (bettingOpen)
-                    {
-                        if (pool.isInPool(person))
+                        output += " " + Api.GetDisplayName(person) + " (" + Database.getTimeWatched(person).ToString(@"d\d\ hh\h\ mm\m") + ")" + " - " + Database.checkCurrency(person);
+                        if (bettingOpen)
                         {
-                            output += "[" + pool.getBetAmount(person) + "]";
+                            if (pool.isInPool(person))
+                            {
+                                output += "[" + pool.getBetAmount(person) + "]";
+                            }
                         }
-                    }
-                    if (auctionOpen)
-                    {
-                        if (auction.highBidder.Equals(person))
+                        if (auctionOpen)
                         {
-                            output += "{" + auction.highBid + "}";
+                            if (auction.highBidder.Equals(person))
+                            {
+                                output += "{" + auction.highBid + "}";
+                            }
                         }
+                        addComma = true;
                     }
-                    addComma = true;
                 }
                 //sendRaw("PRIVMSG " + channel + " :" + output);
                 sendMessage(output);

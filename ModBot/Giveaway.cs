@@ -12,15 +12,10 @@ namespace ModBot
 {
     public static class Giveaway
     {
-        private static MainWindow MainForm;
+        private static MainWindow MainForm = Irc.MainForm;
         private static string sWinner;
         public static int iLastWin;
         private static float fChance;
-
-        public static void SetMainForm(MainWindow Form)
-        {
-            MainForm = Form;
-        }
 
         public static void startGiveaway()
         {
@@ -68,8 +63,8 @@ namespace ModBot
                 MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
                 MainForm.Giveaway_WinnerChat.Clear();
                 MainForm.Giveaway_WinnerLabel.Text = "Giveaway isn't active";
-                MainForm.Giveaway_RerollButton.Text = "Roll";
                 MainForm.Giveaway_WinnerLabel.ForeColor = Color.Blue;
+                MainForm.Giveaway_RerollButton.Text = "Roll";
                 MainForm.Giveaway_WinnerStatusLabel.Text = "";
             });
             sWinner = "";

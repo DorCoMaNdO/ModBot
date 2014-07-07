@@ -17,7 +17,7 @@ namespace ModBot
 {
     public partial class SettingsDialog : CustomForm
     {
-        public iniUtil ini = Irc.ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini");
+        public iniUtil ini = Irc.ini;
         public SettingsDialog()
         {
             if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini"))
