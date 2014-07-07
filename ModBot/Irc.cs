@@ -210,29 +210,45 @@ namespace ModBot
             //Listen();
             new Thread(() =>
             {
-                try
+                int attempts = 0;
+                while (attempts < 5)
                 {
-                    while (irc.Connected)
+                    try
                     {
-                        parseMessage(read.ReadLine());
+                        while (irc.Connected)
+                        {
+                            parseMessage(read.ReadLine());
+                            if(attempts > 0)
+                            {
+                                Console.WriteLine("The attempt was successful, everything should keep running the way it should...");
+                                attempts = 0;
+                            }
+                        }
                     }
+                    catch (IOException)
+                    {
+                    }
+                    catch (Exception e)
+                    {
+                        if (attempts == 0)
+                        {
+                            Console.WriteLine("Uh oh, there was an error! An attempt to keep everything running is being performed, but if you keep seeing this message, email your Error_log.log file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
+                            StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
+                            errorLog.WriteLine("*************Error Message (via Listen()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            errorLog.Close();
+                        }
+                        attempts++;
+                        Console.WriteLine("Attempt number : " + attempts);
+                    }
+                    Thread.Sleep(500);
                 }
-                catch (IOException)
-                {
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Uh oh, there was an error!  Everything should keep running, but if you keep seeing this message, email your Error_log.log file to twitch.tv.modbot@gmail.com");
-                    StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                    errorLog.WriteLine("*************Error Message (via Listen()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                    errorLog.Close();
-                }
+                Console.WriteLine("The attempt was unsuccessful, some functions may still work... But in order get ModBot back to full functionality please restart it...");
             }).Start();
 
             //doWork();
-            g_iLastHandout = Api.GetUnixTimeNow();
             new Thread(() =>
             {
+                g_iLastHandout = Api.GetUnixTimeNow();
                 while (true)
                 {
                     if (Api.GetUnixTimeNow() - g_iLastHandout >= g_iInterval * 60 && g_bIsStreaming)
