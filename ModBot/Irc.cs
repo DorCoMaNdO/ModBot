@@ -42,9 +42,8 @@ namespace ModBot
         public static int g_iLastHandout = 0;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
 
-        public static void Initialize(String Nick, String Password, String Channel, String Currency, int Interval, int Payout, string DonationKey, iniUtil Ini)
+        public static void Initialize(String Nick, String Password, String Channel, String Currency, int Interval, int Payout, string DonationKey)
         {
-            ini = Ini;
             string sResourceKeeper = ini.GetValue("Settings", "ResourceKeeper", "1");
             ini.SetValue("Settings", "ResourceKeeper", sResourceKeeper);
             g_bResourceKeeper = (sResourceKeeper == "1");

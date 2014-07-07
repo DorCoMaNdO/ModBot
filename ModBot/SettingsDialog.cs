@@ -17,7 +17,7 @@ namespace ModBot
 {
     public partial class SettingsDialog : CustomForm
     {
-        public iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini");
+        public iniUtil ini = Irc.ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini");
         public SettingsDialog()
         {
             if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini"))
@@ -70,7 +70,7 @@ namespace ModBot
             ////
 
             //Console.WriteLine(nick + ' ' + password + ' ' + channel + ' ' + currency + ' ' + interval);
-            Irc.Initialize(botNameBox.Text.ToLower(), passwordBox.Text, channelBox.Text.ToLower(), currencyBox.Text, int.Parse(intervalBox.SelectedItem.ToString()), int.Parse(payoutBox.SelectedItem.ToString()), DonationsKeyBox.Text, ini);
+            Irc.Initialize(botNameBox.Text.ToLower(), passwordBox.Text, channelBox.Text.ToLower(), currencyBox.Text, int.Parse(intervalBox.SelectedItem.ToString()), int.Parse(payoutBox.SelectedItem.ToString()), DonationsKeyBox.Text);
         }
 
         private void aboutButton_Click(object sender, EventArgs e)

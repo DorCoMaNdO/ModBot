@@ -18,7 +18,7 @@ namespace ModBot
     public partial class MainWindow : CustomForm
     {
         public Dictionary<string, Dictionary<string, string>> dSettings = new Dictionary<string, Dictionary<string, string>>();
-        public iniUtil ini;
+        public iniUtil ini = Irc.ini;
         private bool bIgnoreUpdates = false;
         public int iSettingsPresent = -2;
         private Donations donations;
@@ -30,7 +30,6 @@ namespace ModBot
             InitializeComponent();
             sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             Text = "ModBot v" + sCurrentVersion.Replace("." + Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
-            ini = Irc.ini;
 
             Giveaway_WinnerChat.Select(0, 7);
             Giveaway_WinnerChat.SelectionColor = Color.Blue;
