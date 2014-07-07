@@ -579,13 +579,8 @@ namespace ModBot
 
         private void Giveaway_AnnounceWinnerButton_Click(object sender, EventArgs e)
         {
-            string sMessage = Giveaway_WinnerLabel.Text + " has won the giveaway! (";
-            if (Api.IsFollowingChannel(Giveaway_WinnerLabel.Text))
-            {
-                sMessage += "Currently follows the channel | ";
-            }
-            TimeSpan t = TimeSpan.FromMinutes(Database.getTimeWatched(Giveaway_WinnerLabel.Text));
-            Irc.sendMessage(sMessage + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currency + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
+            TimeSpan t = Database.getTimeWatched(Giveaway_WinnerLabel.Text);
+            Irc.sendMessage(Giveaway_WinnerLabel.Text + " has won the giveaway! (" + (Api.IsFollowingChannel(Giveaway_WinnerLabel.Text) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currency + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
         }
 
         private void Giveaway_BanButton_Click(object sender, EventArgs e)

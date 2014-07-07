@@ -143,7 +143,7 @@ namespace ModBot
                         //string WinnerLabel = "Winner : ";
                         string WinnerLabel = "";
                         if (Api.IsFollowingChannel(sWinner)) WinnerLabel += "Following | ";
-                        WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currency + " | Watched : " + TimeSpan.FromMinutes(Database.getTimeWatched(sWinner)).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + fChance.ToString("0.00") + "%";
+                        WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currency + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + fChance.ToString("0.00") + "%";
                         MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel;
                         MainForm.Giveaway_WinnerLabel.Text = sWinner;
                         MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);

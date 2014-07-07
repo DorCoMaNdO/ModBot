@@ -73,9 +73,9 @@ namespace ModBot
             greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!");
             ini.SetValue("Settings", "Channel_Greeting", greeting);
 
-            RegisterCommands();
+            Connect();
 
-            Connect();   
+            RegisterCommands();
         }
 
         private static void RegisterCommands()
@@ -411,13 +411,8 @@ namespace ModBot
                             }
                             else
                             {
-                                string sMessage = winner + " has won the giveaway! (";
-                                if (Api.IsFollowingChannel(winner))
-                                {
-                                    sMessage = sMessage + "Currently follows the channel | ";
-                                }
-                                TimeSpan t = TimeSpan.FromMinutes(Database.getTimeWatched(winner));
-                                sendMessage(sMessage + "Has " + Database.checkCurrency(winner) + " " + currency + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
+                                TimeSpan t = Database.getTimeWatched(winner);
+                                sendMessage(winner + " has won the giveaway! (" + (Api.IsFollowingChannel(winner) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currency + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
                             }
                         }
                     }
@@ -506,7 +501,7 @@ namespace ModBot
                         {
                             if (Database.userExists(args[0]))
                             {
-                                sendMessage("Mod check: " + Api.GetDisplayName(args[0], true) + " has " + Database.checkCurrency(args[0]) + " " + currency);
+                                sendMessage("Mod check: " + Api.GetDisplayName(args[0], true) + " has " + Database.checkCurrency(args[0]) + " " + currency + " (" + Database.getTimeWatched(args[0]).ToString(@"d\d\ hh\h\ mm\m") + ")");
                             }
                             else sendMessage("Mod check: " + Api.GetDisplayName(args[0]) + " is not a valid user.");
                         }
@@ -1383,7 +1378,7 @@ namespace ModBot
                         output += ", ";
                     }
 
-                    output += " " + Api.GetDisplayName(person) + " - " + Database.checkCurrency(person);
+                    output += " " + Api.GetDisplayName(person) + " (" + Database.getTimeWatched(person).ToString(@"d\d\ hh\h\ mm\m") + ")" + " - " + Database.checkCurrency(person);
                     if (bettingOpen)
                     {
                         if (pool.isInPool(person))

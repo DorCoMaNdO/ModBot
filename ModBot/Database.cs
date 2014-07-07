@@ -399,7 +399,7 @@ namespace ModBot
             }
         }
 
-        public static int getTimeWatched(String user)
+        public static TimeSpan getTimeWatched(String user)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -414,12 +414,12 @@ namespace ModBot
                     {
                         if (r.Read())
                         {
-                            return Convert.ToInt32(r["time_watched"].ToString());
+                            return TimeSpan.FromMinutes(Convert.ToInt32(r["time_watched"].ToString()));
                         }
                     }
                 }
             }
-            return 0;
+            return new TimeSpan();
         }
 
         public static void addTimeWatched(String user, int time)
