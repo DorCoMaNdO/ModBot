@@ -9,35 +9,33 @@ namespace ModBot
     {
         private Dictionary<string, int> winners;
         private Dictionary<string, PoolUser> bets = new Dictionary<string, PoolUser>();
-        private Database db;
         private int maxBet, totalBets;
-        private String[] options;
+        private List<string> options;
 
-        public Pool(Database db, int maxBet, String[] options)
+        public Pool(int maxBet, List<string> options)
         {
-            this.db = db;
             this.maxBet = maxBet;
             this.options = options;
             totalBets = 0;
         }
 
-        public void placeBet(String nick, int option, int amount)
+        public void placeBet(String nick, string option, int amount)
         {
-            if (option < options.Length && amount <= maxBet)
+            if (options.Contains(option) && amount <= maxBet)
             {
                 if (bets.ContainsKey(nick))
                 {
-                    if (db.checkCurrency(nick) + bets[nick].betAmount >= amount)
+                    if (Database.checkCurrency(nick) + bets[nick].betAmount >= amount)
                     {
                         if (bets[nick].betAmount < amount)
                         {
-                            db.addCurrency(nick, bets[nick].betAmount - amount);
+                            Database.addCurrency(nick, bets[nick].betAmount - amount);
                             bets[nick].betAmount = amount;
                             bets[nick].betOn = option;
                         }
                         else
                         {
-                            db.removeCurrency(nick, amount - bets[nick].betAmount);
+                            Database.removeCurrency(nick, amount - bets[nick].betAmount);
                             bets[nick].betAmount = amount;
                             bets[nick].betOn = option;
                         }
@@ -45,29 +43,29 @@ namespace ModBot
                 }
                 else
                 {
-                    if (db.checkCurrency(nick) >= amount)
+                    if (Database.checkCurrency(nick) >= amount)
                     {
-                        db.removeCurrency(nick, amount);
+                        Database.removeCurrency(nick, amount);
                         bets.Add(nick, new PoolUser(option, amount));
                     }
                 }
             }
         }
 
-        public void closePool(int winIndex)
+        public void closePool(string winBet)
         {
             buildTotalBets();
-            buildWinners(winIndex);            
+            buildWinners(winBet);            
         }
 
-        private void buildWinners(int winIndex)
+        private void buildWinners(string winBet)
         {
             winners = new Dictionary<string, int>();
             foreach (String nick in bets.Keys)
             {
-                if (bets[nick].betOn == winIndex)
+                if (bets[nick].betOn == winBet)
                 {
-                    double temp = (double)(totalBets - getTotalBetsOn(winIndex)) * ((double)bets[nick].betAmount / getTotalBetsOn(winIndex));
+                    double temp = (double)(totalBets - getTotalBetsOn(winBet)) * ((double)bets[nick].betAmount / getTotalBetsOn(winBet));
                     int payout = (int)Math.Round(temp) + bets[nick].betAmount;
                     //Console.WriteLine("Pre-Round: " + temp + " Post Round and addition = " + payout);
                     if (winners.ContainsKey(nick))
@@ -77,7 +75,7 @@ namespace ModBot
                     else
                     {
                         winners.Add(nick, payout);
-                        db.addCurrency(nick, payout);
+                        Database.addCurrency(nick, payout);
                     }
                 }
             }
@@ -97,12 +95,12 @@ namespace ModBot
             return totalBets;
         }
 
-        public int getNumberOfBets(int index)
+        public int getNumberOfBets(string bet)
         {
             int numberOfBets = 0;
             foreach (String nick in bets.Keys)
             {
-                if (bets[nick].betOn == index)
+                if (bets[nick].betOn == bet)
                 {
                     numberOfBets++;
                 }
@@ -110,12 +108,12 @@ namespace ModBot
             return numberOfBets;
         }
 
-        public int getTotalBetsOn(int index)
+        public int getTotalBetsOn(string bet)
         {
             int totalBetsOnOption = 0;
             foreach (String nick in bets.Keys)
             {
-                if (bets[nick].betOn == index)
+                if (bets[nick].betOn == bet)
                 {
                     totalBetsOnOption += bets[nick].betAmount;
                 }
@@ -134,7 +132,7 @@ namespace ModBot
             return bets[nick].betAmount;
         }
 
-        public int getBetOn(String nick)
+        public string getBetOn(String nick)
         {
             return bets[nick].betOn;
         }
@@ -143,7 +141,7 @@ namespace ModBot
         {
             foreach (String nick in bets.Keys)
             {
-                db.addCurrency(nick, bets[nick].betAmount);
+                Database.addCurrency(nick, bets[nick].betAmount);
             }
             bets.Clear();
         }
@@ -159,10 +157,10 @@ namespace ModBot
     /// </summary>
     class PoolUser
     {
-        public int betOn {get;set;}
+        public string betOn { get; set; }
         public int betAmount {get;set;}
 
-        public PoolUser(int betOn, int betAmount) {
+        public PoolUser(string betOn, int betAmount) {
             this.betOn = betOn;
             this.betAmount = betAmount;
         }

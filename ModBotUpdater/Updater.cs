@@ -118,7 +118,7 @@ namespace ModBotUpdater
                                 });
                             }
                         });
-                        client.DownloadFileAsync(new Uri("https://dl.dropboxusercontent.com/u/60356733/ModBot.exe"), AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe");
+                        client.DownloadFileAsync(new Uri("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + LatestVersionLabel.Text + "/ModBot.exe"), AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe");
                     }
                     catch (SocketException)
                     {
@@ -244,8 +244,8 @@ namespace ModBotUpdater
                         try
                         {
                             w.Proxy = null;
-                            sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot.txt");
-                            w.OpenRead("https://dl.dropboxusercontent.com/u/60356733/ModBot.exe");
+                            sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
+                            w.OpenRead("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + sLatestVersion + "/ModBot.exe");
                             iFileSize = Convert.ToDouble(w.ResponseHeaders["Content-Length"]);
                         }
                         catch (SocketException)
@@ -399,7 +399,7 @@ namespace ModBotUpdater
                         try
                         {
                             w.Proxy = null;
-                            sData = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot-Changelog.txt");
+                            sData = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot-Changelog.txt");
                         }
                         catch (SocketException)
                         {

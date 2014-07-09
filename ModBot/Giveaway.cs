@@ -10,26 +10,20 @@ using System.Windows.Forms;
 
 namespace ModBot
 {
-    public class Giveaway
+    public static class Giveaway
     {
-        private MainWindow MainForm;
-        private Irc IRC;
-        public string winner;
-        public int iLastWin;
+        private static MainWindow MainForm = Irc.MainForm;
+        private static string sWinner;
+        public static int iLastWin;
+        private static float fChance;
 
-        public Giveaway(MainWindow MainForm)
-        {
-            this.MainForm = MainForm;
-            IRC = MainForm.IRC;
-        }
-
-        public void startGiveaway()
+        public static void startGiveaway()
         {
             MainForm.BeginInvoke((MethodInvoker)delegate
             {
-                MainForm.Giveaway_StartButton.Visible = false;
-                MainForm.Giveaway_RerollButton.Visible = true;
-                MainForm.Giveaway_AnnounceWinnerButton.Visible = true;
+                MainForm.Giveaway_StartButton.Enabled = false;
+                MainForm.Giveaway_RerollButton.Enabled = true;
+                MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
                 MainForm.Giveaway_StopButton.Enabled = true;
                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
                 MainForm.Giveaway_MustFollowCheckBox.Enabled = false;
@@ -46,17 +40,17 @@ namespace ModBot
                 MainForm.Giveaway_WinnerLabel.ForeColor = Color.Red;
                 MainForm.Giveaway_WinnerStatusLabel.Text = "";
             });
-            winner = "";
+            sWinner = "";
             iLastWin = 0;
         }
 
-        public void endGiveaway()
+        public static void endGiveaway()
         {
             MainForm.BeginInvoke((MethodInvoker)delegate
             {
-                MainForm.Giveaway_StartButton.Visible = true;
-                MainForm.Giveaway_RerollButton.Visible = false;
-                MainForm.Giveaway_AnnounceWinnerButton.Visible = false;
+                MainForm.Giveaway_StartButton.Enabled = true;
+                MainForm.Giveaway_RerollButton.Enabled = false;
+                MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
                 MainForm.Giveaway_StopButton.Enabled = false;
                 MainForm.Giveaway_MustFollowCheckBox.Enabled = true;
                 MainForm.Giveaway_MinCurrencyCheckBox.Enabled = true;
@@ -69,15 +63,15 @@ namespace ModBot
                 MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
                 MainForm.Giveaway_WinnerChat.Clear();
                 MainForm.Giveaway_WinnerLabel.Text = "Giveaway isn't active";
-                MainForm.Giveaway_RerollButton.Text = "Roll";
                 MainForm.Giveaway_WinnerLabel.ForeColor = Color.Blue;
+                MainForm.Giveaway_RerollButton.Text = "Roll";
                 MainForm.Giveaway_WinnerStatusLabel.Text = "";
             });
-            winner = "";
+            sWinner = "";
             iLastWin = 0;
         }
 
-        private int GetMinCurrency()
+        private static int GetMinCurrency()
         {
             if (MainForm.Giveaway_MinCurrencyCheckBox.Checked)
             {
@@ -86,10 +80,10 @@ namespace ModBot
             return 0;
         }
 
-        private void GetWinnerThread()
+        private static void GetWinnerThread()
         {
             if (MainForm.Giveaway_StartButton.Visible) startGiveaway();
-            winner = "";
+            sWinner = "";
             iLastWin = 0;
             MainForm.BeginInvoke((MethodInvoker)delegate
             {
@@ -106,23 +100,23 @@ namespace ModBot
                 MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
                 MainForm.Giveaway_WinnerChat.Clear();
             });
-            IRC.buildUserList();
+            Irc.buildUserList();
 
             try
             {
                 List<string> ValidUsers = new List<string>();
                 int ActiveTime = Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) * 60, CurrentTime = Api.GetUnixTimeNow();
-                lock (IRC.ActiveUsers)
+                lock (Irc.ActiveUsers)
                 {
-                    foreach (KeyValuePair<string, int> user in IRC.ActiveUsers)
+                    foreach (KeyValuePair<string, int> user in Irc.ActiveUsers)
                     {
-                        if (!IRC.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && IRC.IsUserInList(user.Key))
+                        if (!Irc.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && Irc.IsUserInList(user.Key))
                         {
                             if (!MainForm.Giveaway_BanListListBox.Items.Contains(user.Key))
                             {
                                 if (CurrentTime - user.Value <= ActiveTime)
                                 {
-                                    if ((IRC.db.checkCurrency(user.Key) >= GetMinCurrency()))
+                                    if ((Database.checkCurrency(user.Key) >= GetMinCurrency()))
                                     {
                                         if (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollowingChannel(user.Key) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
                                         {
@@ -137,13 +131,16 @@ namespace ModBot
 
                 if (ValidUsers.Count > 0)
                 {
-                    winner = Api.GetDisplayName(ValidUsers[new Random().Next(0, ValidUsers.Count - 1)]);
+                    sWinner = Api.GetDisplayName(ValidUsers[new Random().Next(0, ValidUsers.Count - 1)]);
+                    fChance = 100F / ValidUsers.Count;
                     MainForm.BeginInvoke((MethodInvoker)delegate
                     {
-                        string WinnerLabel = "Winner : ";
-                        if (Api.IsFollowingChannel(winner)) WinnerLabel = WinnerLabel + "Following | ";
-                        MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel + IRC.db.checkCurrency(winner) + " " + IRC.currency;
-                        MainForm.Giveaway_WinnerLabel.Text = winner;
+                        //string WinnerLabel = "Winner : ";
+                        string WinnerLabel = "";
+                        if (Api.IsFollowingChannel(sWinner)) WinnerLabel += "Following | ";
+                        WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currency + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + fChance.ToString("0.00") + "%";
+                        MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel;
+                        MainForm.Giveaway_WinnerLabel.Text = sWinner;
                         MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);
                         MainForm.Giveaway_WinTimeLabel.ForeColor = Color.FromArgb(0, 200, 0);
                         MainForm.Giveaway_WinnerLabel.ForeColor = Color.Green;
@@ -151,14 +148,14 @@ namespace ModBot
                         MainForm.Giveaway_AnnounceWinnerButton.Enabled = true;
                         MainForm.Giveaway_RerollButton.Enabled = true;
                         iLastWin = Api.GetUnixTimeNow();
-                        if (MainForm.Giveaway_AutoBanWinnerCheckBox.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(winner)) MainForm.Giveaway_BanListListBox.Items.Add(winner);
+                        if (MainForm.Giveaway_AutoBanWinnerCheckBox.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(sWinner)) MainForm.Giveaway_BanListListBox.Items.Add(Api.capName(sWinner));
                     });
                     new Thread(() =>
                     {
-                        winner = Api.GetDisplayName(winner, true);
+                        sWinner = Api.GetDisplayName(sWinner, true);
                         MainForm.BeginInvoke((MethodInvoker)delegate
                         {
-                            MainForm.Giveaway_WinnerLabel.Text = winner;
+                            MainForm.Giveaway_WinnerLabel.Text = sWinner;
                         });
                     }).Start();
                     return;
@@ -180,12 +177,17 @@ namespace ModBot
             });
         }
 
-        public String getWinner()
+        public static String getWinner()
         {
             Thread thread = new Thread(new ThreadStart(GetWinnerThread));
             thread.Start();
             thread.Join();
-            return winner;
+            return sWinner;
+        }
+
+        public static float getLastRollWinChance()
+        {
+            return fChance;
         }
     }
 }

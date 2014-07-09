@@ -3,52 +3,208 @@ using System.Linq;
 using System.Text;
 using System.Data.SQLite;
 using System.IO;
+using System.Collections.Generic;
 
 namespace ModBot
-{    
-    public class Commands
+{
+    public delegate void CommandExecutedHandler(string command, string[] args);
+
+    public static class Commands
     {
-        private SQLiteConnection myDB;
-        private SQLiteCommand cmd;
-        public Commands()
+        private class Command
         {
-            InitializeDB();
-        }
+            public string Cmd { get; private set; }
+            private event CommandExecutedHandler Executed;
+            private List<CommandExecutedHandler> Handlers = new List<CommandExecutedHandler>();
 
-        private void InitializeDB()
-        {
-            if (File.Exists("ModBot.sqlite"))
+            public Command(string Command, CommandExecutedHandler Handler)
             {
-                myDB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
-                myDB.Open();
-
-                String sql = "CREATE TABLE IF NOT EXISTS commands (id INTEGER PRIMARY KEY, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);";
-
-                using (cmd = new SQLiteCommand(sql, myDB))
+                if (Command == null || Command == "" || Command.Contains(" "))
                 {
-                    cmd.ExecuteNonQuery();
+                    throw (new Exception("A command can not be null and cannot contain spaces"));
                 }
-                
-            }
-            else
-            {
-                SQLiteConnection.CreateFile("ModBot.sqlite");
-                myDB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
-                myDB.Open();
 
-                String sql = "CREATE TABLE IF NOT EXISTS commands (id INTEGER PRIMARY KEY, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);";
-                
-                using (cmd = new SQLiteCommand(sql, myDB))
+                lock (lCommands)
                 {
-                    cmd.ExecuteNonQuery();
+                    foreach (Command cmd in lCommands)
+                    {
+                        if (cmd.Cmd == Command)
+                        {
+                            if (!Handlers.Contains(Handler))
+                            {
+                                cmd.Executed += Handler;
+                                Handlers.Add(Handler);
+                            }
+                            return;
+                        }
+                    }
+                    this.Cmd = Command;
+                    Executed += Handler;
+                    Handlers.Add(Handler);
+                    lCommands.Add(this);
                 }
             }
+
+            public void Call(string message)
+            {
+                string[] args = message.Contains(" ") ? message.Substring(message.IndexOf(" ") + 1).Split(' ') : null;
+                if (Executed != null)
+                {
+                    new System.Threading.Thread(() =>
+                    {
+                        Executed(Cmd, args);
+                    }).Start();
+                }
+            }
+
+            public void Remove()
+            {
+                Executed = null;
+                Handlers = new List<CommandExecutedHandler>();
+            }
+
+            public void Remove(CommandExecutedHandler Handler)
+            {
+                if (Handlers.Contains(Handler))
+                {
+                    Executed -= Handler;
+                    Handlers.Remove(Handler);
+                }
+            }
         }
 
-        public bool cmdExists(String command)
+        private static SQLiteConnection DB = Database.DB;
+        private static SQLiteCommand cmd;
+        private static List<Command> lCommands = new List<Command>();
+
+        public static void Add(string Command, CommandExecutedHandler Handler)
+        {
+            new Command(Command, Handler);
+        }
+
+        public static void Remove(string Command, CommandExecutedHandler Handler)
+        {
+            lock (lCommands)
+            {
+                foreach (Command cmd in lCommands)
+                {
+                    if (cmd.Cmd.ToLower() == Command.ToLower())
+                    {
+                        cmd.Remove(Handler);
+                    }
+                }
+            }
+        }
+
+        public static void Remove(string Command)
+        {
+            lock (lCommands)
+            {
+                List<Command> lCmds = new List<Command>();
+                foreach (Command cmd in lCommands)
+                {
+                    lCmds.Add(cmd);
+                    cmd.Remove();
+                }
+                foreach (Command cmd in lCmds)
+                {
+                    if (cmd.Cmd.ToLower() == Command.ToLower())
+                    {
+                        lCommands.Remove(cmd);
+                    }
+                }
+            }
+        }
+
+        public static bool Exists(string Command)
+        {
+            lock (lCommands)
+            {
+                foreach (Command cmd in lCommands)
+                {
+                    if (cmd.Cmd.ToLower() == Command.ToLower())
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool CheckCommand(string message, bool call = false)
+        {
+            while (message.Contains("  "))
+            {
+                message = message.Replace("  ", " ");
+            }
+            if (message.StartsWith(" ")) message = message.Substring(1);
+            if (message.EndsWith(" ")) message = message.Substring(0, message.Length - 1);
+            string[] cmd = message.Split(' ');
+            lock (lCommands)
+            {
+                foreach (Command Command in lCommands)
+                {
+                    if (Command.Cmd.ToLower() == cmd[0].ToLower())
+                    {
+                        if (call)
+                        {
+                            Command.Call(message);
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool CheckCommand(string user, string message, bool call = false)
+        {
+            while (message.Contains("  "))
+            {
+                message = message.Replace("  ", " ");
+            }
+            if (message.StartsWith(" ")) message = message.Substring(1);
+            if (message.EndsWith(" ")) message = message.Substring(0, message.Length - 1);
+            string[] cmd = message.Split(' ');
+            lock (lCommands)
+            {
+                foreach (Command Command in lCommands)
+                {
+                    if (Command.Cmd.ToLower() == cmd[0].ToLower())
+                    {
+                        if (call)
+                        {
+                            Command.Call(message);
+                        }
+                        return true;
+                    }
+                }
+            }
+            if (cmdExists(cmd[0]))
+            {
+                if (call) // ToDo : Convert to the new system
+                {
+                    if (Database.getUserLevel(user) >= LevelRequired(cmd[0]))
+                    {
+                        if (cmd.Length > 1 && Database.getUserLevel(user) > 0)
+                        {
+                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", Api.GetDisplayName(cmd[1])));
+                        }
+                        else
+                        {
+                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", Api.GetDisplayName(user)));
+                        }
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public static bool cmdExists(String command)
         {
             String sql = "SELECT * FROM commands";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand(sql, DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -64,30 +220,30 @@ namespace ModBot
             return false;
         }
 
-        public void addCommand(String command, int level, String output)
+        public static void addCommand(String command, int level, String output)
         {
             String sql = String.Format("INSERT INTO commands (command, level, output) VALUES (\"{0}\", {1}, \"{2}\");", command, level, output);
             //String sql = "INSERT INTO commands (command, level, output) VALUES (\"" + command + "\", " + level + ", \"" + output + "\");";
             Console.WriteLine(sql);
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand(sql, DB))
             {
                 cmd.ExecuteNonQuery();
             }
         }
 
-        public void removeCommand(String command)
+        public static void removeCommand(String command)
         {
             String sql = "DELETE FROM commands WHERE command = \"" + command + "\";";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand(sql, DB))
             {
                 cmd.ExecuteNonQuery();
             }
         }
 
-        public int LevelRequired(String command)
+        public static int LevelRequired(String command)
         {
             String sql = String.Format("SELECT * FROM commands WHERE command = \"{0}\";", command);
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand(sql, DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -100,11 +256,11 @@ namespace ModBot
             }
         }
 
-        public string getList()
+        public static string getList()
         {
             StringBuilder list = new StringBuilder();
             String sql = "SELECT * FROM commands;";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand(sql, DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -117,10 +273,10 @@ namespace ModBot
             return list.ToString();
         }
 
-        public string getOutput(String command)
+        public static string getOutput(String command)
         {
             String sql = "SELECT * FROM commands WHERE command = \"" + command + "\";";
-            using (cmd = new SQLiteCommand(sql, myDB))
+            using (cmd = new SQLiteCommand(sql, DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
