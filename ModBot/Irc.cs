@@ -146,14 +146,14 @@ namespace ModBot
         {
             new Thread(() =>
             {
-                while(true)
+                while (true)
                 {
                     Thread.Sleep(60000);
-                    if(irc.Connected)
+                    if (irc.Connected)
                     {
-                        if(g_bIsStreaming)
+                        if (g_bIsStreaming)
                         {
-                            foreach(string user in users)
+                            foreach (string user in users)
                             {
                                 Database.addTimeWatched(user, 1);
                             }
@@ -225,7 +225,7 @@ namespace ModBot
                         while (irc.Connected)
                         {
                             parseMessage(read.ReadLine());
-                            if(attempts > 0)
+                            if (attempts > 0)
                             {
                                 Console.WriteLine("The attempt was successful, everything should keep running the way it should...");
                                 attempts = 0;
@@ -290,7 +290,7 @@ namespace ModBot
         {
             //Console.WriteLine(message);
             String[] msg = message.Split(' ');
-            
+
             if (msg[0].Equals("PING"))
             {
                 sendRaw("PONG " + msg[1]);
@@ -312,7 +312,7 @@ namespace ModBot
                     }
                 }
                 //Console.WriteLine(message);
-                String temp = message.Substring(message.IndexOf(":", 1)+1);
+                String temp = message.Substring(message.IndexOf(":", 1) + 1);
                 string sUser = Api.GetDisplayName(user);
                 Console.WriteLine(sUser + ": " + temp);
                 handleMessage(temp);
@@ -530,7 +530,7 @@ namespace ModBot
                             }
                             else
                             {
-                                foreach(string usr in args[0].Split(','))
+                                foreach (string usr in args[0].Split(','))
                                 {
                                     addToLookups(usr);
                                 }
@@ -629,7 +629,7 @@ namespace ModBot
 
         private static void Command_Gamble(string cmd, string[] args)
         {
-            if (args != null && args.Length >= 1 && Database.getUserLevel(user) >= 1)
+            if (args != null && args.Length >= 1 && Database.getUserLevel(user) >= 2)
             {
                 if (args[0].Equals("open") && args.Length >= 4)
                 {
@@ -737,7 +737,7 @@ namespace ModBot
                                 temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
                             }
                             sendMessage(temp);
-                            sendMessage("Bet by typing \"!bet 50 1\" to bet 50 " + currency + " on option 1,  \"bet 25 2\" to bet 25 on option 2, etc");
+                            sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1,  \"bet 25 option2name\" to bet 25 on option 2, etc");
                         }
                     }
                     else if (int.TryParse(args[0], out betAmount) && args.Length >= 2 && bettingOpen && !poolLocked)
@@ -760,7 +760,7 @@ namespace ModBot
 
         private static void Command_Auction(string cmd, string[] args)
         {
-            if (args != null && Database.getUserLevel(user) >= 1)
+            if (args != null && Database.getUserLevel(user) >= 2)
             {
                 if (args[0].Equals("open"))
                 {
@@ -1108,7 +1108,7 @@ namespace ModBot
                         {
                             JObject stream = JObject.Parse(JObject.Parse(json_data)["chatters"].ToString());
                             string[] sUsers = (stream["moderators"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["staff"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["admins"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["viewers"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "")).Split(',');
-                            foreach(string sUser in sUsers)
+                            foreach (string sUser in sUsers)
                             {
                                 if (sUser != "")
                                 {
@@ -1132,7 +1132,7 @@ namespace ModBot
                     catch (Exception e)
                     {
                         StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                        errorLog.WriteLine("*************Error Message (via buildUserList()): " + DateTime.Now + "*********************************\r\nUnable to connect to twitch API to build the user list.\r\n" + e + "\r\n");;
+                        errorLog.WriteLine("*************Error Message (via buildUserList()): " + DateTime.Now + "*********************************\r\nUnable to connect to twitch API to build the user list.\r\n" + e + "\r\n");
                         errorLog.Close();
                     }
                 }
@@ -1150,10 +1150,12 @@ namespace ModBot
 
         private static void setChannel(String tChannel)
         {
-            if (tChannel.StartsWith("#")) {
+            if (tChannel.StartsWith("#"))
+            {
                 channel = tChannel;
             }
-            else {
+            else
+            {
                 channel = "#" + tChannel;
             }
         }
@@ -1217,7 +1219,7 @@ namespace ModBot
 
         public static void sendMessage(String message, bool usemecommand = true)
         {
-            if(usemecommand)
+            if (usemecommand)
             {
                 message = "/me " + message;
             }
@@ -1343,7 +1345,7 @@ namespace ModBot
         {
             try
             {
-                lock(betOptions)
+                lock (betOptions)
                 {
                     betOptions.Clear();
                     for (int i = 2; i < temp.Length; i++)
