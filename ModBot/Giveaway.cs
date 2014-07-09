@@ -177,7 +177,7 @@ namespace ModBot
             });
         }
 
-        public static String getWinner()
+        public static string getWinner()
         {
             Thread thread = new Thread(new ThreadStart(GetWinnerThread));
             thread.Start();

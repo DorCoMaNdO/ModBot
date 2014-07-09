@@ -32,13 +32,10 @@ namespace OneTimeConverter
             {
                 try
                 {
-                    String connstring = String.Format("Database={0};Data Source={1};User Id={2};Password={3};", databaseBox.Text, serverBox.Text, usernameBox.Text, passwordBox.Text);
-                    mysqlDB = new MySqlConnection(connstring);
+                    mysqlDB = new MySqlConnection("Database=" + databaseBox.Text + ";Data Source=" + serverBox.Text + ";User Id=" + usernameBox.Text + ";Password=" + passwordBox.Text + ";");
                     mysqlDB.Open();
 
-                    String sql = "SELECT * FROM viewers;";
-
-                    using (mysqlCMD = new MySqlCommand(sql, mysqlDB))
+                    using (mysqlCMD = new MySqlCommand("SELECT * FROM viewers;", mysqlDB))
                     {
                         using (MySqlDataReader r = mysqlCMD.ExecuteReader())
                         {
@@ -57,39 +54,39 @@ namespace OneTimeConverter
 
                     Console.WriteLine("ModBot.sqlite created.  Adding new users now.");
 
-                    sql = "CREATE TABLE IF NOT EXISTS transfers (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0);";
-                
-                    using (sqliteCMD = new SQLiteCommand(sql, sqliteDB))
+                    using (sqliteCMD = new SQLiteCommand("CREATE TABLE IF NOT EXISTS transfers (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0);", sqliteDB))
                     {
                         sqliteCMD.ExecuteNonQuery();
                     }
 
                     foreach (string user in transfers.Keys)
                     {
-                        sql = String.Format("INSERT INTO transfers (user, currency) VALUES (\"{0}\", {1})", user, transfers[user]);
                         //Console.WriteLine(sql);
-                        using (sqliteCMD = new SQLiteCommand(sql, sqliteDB))
+                        using (sqliteCMD = new SQLiteCommand("INSERT INTO transfers (user, currency) VALUES (\"" + user + "\", " + transfers[user] + ");", sqliteDB))
                         {
                             sqliteCMD.ExecuteNonQuery();
                         }
-                        Console.WriteLine(String.Format("Added {0} to the new database with {1} currency", user, transfers[user]));
+                        Console.WriteLine("Added " + user + " to the new database with " + transfers[user] + " currency");
                     }
-                    Console.WriteLine("Transfers complete.  Run ModBot.exe now.");
+                    Console.WriteLine("Transfers complete. Run ModBot.exe now.");
+                    System.Threading.Thread.Sleep(10000);
+                    Environment.Exit(0);
                 }
                 catch (Exception error)
                 {
                     Console.WriteLine(error);
                 }
-                
+
             }
-            else Console.WriteLine("ModBot.sqlite file already exists.  To run the converter, it must be deleted/renamed first.  **Make a backup of it if you're not sure what you're doing.");
+            else
+            {
+                Console.WriteLine("ModBot.sqlite file already exists. To run the converter, it must be deleted/renamed first. **Make a backup of it if you're not sure what you're doing.");
+            }
         }
 
-        private String capName(String user)
+        private string capName(string user)
         {
             return char.ToUpper(user[0]) + user.Substring(1);
         }
-
-        
     }
 }

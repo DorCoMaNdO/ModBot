@@ -201,10 +201,9 @@ namespace ModBot
             return false;
         }
 
-        public static bool cmdExists(String command)
+        public static bool cmdExists(string command)
         {
-            String sql = "SELECT * FROM commands";
-            using (cmd = new SQLiteCommand(sql, DB))
+            using (cmd = new SQLiteCommand("SELECT * FROM commands", DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -220,30 +219,25 @@ namespace ModBot
             return false;
         }
 
-        public static void addCommand(String command, int level, String output)
+        public static void addCommand(string command, int level, string output)
         {
-            String sql = String.Format("INSERT INTO commands (command, level, output) VALUES (\"{0}\", {1}, \"{2}\");", command, level, output);
-            //String sql = "INSERT INTO commands (command, level, output) VALUES (\"" + command + "\", " + level + ", \"" + output + "\");";
-            Console.WriteLine(sql);
-            using (cmd = new SQLiteCommand(sql, DB))
+            using (cmd = new SQLiteCommand("INSERT INTO commands (command, level, output) VALUES (\"" + command + "\", " + level + ", \"" + output + "\");", DB))
             {
                 cmd.ExecuteNonQuery();
             }
         }
 
-        public static void removeCommand(String command)
+        public static void removeCommand(string command)
         {
-            String sql = "DELETE FROM commands WHERE command = \"" + command + "\";";
-            using (cmd = new SQLiteCommand(sql, DB))
+            using (cmd = new SQLiteCommand("DELETE FROM commands WHERE command = \"" + command + "\";", DB))
             {
                 cmd.ExecuteNonQuery();
             }
         }
 
-        public static int LevelRequired(String command)
+        public static int LevelRequired(string command)
         {
-            String sql = String.Format("SELECT * FROM commands WHERE command = \"{0}\";", command);
-            using (cmd = new SQLiteCommand(sql, DB))
+            using (cmd = new SQLiteCommand("SELECT * FROM commands WHERE command = \"" + command + "\";", DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -251,32 +245,30 @@ namespace ModBot
                     {
                         return int.Parse(r["level"].ToString());
                     }
-                    return 0;
                 }
             }
+            return 0;
         }
 
         public static string getList()
         {
-            StringBuilder list = new StringBuilder();
-            String sql = "SELECT * FROM commands;";
-            using (cmd = new SQLiteCommand(sql, DB))
+            string commands = "";
+            using (cmd = new SQLiteCommand("SELECT * FROM commands;", DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
                     while (r.Read())
                     {
-                        list.Append(r["command"].ToString() + ", ");
+                        commands += r["command"].ToString() + ", ";
                     }
                 }
             }
-            return list.ToString();
+            return commands.Substring(0, commands.Length - 2);
         }
 
-        public static string getOutput(String command)
+        public static string getOutput(string command)
         {
-            String sql = "SELECT * FROM commands WHERE command = \"" + command + "\";";
-            using (cmd = new SQLiteCommand(sql, DB))
+            using (cmd = new SQLiteCommand("SELECT * FROM commands WHERE command = \"" + command + "\";", DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {

@@ -16,7 +16,7 @@ namespace ModBot
     public static class Irc
     {
         public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini");
-        public static String nick, password, channel, currency, admin, donationkey, user = "";
+        public static string nick, password, channel, currency, admin, donationkey, user = "";
         public static int g_iInterval, payout = 0;
         public static int[] intervals = { 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 };
         public static TcpClient irc;
@@ -31,7 +31,7 @@ namespace ModBot
         public static Timer currencyQueue;
         public static List<string> usersToLookup = new List<string>();
         public static Timer auctionLooper;
-        public static String greeting;
+        public static string greeting;
         public static bool greetingOn = false;
         public static int attempt = 0;
         public static int g_iLastCurrencyLockAnnounce = 0, g_iLastTop5Announce = 0;
@@ -42,7 +42,7 @@ namespace ModBot
         public static int g_iLastHandout = 0;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
 
-        public static void Initialize(String Nick, String Password, String Channel, String Currency, int Interval, int Payout, string DonationKey)
+        public static void Initialize(string Nick, string Password, string Channel, string Currency, int Interval, int Payout, string DonationKey)
         {
             string sResourceKeeper = ini.GetValue("Settings", "ResourceKeeper", "1");
             ini.SetValue("Settings", "ResourceKeeper", sResourceKeeper);
@@ -177,7 +177,7 @@ namespace ModBot
                     bool bIsStreaming = false;
                     using (WebClient w = new WebClient())
                     {
-                        String json_data = "";
+                        string json_data = "";
                         try
                         {
                             w.Proxy = null;
@@ -286,10 +286,10 @@ namespace ModBot
             auctionLooper = new Timer(auctionLoop, null, Timeout.Infinite, Timeout.Infinite);
         }
 
-        private static void parseMessage(String message)
+        private static void parseMessage(string message)
         {
             //Console.WriteLine(message);
-            String[] msg = message.Split(' ');
+            string[] msg = message.Split(' ');
 
             if (msg[0].Equals("PING"))
             {
@@ -312,7 +312,7 @@ namespace ModBot
                     }
                 }
                 //Console.WriteLine(message);
-                String temp = message.Substring(message.IndexOf(":", 1) + 1);
+                string temp = message.Substring(message.IndexOf(":", 1) + 1);
                 string sUser = Api.GetDisplayName(user);
                 Console.WriteLine(sUser + ": " + temp);
                 handleMessage(temp);
@@ -475,7 +475,7 @@ namespace ModBot
                         {
                             g_iLastTop5Announce = Api.GetUnixTimeNow();
                             Dictionary<string, int> TopPoints = new Dictionary<string, int>();
-                            foreach (String nick in Database.GetAllUsers())
+                            foreach (string nick in Database.GetAllUsers())
                             {
                                 if (!IgnoredUsers.Any(c => c.Equals(nick.ToLower())))
                                 {
@@ -507,7 +507,7 @@ namespace ModBot
                     }
                     else if (args[0].Equals("clear") && Database.getUserLevel(user) >= 3)
                     {
-                        foreach (String nick in Database.GetAllUsers())
+                        foreach (string nick in Database.GetAllUsers())
                         {
                             Database.setCurrency(nick, 0);
                         }
@@ -548,7 +548,7 @@ namespace ModBot
                         {
                             if (args[2].Equals("all"))
                             {
-                                foreach (String nick in Database.GetAllUsers())
+                                foreach (string nick in Database.GetAllUsers())
                                 {
                                     Database.addCurrency(nick, amount);
                                 }
@@ -570,7 +570,7 @@ namespace ModBot
                         {
                             if (args[2].Equals("all"))
                             {
-                                foreach (String nick in Database.GetAllUsers())
+                                foreach (string nick in Database.GetAllUsers())
                                 {
                                     Database.setCurrency(nick, amount);
                                 }
@@ -595,7 +595,7 @@ namespace ModBot
 
                             if (args[2].Equals("all"))
                             {
-                                foreach (String nick in Database.GetAllUsers())
+                                foreach (string nick in Database.GetAllUsers())
                                 {
                                     Database.removeCurrency(nick, amount);
                                 }
@@ -642,7 +642,7 @@ namespace ModBot
                             pool = new Pool(maxBet, betOptions);
                             bettingOpen = true;
                             sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currency);
-                            String temp = "Betting open for: ";
+                            string temp = "Betting open for: ";
                             for (int i = 0; i < betOptions.Count; i++)
                             {
                                 temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
@@ -671,7 +671,7 @@ namespace ModBot
                         bettingOpen = false;
                         poolLocked = false;
                         sendMessage("Betting Pool closed! A total of " + pool.getTotalBets() + " " + currency + " were bet.");
-                        String output = "Bets for:";
+                        string output = "Bets for:";
                         for (int i = 0; i < betOptions.Count; i++)
                         {
                             double x = ((double)pool.getTotalBetsOn(betOptions[i]) / pool.getTotalBets()) * 100;
@@ -731,7 +731,7 @@ namespace ModBot
                     {
                         if (bettingOpen)
                         {
-                            String temp = "Betting open for: ";
+                            string temp = "Betting open for: ";
                             for (int i = 0; i < betOptions.Count; i++)
                             {
                                 temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
@@ -847,7 +847,7 @@ namespace ModBot
                         else
                         {
                             //Console.WriteLine(tempInterval + " " + Array.IndexOf(intervals, tempInterval));
-                            String output = "Can't change payout interval.  Accepted values: ";
+                            string output = "Can't change payout interval.  Accepted values: ";
                             bool addComma = false;
                             foreach (int x in intervals)
                             {
@@ -876,17 +876,6 @@ namespace ModBot
                         }
                         if (args[1].Equals("set") && args.Length >= 3)
                         {
-                            /*StringBuilder sb = new StringBuilder();
-                            for (int i = 3; i < args.Length; i++)
-                            {
-                                if (i == 3 && args[i].StartsWith("/"))
-                                {
-                                    sb.Append(args[i].Substring(1, args[i].Length - 1) + " ");
-                                }
-                                else sb.Append(args[i] + " ");
-                            }
-
-                            greeting = sb.ToString();*/
                             string sGreeting = "";
                             for (int i = 2; i < args.Length; i++)
                             {
@@ -895,7 +884,6 @@ namespace ModBot
                             greeting = sGreeting.Substring(0, sGreeting.Length - 1);
                             ini.SetValue("Settings", "Channel_Greeting", greeting);
                             sendMessage("Your new greeting is: " + greeting);
-
                         }
                     }
                     if (args[0].Equals("addsub") && args.Length >= 2)
@@ -904,7 +892,10 @@ namespace ModBot
                         {
                             sendMessage(Api.capName(args[1]) + " added as a subscriber.");
                         }
-                        else sendMessage(Api.capName(args[1]) + " does not exist in the database.  Have them type !<currency> then try again.");
+                        else
+                        {
+                            sendMessage(Api.capName(args[1]) + " does not exist in the database.  Have them type !<currency> then try again.");
+                        }
                     }
                     if (args[0].Equals("removesub") && args.Length >= 2)
                     {
@@ -912,7 +903,10 @@ namespace ModBot
                         {
                             sendMessage(Api.capName(args[1]) + " removed from subscribers.");
                         }
-                        else sendMessage(Api.capName(args[1]) + " does not exist in the database.");
+                        else
+                        {
+                            sendMessage(Api.capName(args[1]) + " does not exist in the database.");
+                        }
                     }
                 }
                 if (Database.getUserLevel(user) >= 3)
@@ -928,13 +922,19 @@ namespace ModBot
                                 sendMessage(tNick + " added as a bot moderator.");
                                 Log(user + " added " + tNick + "as a bot moderator.");
                             }
-                            else sendMessage("Cannot change broadcaster access level.");
+                            else
+                            {
+                                sendMessage("Cannot change broadcaster access level.");
+                            }
                         }
-                        else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
+                        else
+                        {
+                            sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
+                        }
                     }
                     if (args[0].Equals("addsuper") && args.Length >= 2)
                     {
-                        String tNick = Api.capName(args[1]);
+                        string tNick = Api.capName(args[1]);
                         if (Database.userExists(tNick))
                         {
                             if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
@@ -942,9 +942,15 @@ namespace ModBot
                                 Database.setUserLevel(tNick, 2);
                                 sendMessage(tNick + " added as a bot Super Mod.");
                             }
-                            else sendMessage("Cannot change Broadcaster access level.");
+                            else
+                            {
+                                sendMessage("Cannot change Broadcaster access level.");
+                            }
                         }
-                        else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
+                        else
+                        {
+                            sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
+                        }
                     }
                     if (args[0].Equals("demote") && args.Length >= 2)
                     {
@@ -958,11 +964,20 @@ namespace ModBot
                                     Database.setUserLevel(tNick, Database.getUserLevel(tNick) - 1);
                                     sendMessage(tNick + " demoted.");
                                 }
-                                else sendMessage("Cannot change Broadcaster access level.");
+                                else
+                                {
+                                    sendMessage("Cannot change Broadcaster access level.");
+                                }
                             }
-                            else sendMessage("User is already Access Level 0.  Cannot demote further.");
+                            else
+                            {
+                                sendMessage("User is already Access Level 0.  Cannot demote further.");
+                            }
                         }
-                        else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try again.");
+                        else
+                        {
+                            sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try again.");
+                        }
                     }
                     if (args[0].Equals("setlevel") && args.Length >= 3)
                     {
@@ -981,7 +996,10 @@ namespace ModBot
                             }
                             else sendMessage("Cannot change that mod's access level.");
                         }
-                        else sendMessage(tNick + " does not exist in the database.  Have them type !currency, then try again.");
+                        else
+                        {
+                            sendMessage(tNick + " does not exist in the database.  Have them type !currency, then try again.");
+                        }
                     }
                 }
                 if (Database.getUserLevel(user) >= 2)
@@ -991,60 +1009,64 @@ namespace ModBot
                         int level;
                         if (int.TryParse(args[1], out level) && level >= 0 && level <= 4)
                         {
-                            String command = args[2].ToLower();
+                            string command = args[2].ToLower();
                             if (!Commands.CheckCommand(command))
                             {
-                                StringBuilder sb = new StringBuilder();
+                                string output = "";
                                 for (int i = 3; i < args.Length; i++)
                                 {
-                                    if (args[i].StartsWith("/") && i == 4)
-                                    {
-                                        sb.Append(args[i].Substring(1, args[i].Length - 1));
-                                    }
-                                    else sb.Append(args[i]);
-                                    if (i != args.Length - 1)
-                                    {
-                                        sb.Append(" ");
-                                    }
+                                    output += args[i] + " ";
                                 }
-                                Commands.addCommand(command, level, sb.ToString());
+                                Commands.addCommand(command, level, output.Substring(0, output.Length - 1));
                                 sendMessage(command + " command added.");
                             }
-                            else sendMessage(command + " is already a command.");
+                            else
+                            {
+                                sendMessage(command + " is already a command.");
+                            }
                         }
-                        else sendMessage("Invalid syntax.  Correct syntax is \"!modbot addcommand <access level> <command> <text you want to output>");
+                        else 
+                        {
+                            sendMessage("Invalid syntax.  Correct syntax is \"!modbot addcommand <access level> <command> <text you want to output>");
+                        }
                     }
                     else if (args[0].Equals("removecommand") && args.Length >= 2)
                     {
-                        String command = args[1].ToLower();
+                        string command = args[1].ToLower();
                         if (Commands.cmdExists(command))
                         {
                             Commands.removeCommand(command);
                             sendMessage(command + " command removed.");
                         }
-                        else sendMessage(command + " command does not exist.");
+                        else
+                        {
+                            sendMessage(command + " command does not exist.");
+                        }
                     }
                 }
-                else if (Database.getUserLevel(user) >= 1)
+                if (Database.getUserLevel(user) >= 1)
                 {
                     if (args[0].Equals("commmandlist"))
                     {
-                        String temp = Commands.getList();
+                        string temp = Commands.getList();
                         if (temp != "")
                         {
-                            sendMessage("Current commands: " + temp.Substring(0, temp.Length - 2));
+                            sendMessage("Current commands: " + temp);
                         }
-                        else sendMessage("Currently no custom commands");
+                        else
+                        {
+                            sendMessage("No custom commands were added.");
+                        }
                     }
                 }
             }
         }
 
-        private static void handleMessage(String message)
+        private static void handleMessage(string message)
         {
             if (Commands.CheckCommand(user, message, true)) return;
 
-            //String[] msg = message.Split(' ');
+            //string[] msg = message.Split(' ');
 
             /*if (msg[0].Equals("!restart") && db.getUserLevel(user) == 3)
             {
@@ -1056,7 +1078,7 @@ namespace ModBot
 
 
 
-        private static void addUserToList(String nick)
+        private static void addUserToList(string nick)
         {
             lock (users)
             {
@@ -1067,7 +1089,7 @@ namespace ModBot
             }
         }
 
-        public static bool IsUserInList(String nick)
+        public static bool IsUserInList(string nick)
         {
             lock (users)
             {
@@ -1079,7 +1101,7 @@ namespace ModBot
             return false;
         }
 
-        private static void removeUserFromList(String nick)
+        private static void removeUserFromList(string nick)
         {
             lock (users)
             {
@@ -1141,14 +1163,14 @@ namespace ModBot
             thread.Join();
         }
 
-        private static String getUser(String message)
+        private static string getUser(string message)
         {
-            String[] temp = message.Split('!');
+            string[] temp = message.Split('!');
             user = temp[0].Substring(1);
             return Api.capName(user);
         }
 
-        private static void setChannel(String tChannel)
+        private static void setChannel(string tChannel)
         {
             if (tChannel.StartsWith("#"))
             {
@@ -1160,7 +1182,7 @@ namespace ModBot
             }
         }
 
-        private static void setAdmin(String tChannel)
+        private static void setAdmin(string tChannel)
         {
             if (tChannel.StartsWith("#"))
             {
@@ -1172,7 +1194,7 @@ namespace ModBot
             }
         }
 
-        public static void setCurrency(String tCurrency)
+        public static void setCurrency(string tCurrency)
         {
             if (tCurrency.StartsWith("!"))
             {
@@ -1194,7 +1216,7 @@ namespace ModBot
             payout = tPayout;
         }
 
-        private static void sendRaw(String message)
+        private static void sendRaw(string message)
         {
             try
             {
@@ -1217,7 +1239,7 @@ namespace ModBot
 
         }
 
-        public static void sendMessage(String message, bool usemecommand = true)
+        public static void sendMessage(string message, bool usemecommand = true)
         {
             if (usemecommand)
             {
@@ -1227,10 +1249,10 @@ namespace ModBot
             Console.WriteLine(nick + ": " + message.Substring(4));
         }
 
-        private static String checkBtag(String person)
+        private static string checkBtag(string person)
         {
             //DB Lookup person to see if they have a battletag set
-            String btag = Database.getBtag(person);
+            string btag = Database.getBtag(person);
             //print(btag);
             if (btag == null)
             {
@@ -1247,7 +1269,7 @@ namespace ModBot
                 string sSubURL = ini.GetValue("Settings", "Subsribers_URL", "");
                 if (sSubURL != "")
                 {
-                    String json_data = "";
+                    string json_data = "";
                     using (WebClient w = new WebClient())
                     {
                         try
@@ -1327,7 +1349,7 @@ namespace ModBot
                     lHandoutUsers.Add(Api.capName(admin));
                 }
 
-                foreach (String person in lHandoutUsers)
+                foreach (string person in lHandoutUsers)
                 {
                     if (Database.isSubscriber(person) || temp.Contains(person))
                     {
@@ -1341,7 +1363,7 @@ namespace ModBot
             }
         }
 
-        private static void buildBetOptions(String[] temp)
+        private static void buildBetOptions(string[] temp)
         {
             try
             {
@@ -1368,7 +1390,7 @@ namespace ModBot
             }
         }
 
-        private static void addToLookups(String nick)
+        private static void addToLookups(string nick)
         {
             if (usersToLookup.Count == 0)
             {
@@ -1384,9 +1406,9 @@ namespace ModBot
         {
             if (usersToLookup.Count != 0)
             {
-                String output = currency + ":";
+                string output = currency + ":";
                 bool addComma = false;
-                foreach (String person in usersToLookup)
+                foreach (string person in usersToLookup)
                 {
                     if (Database.userExists(person))
                     {
@@ -1427,7 +1449,7 @@ namespace ModBot
             }
         }
 
-        private static void Log(String output)
+        private static void Log(string output)
         {
             try
             {

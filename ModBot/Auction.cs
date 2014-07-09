@@ -7,7 +7,7 @@ namespace ModBot
 {
     public class Auction
     {
-        public String highBidder {get; private set;}
+        public string highBidder {get; private set;}
         public int highBid { get; private set; }
 
         public Auction()
@@ -16,7 +16,7 @@ namespace ModBot
             highBid = 0;
         }
 
-        public bool placeBid(String nick, int amount)
+        public bool placeBid(string nick, int amount)
         {
             if (Database.checkCurrency(nick) >= amount)
             {

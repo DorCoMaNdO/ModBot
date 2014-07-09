@@ -57,7 +57,7 @@ namespace ModBotUpdater
         [Category("Appearance")]
         [Description("Gets or sets the text displayed above the control.")]
         [BrowsableAttribute(true)]
-        public new String Text
+        public new string Text
         {
             get;
             set;

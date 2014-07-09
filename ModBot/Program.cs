@@ -115,7 +115,7 @@ namespace ModBot
                 }
             }
 
-            private static bool IsFileLocked(String FileLocation)
+            private static bool IsFileLocked(string FileLocation)
             {
                 FileInfo file = new FileInfo(FileLocation);
                 FileStream stream = null;

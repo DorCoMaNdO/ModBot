@@ -21,7 +21,7 @@ namespace ModBotUpdater
             CheckUpdates();
         }
 
-        private bool IsFileLocked(String FileLocation)
+        private bool IsFileLocked(string FileLocation)
         {
             FileInfo file = new FileInfo(FileLocation);
             FileStream stream = null;

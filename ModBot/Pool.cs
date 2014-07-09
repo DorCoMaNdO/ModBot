@@ -19,7 +19,7 @@ namespace ModBot
             totalBets = 0;
         }
 
-        public void placeBet(String nick, string option, int amount)
+        public void placeBet(string nick, string option, int amount)
         {
             if (options.Contains(option) && amount <= maxBet)
             {
@@ -61,7 +61,7 @@ namespace ModBot
         private void buildWinners(string winBet)
         {
             winners = new Dictionary<string, int>();
-            foreach (String nick in bets.Keys)
+            foreach (string nick in bets.Keys)
             {
                 if (bets[nick].betOn == winBet)
                 {
@@ -84,7 +84,7 @@ namespace ModBot
         private void buildTotalBets()
         {
             totalBets = 0;
-            foreach (String nick in bets.Keys)
+            foreach (string nick in bets.Keys)
             {
                 totalBets += bets[nick].betAmount;
             }
@@ -98,7 +98,7 @@ namespace ModBot
         public int getNumberOfBets(string bet)
         {
             int numberOfBets = 0;
-            foreach (String nick in bets.Keys)
+            foreach (string nick in bets.Keys)
             {
                 if (bets[nick].betOn == bet)
                 {
@@ -111,7 +111,7 @@ namespace ModBot
         public int getTotalBetsOn(string bet)
         {
             int totalBetsOnOption = 0;
-            foreach (String nick in bets.Keys)
+            foreach (string nick in bets.Keys)
             {
                 if (bets[nick].betOn == bet)
                 {
@@ -127,26 +127,26 @@ namespace ModBot
             return winners;
         }
 
-        public int getBetAmount(String nick)
+        public int getBetAmount(string nick)
         {
             return bets[nick].betAmount;
         }
 
-        public string getBetOn(String nick)
+        public string getBetOn(string nick)
         {
             return bets[nick].betOn;
         }
 
         public void cancel()
         {
-            foreach (String nick in bets.Keys)
+            foreach (string nick in bets.Keys)
             {
                 Database.addCurrency(nick, bets[nick].betAmount);
             }
             bets.Clear();
         }
 
-        public bool isInPool(String nick)
+        public bool isInPool(string nick)
         {
             return bets.ContainsKey(nick);
         }

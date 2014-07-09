@@ -117,7 +117,7 @@ namespace ModBot
             }));*/
         }
 
-        public static void newUser(String user, bool bCheckDisplayName = true)
+        public static void newUser(string user, bool bCheckDisplayName = true)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -153,7 +153,7 @@ namespace ModBot
             return users;
         }
 
-        public static void setDisplayName(String user, string name)
+        public static void setDisplayName(string user, string name)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -166,7 +166,7 @@ namespace ModBot
             }
         }
 
-        public static string getDisplayName(String user)
+        public static string getDisplayName(string user)
         {
             user = Api.capName(user);
             if (userExists(user))
@@ -190,7 +190,7 @@ namespace ModBot
             }
         }
 
-        public static void setCurrency(String user, int amount)
+        public static void setCurrency(string user, int amount)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -204,7 +204,7 @@ namespace ModBot
 
         }
 
-        public static int checkCurrency(String user)
+        public static int checkCurrency(string user)
         {
             user = Api.capName(user);
             if (userExists(user)) {
@@ -227,7 +227,7 @@ namespace ModBot
             }
         }
 
-        public static void addCurrency(String user, int amount)
+        public static void addCurrency(string user, int amount)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -240,7 +240,7 @@ namespace ModBot
             }
         }
 
-        public static void removeCurrency(String user, int amount)
+        public static void removeCurrency(string user, int amount)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -253,7 +253,7 @@ namespace ModBot
             }
         }
 
-        public static bool userExists(String user)
+        public static bool userExists(string user)
         {
             user = Api.capName(user);
             using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", DB))
@@ -272,7 +272,7 @@ namespace ModBot
             return false;
         }
 
-        public static String getBtag(String user)
+        public static string getBtag(string user)
         {
             user = Api.capName(user);
             if (userExists(user))
@@ -300,7 +300,7 @@ namespace ModBot
             return null;
         }
 
-        public static void setBtag(String user, String btag)
+        public static void setBtag(string user, string btag)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -313,7 +313,7 @@ namespace ModBot
             }
         }
 
-        public static bool isSubscriber(String user)
+        public static bool isSubscriber(string user)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -339,7 +339,7 @@ namespace ModBot
             return false;
         }
 
-        public static bool addSub(String user)
+        public static bool addSub(string user)
         {
             user = Api.capName(user);
             if (userExists(user))
@@ -353,7 +353,7 @@ namespace ModBot
             return false;
         }
 
-        public static bool removeSub(String user)
+        public static bool removeSub(string user)
         {
             user = Api.capName(user);
             if (userExists(user))
@@ -367,7 +367,7 @@ namespace ModBot
             return false;
         }
 
-        public static int getUserLevel(String user)
+        public static int getUserLevel(string user)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -390,7 +390,7 @@ namespace ModBot
             return 0;
         }
 
-        public static void setUserLevel(String user, int level)
+        public static void setUserLevel(string user, int level)
         {
             user = Api.capName(user);
             using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET userlevel = " + level + " WHERE user = '" + user + "';", DB))
@@ -399,7 +399,7 @@ namespace ModBot
             }
         }
 
-        public static TimeSpan getTimeWatched(String user)
+        public static TimeSpan getTimeWatched(string user)
         {
             user = Api.capName(user);
             if (!userExists(user))
@@ -422,7 +422,7 @@ namespace ModBot
             return new TimeSpan();
         }
 
-        public static void addTimeWatched(String user, int time)
+        public static void addTimeWatched(string user, int time)
         {
             user = Api.capName(user);
             using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", DB))
@@ -431,7 +431,7 @@ namespace ModBot
             }
         }
 
-        private static bool tableExists(String table)
+        private static bool tableExists(string table)
         {
             try
             {
@@ -456,7 +456,7 @@ namespace ModBot
             return false;
         }
 
-        private static bool tableHasData(String table)
+        private static bool tableHasData(string table)
         {
             using (cmd = new SQLiteCommand("SELECT * FROM '" + table + "';", DB))
             {
