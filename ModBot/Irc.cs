@@ -15,7 +15,7 @@ namespace ModBot
 {
     public static class Irc
     {
-        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini");
+        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini");
         public static String nick, password, channel, currency, admin, donationkey, user = "";
         public static int g_iInterval, payout = 0;
         public static int[] intervals = { 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 };
@@ -24,10 +24,10 @@ namespace ModBot
         public static StreamWriter write;
         public static bool bettingOpen, auctionOpen, poolLocked = false;
         private static Auction auction;
-        public static Pool pool;
+        private static Pool pool;
         public static List<string> users = new List<string>(), IgnoredUsers = new List<string>();
         public static DateTime time;
-        public static String[] betOptions;
+        public static List<string> betOptions = new List<string>();
         public static Timer currencyQueue;
         public static List<string> usersToLookup = new List<string>();
         public static Timer auctionLooper;
@@ -78,6 +78,13 @@ namespace ModBot
             Commands.Add("!raffle", Command_Giveaway);
             Commands.Add("!giveaway", Command_Giveaway);
             Commands.Add("!" + currency, Command_Currency);
+            Commands.Add("!gamble", Command_Gamble);
+            Commands.Add("!bet", Command_Bet);
+            Commands.Add("!auction", Command_Auction);
+            Commands.Add("!bid", Command_Bid);
+            Commands.Add("!btag", Command_BTag);
+            Commands.Add("!battletag", Command_BTag);
+            Commands.Add("!modbot", Command_ModBot);
         }
 
         private static void Connect()
@@ -620,134 +627,112 @@ namespace ModBot
             }
         }
 
-        private static void handleMessage(String message)
+        private static void Command_Gamble(string cmd, string[] args)
         {
-            if (Commands.CheckCommand(user, message, true)) return;
-
-            String[] msg = message.Split(' ');
-
-            ///////////////////BETTING COMMANDS//////////////////////////
-            #region betting
-            //////////////////ADMIN BET COMMANDS/////////////////////////
-            if (msg[0].Equals("!gamble") && msg.Length >= 2)
+            if (args != null && args.Length >= 1 && Database.getUserLevel(user) >= 1)
             {
-                if (Database.getUserLevel(user) >= 1)
+                if (args[0].Equals("open") && args.Length >= 4)
                 {
-                    if (msg[1].Equals("open") && msg.Length >= 5)
+                    if (!bettingOpen)
                     {
-                        if (!bettingOpen)
+                        int maxBet;
+                        if (int.TryParse(args[1], out maxBet))
                         {
-                            int maxBet;
-                            if (int.TryParse(msg[2], out maxBet))
+                            buildBetOptions(args);
+                            pool = new Pool(maxBet, betOptions);
+                            bettingOpen = true;
+                            sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currency);
+                            String temp = "Betting open for: ";
+                            for (int i = 0; i < betOptions.Count; i++)
                             {
-                                buildBetOptions(msg);
-                                pool = new Pool(maxBet, betOptions);
-                                bettingOpen = true;
-                                sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currency);
-                                String temp = "Betting open for: ";
-                                for (int i = 0; i < betOptions.Length; i++)
-                                {
-                                    temp += "(" + (i+1).ToString() + ") " + betOptions[i] + " ";
-                                }
-                                sendMessage(temp);
-                                sendMessage("Bet by typing \"!bet 50 1\" to bet 50 " + currency + " on option 1,  \"!bet 25 2\" to bet 25 on option 2, etc");
+                                temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
                             }
-                            else sendMessage("Invalid syntax.  Open a betting pool with: !gamble open <maxBet> <option1>, <option2>, .... <optionN> (comma delimited options)");
+                            sendMessage(temp);
+                            sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1,  \"!bet 25 option2name\" to bet 25 on option 2, etc");
                         }
-                        else sendMessage("Betting Pool already opened.  Close or cancel the current one before starting a new one.");
+                        else sendMessage("Invalid syntax.  Open a betting pool with: !gamble open <maxBet> <option1>, <option2>, .... <optionN> (comma delimited options)");
                     }
-                    else if (msg[1].Equals("close"))
+                    else sendMessage("Betting Pool already opened.  Close or cancel the current one before starting a new one.");
+                }
+                else if (args[0].Equals("close"))
+                {
+                    if (bettingOpen)
                     {
-                        if (bettingOpen)
+                        poolLocked = true;
+                        sendMessage("Bets locked in.  Good luck everyone!");
+                    }
+                    else sendMessage("No pool currently open.");
+                }
+                else if (args[0].Equals("winner") && args.Length == 2)
+                {
+                    if (bettingOpen && poolLocked && betOptions.Contains(args[1]))
+                    {
+                        pool.closePool(args[1]);
+                        bettingOpen = false;
+                        poolLocked = false;
+                        sendMessage("Betting Pool closed! A total of " + pool.getTotalBets() + " " + currency + " were bet.");
+                        String output = "Bets for:";
+                        for (int i = 0; i < betOptions.Count; i++)
                         {
-                            poolLocked = true;
-                            sendMessage("Bets locked in.  Good luck everyone!");
+                            double x = ((double)pool.getTotalBetsOn(betOptions[i]) / pool.getTotalBets()) * 100;
+                            output += " " + betOptions[i] + " - " + pool.getNumberOfBets(betOptions[i]) + " (" + Math.Round(x) + "%);";
+                            //Console.WriteLine("TESTING: getTotalBetsOn(" + i + ") = " + pool.getTotalBetsOn(i) + " --- getTotalBets() = " + pool.getTotalBets() + " ---  (double)betsOn(i)/totalBets() = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) + " --- *100 = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100 + " --- Converted to a double = " + (double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100) + " --- Rounded double = " + Math.Round((double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100)));
                         }
-                        else sendMessage("No pool currently open.");
-                    }
-                    else if (msg[1].Equals("winner") && msg.Length == 3)
-                    {
-                        if (bettingOpen && poolLocked)
+                        sendMessage(output);
+                        Dictionary<string, int> winners = pool.getWinners();
+                        output = "Winners:";
+                        if (winners.Count == 0)
                         {
-                            int winIndex;
-                            if (int.TryParse(msg[2], out winIndex) && winIndex > 0)
+                            sendMessage(output + " No One!");
+                        }
+                        for (int i = 0; i < winners.Count; i++)
+                        {
+                            output += " " + winners.ElementAt(i).Key + " - " + winners.ElementAt(i).Value + " (Bet " + pool.getBetAmount(winners.ElementAt(i).Key) + ")";
+                            if (i == 0 && i == winners.Count - 1)
                             {
-                                winIndex = winIndex - 1;
-                                if (winIndex < betOptions.Length)
-                                {
-                                    pool.closePool(winIndex);
-                                    bettingOpen = false;
-                                    poolLocked = false;
-                                    sendMessage("Betting Pool closed! A total of " + pool.getTotalBets() + " " + currency + " were bet.");
-                                    String output = "Bets for:";
-                                    for (int i = 0; i < betOptions.Length; i++)
-                                    {
-                                        double x = ((double)pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100;
-                                        output += " " + betOptions[i] + " - " + pool.getNumberOfBets(i) + " (" + Math.Round(x) + "%);";
-                                        //Console.WriteLine("TESTING: getTotalBetsOn(" + i + ") = " + pool.getTotalBetsOn(i) + " --- getTotalBets() = " + pool.getTotalBets() + " ---  (double)betsOn(i)/totalBets() = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) + " --- *100 = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100 + " --- Converted to a double = " + (double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100) + " --- Rounded double = " + Math.Round((double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100)));
-                                    }
-                                    sendMessage(output);
-                                    Dictionary<string, int> winners = pool.getWinners();
-                                    output = "Winners:";
-                                    if (winners.Count == 0)
-                                    {
-                                        sendMessage(output + " No One!");
-                                    }
-                                    for (int i = 0; i < winners.Count; i++)
-                                    {
-                                        output += " " + winners.ElementAt(i).Key + " - " + winners.ElementAt(i).Value + " (Bet " + pool.getBetAmount(winners.ElementAt(i).Key) + ")";
-                                        if (i == 0 && i == winners.Count - 1)
-                                        {
-                                            sendMessage(output);
-                                            output = "";
-                                        }
-                                        else if ((i != 0 && i % 10 == 0) || i == winners.Count - 1)
-                                        {
-                                            sendMessage(output);
-                                            output = "";
-                                        }
-                                    }
-
-                                }
-                                else
-                                {
-                                    sendMessage("Close the betting pool by typing \"!gamble winner 1\" if option 1 won, \"!gamble winner 2\" for option 2, etc.");
-                                    sendMessage("You can type !bet help to get a list of the options for a reminder of which is each number if needed");
-                                }
+                                sendMessage(output);
+                                output = "";
                             }
-                            else
+                            else if ((i != 0 && i % 10 == 0) || i == winners.Count - 1)
                             {
-                                sendMessage("Close the betting pool by typing \"!gamble winner 1\" if option 1 won, \"!gamble winner 2\" for option 2, etc.");
-                                sendMessage("You can type !bet help to get a list of the options for a reminder of which option is each number if needed");
+                                sendMessage(output);
+                                output = "";
                             }
                         }
-                        else sendMessage("Betting pool must be open and bets must be locked before you can specify a winner.");
                     }
-                    else if (msg[1].Equals("cancel"))
+                    else
                     {
-                        if (pool != null)
-                        {
-                            pool.cancel();
-                            bettingOpen = false;
-                            poolLocked = false;
-                            sendMessage("Betting Pool canceled.  All bets refunded");
-                        }
+                        sendMessage("Close the betting pool by typing \"!gamble winner option1name\" if option 1 won, \"!gamble winner option2name\" for option 2, etc.");
+                        sendMessage("You can type !bet help to get a list of the options for a reminder of which option is each number if needed");
                     }
                 }
+                else sendMessage("Betting pool must be open and bets must be locked before you can specify a winner.");
             }
-            ////////////////USER BET COMMANDS////////////////////////
-            if (msg[0].Equals("!bet") && bettingOpen)
+            else if (args[0].Equals("cancel"))
             {
-                if (msg.Length >= 2)
+                if (pool != null)
+                {
+                    pool.cancel();
+                    bettingOpen = false;
+                    poolLocked = false;
+                    sendMessage("Betting Pool canceled.  All bets refunded");
+                }
+            }
+        }
+
+        private static void Command_Bet(string cmd, string[] args)
+        {
+            if (bettingOpen)
+            {
+                if (args != null)
                 {
                     int betAmount;
-                    int betOn;
-                    if (msg[1].Equals("help"))
+                    if (args[0].Equals("help"))
                     {
                         if (bettingOpen)
                         {
                             String temp = "Betting open for: ";
-                            for (int i = 0; i < betOptions.Length; i++)
+                            for (int i = 0; i < betOptions.Count; i++)
                             {
                                 temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
                             }
@@ -755,11 +740,11 @@ namespace ModBot
                             sendMessage("Bet by typing \"!bet 50 1\" to bet 50 " + currency + " on option 1,  \"bet 25 2\" to bet 25 on option 2, etc");
                         }
                     }
-                    else if (int.TryParse(msg[1], out betAmount) && msg.Length >= 3 && bettingOpen && !poolLocked)
+                    else if (int.TryParse(args[0], out betAmount) && args.Length >= 2 && bettingOpen && !poolLocked)
                     {
-                        if (int.TryParse(msg[2], out betOn) && betOn > 0 && betOn <= betOptions.Length)
+                        if (betOptions.Contains(args[1]))
                         {
-                            pool.placeBet(user, betOn - 1, betAmount);
+                            pool.placeBet(user, args[1], betAmount);
                         }
                     }
                 }
@@ -767,55 +752,54 @@ namespace ModBot
                 {
                     if (pool.isInPool(user))
                     {
-                        sendMessage(user + ": " + betOptions[pool.getBetOn(user)] + " (" + pool.getBetAmount(user) + ")");
+                        sendMessage(user + ": " + pool.getBetOn(user) + " (" + pool.getBetAmount(user) + ")");
                     }
                 }
             }
-            #endregion
-            ////////////////END BET COMMANDS/////////////////////////
+        }
 
-            ////////////////AUCTION COMMANDS/////////////////////////
-            #region auction
-            else if (msg[0].Equals("!auction") && msg.Length >= 2)
+        private static void Command_Auction(string cmd, string[] args)
+        {
+            if (args != null && Database.getUserLevel(user) >= 1)
             {
-                if (Database.getUserLevel(user) >= 1)
+                if (args[0].Equals("open"))
                 {
-                    if (msg[1].Equals("open"))
+                    if (!auctionOpen)
                     {
-                        if (!auctionOpen)
-                        {
-                            auctionOpen = true;
-                            auction = new Auction();
-                            sendMessage("Auction open!  Bid by typing \"!bid 50\", etc.");
-                        }
-                        else sendMessage("Auction already open.  Close or cancel the previous one first.");
+                        auctionOpen = true;
+                        auction = new Auction();
+                        sendMessage("Auction open!  Bid by typing \"!bid 50\", etc.");
                     }
-                    else if (msg[1].Equals("close"))
+                    else sendMessage("Auction already open.  Close or cancel the previous one first.");
+                }
+                else if (args[0].Equals("close"))
+                {
+                    if (auctionOpen)
                     {
-                        if (auctionOpen)
-                        {
-                            auctionOpen = false;
-                            sendMessage("Auction closed!  Winner is: " + checkBtag(auction.highBidder) + " (" + auction.highBid + ")");
-                        }
-                        else sendMessage("No auction open.");
+                        auctionOpen = false;
+                        sendMessage("Auction closed!  Winner is: " + checkBtag(auction.highBidder) + " (" + auction.highBid + ")");
                     }
-                    else if (msg[1].Equals("cancel"))
+                    else sendMessage("No auction open.");
+                }
+                else if (args[0].Equals("cancel"))
+                {
+                    if (auctionOpen)
                     {
-                        if (auctionOpen)
-                        {
-                            auctionOpen = false;
-                            auction.Cancel();
-                            sendMessage("Auction cancelled.  Bids refunded.");
-                        }
-                        else sendMessage("No auction open.");
+                        auctionOpen = false;
+                        auction.Cancel();
+                        sendMessage("Auction cancelled.  Bids refunded.");
                     }
+                    else sendMessage("No auction open.");
                 }
             }
+        }
 
-            if (msg[0].Equals("!bid") && msg.Length >= 2)
+        private static void Command_Bid(string cmd, string[] args)
+        {
+            if (args != null)
             {
                 int amount;
-                if (int.TryParse(msg[1], out amount))
+                if (int.TryParse(args[0], out amount))
                 {
                     if (auctionOpen)
                     {
@@ -826,188 +810,199 @@ namespace ModBot
                     }
                 }
             }
-            #endregion
-            ///////////////END AUCTION COMMANDS////////////////////////
+        }
 
-            ////////////////ADMIN COMMANDS//////////////////////////////
-            #region admin
-            else if (msg[0].Equals("!admin") && Database.getUserLevel(user) >= 3 && msg.Length >= 2)
+        private static void Command_BTag(string cmd, string[] args)
+        {
+            if (args != null && args[1].Contains("#"))
             {
-                if (msg[1].Equals("payout") && msg.Length >= 3)
+                Database.setBtag(user, args[1]);
+            }
+        }
+
+        private static void Command_ModBot(string cmd, string[] args)
+        {
+            if (args != null)
+            {
+                if (Database.getUserLevel(user) >= 4)
                 {
-                    int amount = 0;
-                    if (int.TryParse(msg[2], out amount) && amount > 0)
+                    if (args[0].Equals("payout") && args.Length >= 2)
                     {
-                        setPayout(amount);
-                        sendMessage("New Payout Amount: " + amount);
-                    }
-                    else sendMessage("Can't change payout amount.  Must be a valid integer greater than 0");
-                }
-                if (msg[1].Equals("interval") && msg.Length >= 3)
-                {
-                    int tempInterval = -1;
-                    if (int.TryParse(msg[2], out tempInterval) && Array.IndexOf(intervals, tempInterval) > -1)
-                    {
-                        setInterval(tempInterval);
-                        sendMessage("New Payout Interval: " + tempInterval);
-                    }
-                    else
-                    {
-                        //Console.WriteLine(tempInterval + " " + Array.IndexOf(intervals, tempInterval));
-                        String output = "Can't change payout interval.  Accepted values: ";
-                        bool addComma = false;
-                        foreach (int x in intervals)
+                        int amount = 0;
+                        if (int.TryParse(args[1], out amount) && amount > 0)
                         {
-                            if (addComma)
+                            setPayout(amount);
+                            sendMessage("New Payout Amount: " + amount);
+                        }
+                        else sendMessage("Can't change payout amount.  Must be a valid integer greater than 0");
+                    }
+                    if (args[0].Equals("interval") && args.Length >= 2)
+                    {
+                        int tempInterval = -1;
+                        if (int.TryParse(args[1], out tempInterval) && Array.IndexOf(intervals, tempInterval) > -1)
+                        {
+                            setInterval(tempInterval);
+                            sendMessage("New Payout Interval: " + tempInterval);
+                        }
+                        else
+                        {
+                            //Console.WriteLine(tempInterval + " " + Array.IndexOf(intervals, tempInterval));
+                            String output = "Can't change payout interval.  Accepted values: ";
+                            bool addComma = false;
+                            foreach (int x in intervals)
                             {
-                                output += ", ";
+                                if (addComma)
+                                {
+                                    output += ", ";
+                                }
+                                output += x;
+                                addComma = true;
                             }
-                            output += x;
-                            addComma = true;
+                            sendMessage(output + " minutes.");
                         }
-                        sendMessage(output + " minutes.");
                     }
-                }
-                if (msg[1].Equals("addmod") && msg.Length >= 3)
-                {
-                    string tNick = Api.capName(msg[2]);
-                    if (Database.userExists(tNick))
+                    if (args[0].Equals("greeting") && args.Length >= 2)
                     {
-                        if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
+                        //Console.WriteLine(Database.getUserLevel(user) + "test 1");
+                        if (args[1].Equals("on"))
                         {
-                            Database.setUserLevel(tNick, 1);
-                            sendMessage(tNick + " added as a bot moderator.");
-                            Log(user + " added " + tNick + "as a bot moderator.");
+                            greetingOn = true;
+                            sendMessage("Greetings turned on.");
                         }
-                        else sendMessage("Cannot change broadcaster access level.");
-                    }
-                    else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
-                }
-                if (msg[1].Equals("addsuper") && msg.Length >= 3)
-                {
-                    String tNick = Api.capName(msg[2]);
-                    if (Database.userExists(tNick))
-                    {
-                        if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
+                        if (args[1].Equals("off"))
                         {
-                            Database.setUserLevel(tNick, 2);
-                            sendMessage(tNick + " added as a bot Super Mod.");
+                            greetingOn = false;
+                            sendMessage("Greetings turned off.");
                         }
-                        else sendMessage("Cannot change Broadcaster access level.");
+                        if (args[1].Equals("set") && args.Length >= 3)
+                        {
+                            /*StringBuilder sb = new StringBuilder();
+                            for (int i = 3; i < args.Length; i++)
+                            {
+                                if (i == 3 && args[i].StartsWith("/"))
+                                {
+                                    sb.Append(args[i].Substring(1, args[i].Length - 1) + " ");
+                                }
+                                else sb.Append(args[i] + " ");
+                            }
+
+                            greeting = sb.ToString();*/
+                            string sGreeting = "";
+                            for (int i = 2; i < args.Length; i++)
+                            {
+                                sGreeting += args[i] + " ";
+                            }
+                            greeting = sGreeting.Substring(0, sGreeting.Length - 1);
+                            ini.SetValue("Settings", "Channel_Greeting", greeting);
+                            sendMessage("Your new greeting is: " + greeting);
+
+                        }
                     }
-                    else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
-                }
-                if (msg[1].Equals("demote") && msg.Length >= 3)
-                {
-                    string tNick = Api.capName(msg[2]);
-                    if (Database.userExists(tNick))
+                    if (args[0].Equals("addsub") && args.Length >= 2)
                     {
-                        if (Database.getUserLevel(tNick) > 0)
+                        if (Database.addSub(args[1]))
+                        {
+                            sendMessage(Api.capName(args[1]) + " added as a subscriber.");
+                        }
+                        else sendMessage(Api.capName(args[1]) + " does not exist in the database.  Have them type !<currency> then try again.");
+                    }
+                    if (args[0].Equals("removesub") && args.Length >= 2)
+                    {
+                        if (Database.removeSub(args[1]))
+                        {
+                            sendMessage(Api.capName(args[1]) + " removed from subscribers.");
+                        }
+                        else sendMessage(Api.capName(args[1]) + " does not exist in the database.");
+                    }
+                }
+                if (Database.getUserLevel(user) >= 3)
+                {
+                    if (args[0].Equals("addmod") && args.Length >= 2)
+                    {
+                        string tNick = Api.capName(args[1]);
+                        if (Database.userExists(tNick))
                         {
                             if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
                             {
-                                Database.setUserLevel(tNick, Database.getUserLevel(tNick) - 1);
-                                sendMessage(tNick + " demoted.");
+                                Database.setUserLevel(tNick, 1);
+                                sendMessage(tNick + " added as a bot moderator.");
+                                Log(user + " added " + tNick + "as a bot moderator.");
+                            }
+                            else sendMessage("Cannot change broadcaster access level.");
+                        }
+                        else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
+                    }
+                    if (args[0].Equals("addsuper") && args.Length >= 2)
+                    {
+                        String tNick = Api.capName(args[1]);
+                        if (Database.userExists(tNick))
+                        {
+                            if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
+                            {
+                                Database.setUserLevel(tNick, 2);
+                                sendMessage(tNick + " added as a bot Super Mod.");
                             }
                             else sendMessage("Cannot change Broadcaster access level.");
                         }
-                        else sendMessage("User is already Access Level 0.  Cannot demote further.");
+                        else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
                     }
-                    else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try again.");
-                }
-                if (msg[1].Equals("setlevel") && msg.Length >= 4)
-                {
-                    string tNick = Api.capName(msg[2]);
-                    if (Database.userExists(tNick))
+                    if (args[0].Equals("demote") && args.Length >= 2)
                     {
-                        if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
+                        string tNick = Api.capName(args[1]);
+                        if (Database.userExists(tNick))
                         {
-                            int level;
-                            if (int.TryParse(msg[3], out level) && level >= 0 && (level < 4 && Database.getUserLevel(user) >= 4 || level < 3))
+                            if (Database.getUserLevel(tNick) > 0)
                             {
-                                Database.setUserLevel(tNick, level);
-                                sendMessage(tNick + " set to Access Level " + level);
+                                if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
+                                {
+                                    Database.setUserLevel(tNick, Database.getUserLevel(tNick) - 1);
+                                    sendMessage(tNick + " demoted.");
+                                }
+                                else sendMessage("Cannot change Broadcaster access level.");
                             }
-                            else sendMessage("Level must be greater than or equal to 0, and less than 3 (0>=Level<3)");
+                            else sendMessage("User is already Access Level 0.  Cannot demote further.");
                         }
-                        else sendMessage("Cannot change that mod's access level.");
+                        else sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try again.");
                     }
-                    else sendMessage(tNick + " does not exist in the database.  Have them type !currency, then try again.");
-                }
-                if (msg[1].Equals("greeting") && msg.Length >= 3)
-                {
-                    Console.WriteLine(Database.getUserLevel(user) + "test 1");
-                    if (msg[2].Equals("on"))
+                    if (args[0].Equals("setlevel") && args.Length >= 3)
                     {
-                        greetingOn = true;
-                        sendMessage("Greetings turned on.");
-                    }
-                    if (msg[2].Equals("off"))
-                    {
-                        greetingOn = false;
-                        sendMessage("Greetings turned off.");
-                    }
-                    if (msg[2].Equals("set") && msg.Length >= 4)
-                    {
-                        StringBuilder sb = new StringBuilder();
-                        for (int i = 3; i < msg.Length; i++)
+                        string tNick = Api.capName(args[1]);
+                        if (Database.userExists(tNick))
                         {
-                            if (i == 3 && msg[i].StartsWith("/"))
+                            if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
                             {
-                                sb.Append(msg[i].Substring(1, msg[i].Length-1) + " ");
+                                int level;
+                                if (int.TryParse(args[2], out level) && level >= 0 && (level < 4 && Database.getUserLevel(user) >= 4 || level < 3))
+                                {
+                                    Database.setUserLevel(tNick, level);
+                                    sendMessage(tNick + " set to Access Level " + level);
+                                }
+                                else sendMessage("Level must be greater than or equal to 0, and less than 3 (0>=Level<3)");
                             }
-                            else sb.Append(msg[i] + " ");
+                            else sendMessage("Cannot change that mod's access level.");
                         }
-                       
-                        greeting = sb.ToString();
-                        ini.SetValue("Settings", "Channel_Greeting", greeting);
-                        sendMessage("Your new greeting is: " + greeting);
-                        
+                        else sendMessage(tNick + " does not exist in the database.  Have them type !currency, then try again.");
                     }
                 }
-                if (msg[1].Equals("addsub") && msg.Length >= 3)
-                {
-                    if (Database.addSub(msg[2]))
-                    {
-                        sendMessage(Api.capName(msg[2]) + " added as a subscriber.");
-                    }
-                    else sendMessage(Api.capName(msg[2]) + " does not exist in the database.  Have them type !<currency> then try again.");
-                }
-                if (msg[1].Equals("removesub") && msg.Length >= 3)
-                {
-                    if (Database.removeSub(msg[2]))
-                    {
-                        sendMessage(Api.capName(msg[2]) + " removed from subscribers.");
-                    }
-                    else sendMessage(Api.capName(msg[2]) + " does not exist in the database.");
-                }
-            }
-            #endregion
-            ////////////////END ADMIN COMMANDS///////////////////////////
-
-            ////////////////MOD COMMANDS//////////////////////////////
-            #region modcommands
-            else if (msg[0].Equals("!mod") && msg.Length >= 2)
-            {
                 if (Database.getUserLevel(user) >= 2)
                 {
-                    if (msg[1].Equals("addcommand") && msg.Length >= 5)
+                    if (args[0].Equals("addcommand") && args.Length >= 4)
                     {
                         int level;
-                        if (int.TryParse(msg[2], out level) && level >= 0 && level <= 4)
+                        if (int.TryParse(args[1], out level) && level >= 0 && level <= 4)
                         {
-                            String command = msg[3].ToLower();
+                            String command = args[2].ToLower();
                             if (!Commands.CheckCommand(command))
                             {
                                 StringBuilder sb = new StringBuilder();
-                                for (int i = 4; i < msg.Length; i++)
+                                for (int i = 3; i < args.Length; i++)
                                 {
-                                    if (msg[i].StartsWith("/") && i == 4)
+                                    if (args[i].StartsWith("/") && i == 4)
                                     {
-                                        sb.Append(msg[i].Substring(1, msg[i].Length - 1));
+                                        sb.Append(args[i].Substring(1, args[i].Length - 1));
                                     }
-                                    else sb.Append(msg[i]);
-                                    if (i != msg.Length - 1)
+                                    else sb.Append(args[i]);
+                                    if (i != args.Length - 1)
                                     {
                                         sb.Append(" ");
                                     }
@@ -1017,11 +1012,11 @@ namespace ModBot
                             }
                             else sendMessage(command + " is already a command.");
                         }
-                        else sendMessage("Invalid syntax.  Correct syntax is \"!mod addcom <access level> <command> <text you want to output>");
+                        else sendMessage("Invalid syntax.  Correct syntax is \"!modbot addcommand <access level> <command> <text you want to output>");
                     }
-                    else if (msg[1].Equals("removecommand") && msg.Length >= 3)
+                    else if (args[0].Equals("removecommand") && args.Length >= 2)
                     {
-                        String command = msg[2].ToLower();
+                        String command = args[1].ToLower();
                         if (Commands.cmdExists(command))
                         {
                             Commands.removeCommand(command);
@@ -1032,7 +1027,7 @@ namespace ModBot
                 }
                 else if (Database.getUserLevel(user) >= 1)
                 {
-                    if (msg[1].Equals("commmandlist"))
+                    if (args[0].Equals("commmandlist"))
                     {
                         String temp = Commands.getList();
                         if (temp != "")
@@ -1043,22 +1038,20 @@ namespace ModBot
                     }
                 }
             }
-            #endregion
-            ///////////////END MOD COMMANDS//////////////////////////
+        }
 
-            ////////////////ADD BATTLETAG///////////////////////////
-            if ((msg[0].Equals("!btag")|| msg[0].Equals("!battletag")) && msg.Length == 2 && msg[1].Contains("#"))
-            {
-                Database.setBtag(user, msg[1]);
-            }
+        private static void handleMessage(String message)
+        {
+            if (Commands.CheckCommand(user, message, true)) return;
 
-           /* if (msg[0].Equals("!restart") && db.getUserLevel(user) == 3)
+            //String[] msg = message.Split(' ');
+
+            /*if (msg[0].Equals("!restart") && db.getUserLevel(user) == 3)
             {
                 irc.Close();
                 //Flush();
                 Connect();
             }*/
-            
         }
 
 
@@ -1244,17 +1237,15 @@ namespace ModBot
             else return person + " (" + btag + ") ";
         }
 
-        private static String checkSubList()
+        private static List<string> checkSubList()
         {
-            string sSubs = "";
+            List<string> lSubs = new List<string>();
             Thread tThread = new Thread(() =>
             {
                 string sSubURL = ini.GetValue("Settings", "Subsribers_URL", "");
                 if (sSubURL != "")
                 {
                     String json_data = "";
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("Subscribers from Google Doc: ");
                     using (WebClient w = new WebClient())
                     {
                         try
@@ -1262,15 +1253,9 @@ namespace ModBot
                             w.Proxy = null;
                             json_data = w.DownloadString(sSubURL);
                             JObject list = JObject.Parse(json_data);
-                            bool addComma = false;
                             foreach (var x in list["feed"]["entry"])
                             {
-                                if (addComma)
-                                {
-                                    sb.Append(", ");
-                                }
-                                sb.Append(Api.capName(x["title"]["$t"].ToString()));
-                                addComma = true;
+                                lSubs.Add(Api.capName(x["title"]["$t"].ToString()));
                             }
                         }
                         catch (SocketException)
@@ -1284,25 +1269,23 @@ namespace ModBot
                             errorLog.Close();
                         }
                     }
-                    sSubs = sb.ToString();
                 }
-                else sSubs = "No valid Sub link supplied.  Skipping.";
             });
             tThread.Start();
             tThread.Join();
-            return sSubs;
+            return lSubs;
         }
 
         private static void handoutCurrency()
         {
             g_iLastHandout = Api.GetUnixTimeNow();
-            String temp = "";
+            List<string> temp = new List<string>();
             buildUserList();
 
             try
             {
                 temp = checkSubList();
-                Console.WriteLine(temp);
+                //Console.WriteLine(temp);
             }
             catch (Exception e)
             {
@@ -1360,20 +1343,25 @@ namespace ModBot
         {
             try
             {
-                betOptions = new String[temp.Length - 3];
-                StringBuilder sb = new StringBuilder();
-                for (int i = 3; i < temp.Length; i++)
+                lock(betOptions)
                 {
-                    sb.Append(temp[i]);
+                    betOptions.Clear();
+                    for (int i = 2; i < temp.Length; i++)
+                    {
+                        if (!betOptions.Contains(temp[i]))
+                        {
+                            betOptions.Add(temp[i]);
+                        }
+                    }
                 }
-                betOptions = sb.ToString().Split(',');
+
                 //print(sb.ToString());
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
                 StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                errorLog.WriteLine("*************Error Message: " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                errorLog.WriteLine("*************Error Message (via buildBetOptions()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                 errorLog.Close();
             }
         }

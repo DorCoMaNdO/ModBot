@@ -592,7 +592,7 @@ namespace ModBot
 
         private void Giveaway_AddBanTextBox_TextChanged(object sender, EventArgs e)
         {
-            if (!Giveaway_AddBanTextBox.Text.Equals("") && Giveaway_BanListListBox.Items.Contains(Giveaway_AddBanTextBox.Text))
+            if (Giveaway_AddBanTextBox.Text == "" || Giveaway_AddBanTextBox.Text.Length < 5 || Giveaway_AddBanTextBox.Text.Contains(" ") || Giveaway_AddBanTextBox.Text.Contains(".") || Giveaway_AddBanTextBox.Text.Contains(",") || Giveaway_AddBanTextBox.Text.Contains("\"") || Giveaway_AddBanTextBox.Text.Contains("'") || Irc.IgnoredUsers.Any(user => user.ToLower() == Giveaway_AddBanTextBox.Text.ToLower()) || Giveaway_BanListListBox.Items.Contains(Giveaway_AddBanTextBox.Text))
             {
                 Giveaway_BanButton.Enabled = false;
             }
@@ -609,9 +609,21 @@ namespace ModBot
 
         private void Giveaway_UnbanButton_Click(object sender, EventArgs e)
         {
-            Giveaway_BanListListBox.Items.RemoveAt(Giveaway_BanListListBox.SelectedIndex);
+            int iOldIndex = Giveaway_BanListListBox.SelectedIndex;
+            Giveaway_BanListListBox.Items.RemoveAt(iOldIndex);
             Giveaway_UnbanButton.Enabled = false;
             SaveSettings();
+            if(Giveaway_BanListListBox.Items.Count > 0)
+            {
+                if (iOldIndex > Giveaway_BanListListBox.Items.Count - 1)
+                {
+                    Giveaway_BanListListBox.SelectedIndex = Giveaway_BanListListBox.Items.Count-1;
+                }
+                else
+                {
+                    Giveaway_BanListListBox.SelectedIndex = iOldIndex;
+                }
+            }
         }
 
         private void Giveaway_CopyWinnerButton_Click(object sender, EventArgs e)

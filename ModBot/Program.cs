@@ -37,7 +37,7 @@ namespace ModBot
                         try
                         {
                             w.Proxy = null;
-                            sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot.txt");
+                            sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
                             if (sLatestVersion != "")
                             {
                                 string[] sCurrent = sCurrentVersion.Split('.');

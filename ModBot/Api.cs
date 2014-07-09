@@ -90,6 +90,10 @@ namespace ModBot
 
         public static string capName(string name)
         {
+            if(name.Length < 2)
+            {
+                return name;
+            }
             return char.ToUpper(name[0]) + name.Substring(1).ToLower();
         }
 

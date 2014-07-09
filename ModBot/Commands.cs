@@ -47,8 +47,6 @@ namespace ModBot
 
             public void Call(string message)
             {
-                message = message.Replace("  ", " ");
-                if (message.EndsWith(" ")) message = message.Substring(0, message.Length - 1);
                 string[] args = message.Contains(" ") ? message.Substring(message.IndexOf(" ") + 1).Split(' ') : null;
                 if (Executed != null)
                 {
@@ -135,6 +133,12 @@ namespace ModBot
 
         public static bool CheckCommand(string message, bool call = false)
         {
+            while (message.Contains("  "))
+            {
+                message = message.Replace("  ", " ");
+            }
+            if (message.StartsWith(" ")) message = message.Substring(1);
+            if (message.EndsWith(" ")) message = message.Substring(0, message.Length - 1);
             string[] cmd = message.Split(' ');
             lock (lCommands)
             {
@@ -155,6 +159,12 @@ namespace ModBot
 
         public static bool CheckCommand(string user, string message, bool call = false)
         {
+            while (message.Contains("  "))
+            {
+                message = message.Replace("  ", " ");
+            }
+            if (message.StartsWith(" ")) message = message.Substring(1);
+            if (message.EndsWith(" ")) message = message.Substring(0, message.Length - 1);
             string[] cmd = message.Split(' ');
             lock (lCommands)
             {
@@ -172,17 +182,17 @@ namespace ModBot
             }
             if (cmdExists(cmd[0]))
             {
-                if (call)
+                if (call) // ToDo : Convert to the new system
                 {
                     if (Database.getUserLevel(user) >= LevelRequired(cmd[0]))
                     {
                         if (cmd.Length > 1 && Database.getUserLevel(user) > 0)
                         {
-                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", Api.capName(cmd[1])));
+                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", Api.GetDisplayName(cmd[1])));
                         }
                         else
                         {
-                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", user));
+                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", Api.GetDisplayName(user)));
                         }
                     }
                 }
