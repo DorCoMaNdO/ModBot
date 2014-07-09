@@ -55,6 +55,10 @@ namespace ModBot
             setInterval(Interval);
             setPayout(Payout);
             donationkey = DonationKey;
+            if (donationkey == "")
+            {
+                MainForm.Donations_ManageButton.Enabled = false;
+            }
             Database.Initialize();
             IgnoredUsers.Add("jtv");
             IgnoredUsers.Add("moobot");
@@ -130,16 +134,19 @@ namespace ModBot
                 Thread.Sleep(5000);
             }
 
-            if (donationkey == "")
+            if (!read.ReadLine().Contains("Login unsuccessful"))
             {
-                MainForm.Donations_ManageButton.Enabled = false;
+                new Thread(() =>
+                {
+                    MainForm.GrabData();
+                }).Start();
+                MainForm.Show();
+                StartThreads();
             }
-            new Thread(() =>
+            else
             {
-                MainForm.GrabData();
-            }).Start();
-            MainForm.Show();
-            StartThreads();
+                Console.WriteLine("Username and/or password (oauth token) are incorrect!");
+            }
         }
 
         private static void StartThreads()
