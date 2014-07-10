@@ -12,12 +12,19 @@ namespace ModBot
 {
     static class Program
     {
+        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini");
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
+            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini"))
+            {
+                File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini", "\r\n[Default]");
+            }
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Updates.ExtractUpdater();

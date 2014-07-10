@@ -17,56 +17,38 @@ namespace ModBot
 {
     public partial class SettingsDialog : CustomForm
     {
-        public iniUtil ini = Irc.ini;
+        private iniUtil ini = Program.ini;
         public SettingsDialog()
         {
-            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini"))
-            {
-                File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini", "\r\n[Default]");
-            }
             InitializeComponent();
-            string sBotName = ini.GetValue("Settings", "BOT_Name", "ModBot");
-            ini.SetValue("Settings", "BOT_Name", sBotName);
-            botNameBox.Text = sBotName;
-            string sBotPass = ini.GetValue("Settings", "BOT_Password", "");
-            ini.SetValue("Settings", "BOT_Password", sBotPass);
-            passwordBox.Text = sBotPass;
-            string sChannelName = ini.GetValue("Settings", "Channel_Name", "ModChannel");
-            ini.SetValue("Settings", "Channel_Name", sChannelName);
-            channelBox.Text = sChannelName;
-            string sCurrency = ini.GetValue("Settings", "Currency_Name", "ModCoins");
-            ini.SetValue("Settings", "Currency_Name", sCurrency);
-            currencyBox.Text = sCurrency;
-            string sCurrencyInterval = ini.GetValue("Settings", "Currency_Interval", "4");
-            ini.SetValue("Settings", "Currency_Interval", sCurrencyInterval);
-            intervalBox.SelectedIndex = Convert.ToInt32(sCurrencyInterval);
-            string sCurrencyPayout = ini.GetValue("Settings", "Currency_Payout", "0");
-            ini.SetValue("Settings", "Currency_Payout", sCurrencyPayout);
-            payoutBox.SelectedIndex = Convert.ToInt32(sCurrencyPayout);
-            string sSubURL = ini.GetValue("Settings", "Subsribers_URL", "");
-            ini.SetValue("Settings", "Subsribers_URL", sSubURL);
-            subBox.Text = sSubURL;
-            string sDonationKey = ini.GetValue("Settings", "Donations_Key", "");
-            ini.SetValue("Settings", "Donations_Key", sDonationKey);
-            DonationsKeyBox.Text = sDonationKey;
+            ini.SetValue("Settings", "BOT_Name", botNameBox.Text = ini.GetValue("Settings", "BOT_Name", "ModBot"));
+            ini.SetValue("Settings", "BOT_Password", passwordBox.Text = ini.GetValue("Settings", "BOT_Password", ""));
+            ini.SetValue("Settings", "Channel_Name", channelBox.Text = ini.GetValue("Settings", "Channel_Name", "ModChannel"));
+            ini.SetValue("Settings", "Currency_Name", currencyBox.Text = ini.GetValue("Settings", "Currency_Name", "ModCoins"));
+            ini.SetValue("Settings", "Currency_Interval", (intervalBox.SelectedIndex = Convert.ToInt32(ini.GetValue("Settings", "Currency_Interval", "4"))).ToString());
+            ini.SetValue("Settings", "Currency_Payout", (payoutBox.SelectedIndex = Convert.ToInt32(ini.GetValue("Settings", "Currency_Payout", "0"))).ToString());
+            ini.SetValue("Settings", "Subsribers_URL", subBox.Text = ini.GetValue("Settings", "Subsribers_URL", ""));
+            ini.SetValue("Settings", "Donations_Key", DonationsKeyBox.Text = ini.GetValue("Settings", "Donations_Key", ""));
         }
 
         private void startButton_Click(object sender, EventArgs e)
         {
             this.Hide();
             //save session settings
-            ini.SetValue("Settings", "BOT_Name", botNameBox.Text);
-            ini.SetValue("Settings", "BOT_Password", passwordBox.Text);
-            ini.SetValue("Settings", "Channel_Name", channelBox.Text);
-            ini.SetValue("Settings", "Currency_Name", currencyBox.Text);
+            ini.SetValue("Settings", "BOT_Name", Irc.nick = botNameBox.Text);
+            ini.SetValue("Settings", "BOT_Password", Irc.password = passwordBox.Text);
+            ini.SetValue("Settings", "Channel_Name", Irc.channel = channelBox.Text);
+            ini.SetValue("Settings", "Currency_Name", Irc.currency = currencyBox.Text);
             ini.SetValue("Settings", "Currency_Interval", intervalBox.SelectedIndex.ToString());
+            Irc.interval = Convert.ToInt32(intervalBox.SelectedItem.ToString());
             ini.SetValue("Settings", "Currency_Payout", payoutBox.SelectedIndex.ToString());
-            ini.SetValue("Settings", "Donations_Key", DonationsKeyBox.Text);
+            Irc.payout = Convert.ToInt32(payoutBox.SelectedItem.ToString());
+            ini.SetValue("Settings", "Donations_Key", Irc.donationkey = DonationsKeyBox.Text);
             if ((subBox.Text.StartsWith("https://spreadsheets.google.com") || subBox.Text.StartsWith("http://spreadsheets.google.com")) && subBox.Text.EndsWith("?alt=json"))
             {
                 ini.SetValue("Settings", "Subsribers_URL", subBox.Text);
             }
-            else Console.WriteLine("Invalid subscriber link.  Reverting to the last known good link, or blank.  Restart the program to fix it.");
+            else Console.WriteLine("Invalid subscriber link. Reverting to the last known good link, or blank. Restart the program to fix it.");
             ////
 
             //Console.WriteLine(nick + ' ' + password + ' ' + channel + ' ' + currency + ' ' + interval);

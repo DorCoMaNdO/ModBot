@@ -15,7 +15,7 @@ namespace ModBot
 
         public static void Initialize()
         {
-            channel = Irc.admin;
+            channel = Irc.channel.Substring(1);
 
             if (File.Exists("ModBot.sqlite"))
             {

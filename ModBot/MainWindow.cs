@@ -17,19 +17,16 @@ namespace ModBot
 {
     public partial class MainWindow : CustomForm
     {
+        private iniUtil ini = Program.ini;
         public Dictionary<string, Dictionary<string, string>> dSettings = new Dictionary<string, Dictionary<string, string>>();
-        public iniUtil ini = Irc.ini;
         private bool bIgnoreUpdates = false;
         public int iSettingsPresent = -2;
-        private Donations donations;
-        private string sCurrentVersion = "";
+        private Donations donations = new Donations();
         private bool g_bLoaded = false;
 
         public MainWindow()
         {
             InitializeComponent();
-            sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            Text = "ModBot v" + sCurrentVersion.Replace("." + Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
 
             Giveaway_WinnerChat.Select(0, 7);
             Giveaway_WinnerChat.SelectionColor = Color.Blue;
@@ -49,8 +46,6 @@ namespace ModBot
             }*/
 
             //GetSettings();
-
-            donations = new Donations(this);
         }
 
         private void MainWindow_Load(object sender, EventArgs e)
@@ -108,10 +103,11 @@ namespace ModBot
 
         public void GetSettings()
         {
-            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini"))
+            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini"))
             {
-                File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "modbot.ini", "\r\n[Default]");
+                File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini", "\r\n[Default]");
             }
+
             if (!bIgnoreUpdates)
             {
                 ////SettingsPresents.TabPages.Clear();
@@ -134,6 +130,7 @@ namespace ModBot
                         bRecreateSections = true;
                         SettingsPresents.TabPages.Clear();
                         dSettings.Clear();
+                        break;
                     }
                 }
                 foreach (string section in ini.GetSectionNames())

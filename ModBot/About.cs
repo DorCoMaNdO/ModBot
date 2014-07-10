@@ -14,19 +14,12 @@ namespace ModBot
         public About()
         {
             InitializeComponent();
-            version.Text = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         }
 
-        private void About_Load(object sender, EventArgs e)
+        private void WebsiteLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            LinkLabel.Link link = new LinkLabel.Link();
-            link.LinkData = "https://sourceforge.net/projects/twitchmodbot/";
-            linkLabel1.Links.Add(link);
-        }
-
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            System.Diagnostics.Process.Start(e.Link.LinkData as string);
+            System.Diagnostics.Process.Start("https://sourceforge.net/projects/twitchmodbot/");
+            System.Diagnostics.Process.Start("http://modbot.wordpress.com/");
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -34,5 +27,14 @@ namespace ModBot
             this.Close();
         }
 
+        private void SupportLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("http://modbot.wordpress.com/about/");
+        }
+
+        private void EmailLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("mailto:DorCoMaNdO@gmail.com");
+        }
     }
 }

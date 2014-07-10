@@ -624,7 +624,7 @@
             this.Controls.Add(this.groupBox1);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
-            this.Text = "ModBot";
+            this.Text = "ModBot v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString().Replace("." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
             this.Controls.SetChildIndex(this.groupBox1, 0);

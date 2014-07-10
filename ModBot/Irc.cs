@@ -15,18 +15,17 @@ namespace ModBot
 {
     public static class Irc
     {
-        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini");
-        public static string nick, password, channel, currency, admin, donationkey, user = "";
-        public static int g_iInterval, payout = 0;
-        public static int[] intervals = { 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 };
+        private static iniUtil ini = Program.ini;
         public static TcpClient irc;
         public static StreamReader read;
         public static StreamWriter write;
+        public static string nick, password, channel, currency, admin, donationkey, user = "";
+        public static int interval, payout = 0;
+        public static int[] intervals = { 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 };
         public static bool bettingOpen, auctionOpen, poolLocked = false;
         private static Auction auction;
         private static Pool pool;
         public static List<string> users = new List<string>(), IgnoredUsers = new List<string>();
-        public static DateTime time;
         public static List<string> betOptions = new List<string>();
         public static Timer currencyQueue;
         public static List<string> usersToLookup = new List<string>();
@@ -44,16 +43,14 @@ namespace ModBot
 
         public static void Initialize(string Nick, string Password, string Channel, string Currency, int Interval, int Payout, string DonationKey)
         {
-            string sResourceKeeper = ini.GetValue("Settings", "ResourceKeeper", "1");
-            ini.SetValue("Settings", "ResourceKeeper", sResourceKeeper);
-            g_bResourceKeeper = (sResourceKeeper == "1");
+            ini.SetValue("Settings", "ResourceKeeper", (g_bResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
             nick = Nick.ToLower();
             password = Password;
             setAdmin(Channel);
             setChannel(Channel);
             setCurrency(Currency);
-            setInterval(Interval);
-            setPayout(Payout);
+            interval = Interval;
+            payout = Payout;
             donationkey = DonationKey;
             if (donationkey == "")
             {
@@ -69,8 +66,7 @@ namespace ModBot
             Database.newUser(admin);
             Database.setUserLevel(admin, 4);
 
-            greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!");
-            ini.SetValue("Settings", "Channel_Greeting", greeting);
+            ini.SetValue("Settings", "Channel_Greeting", greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!"));
 
             Connect();
 
@@ -265,7 +261,7 @@ namespace ModBot
                 g_iLastHandout = Api.GetUnixTimeNow();
                 while (true)
                 {
-                    if (Api.GetUnixTimeNow() - g_iLastHandout >= g_iInterval * 60 && g_bIsStreaming)
+                    if (Api.GetUnixTimeNow() - g_iLastHandout >= interval * 60 && g_bIsStreaming)
                     {
                         Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currency);
                         handoutCurrency();
@@ -838,7 +834,7 @@ namespace ModBot
                         int amount = 0;
                         if (int.TryParse(args[1], out amount) && amount > 0)
                         {
-                            setPayout(amount);
+                            payout = amount;
                             sendMessage("New Payout Amount: " + amount);
                         }
                         else sendMessage("Can't change payout amount.  Must be a valid integer greater than 0");
@@ -848,7 +844,7 @@ namespace ModBot
                         int tempInterval = -1;
                         if (int.TryParse(args[1], out tempInterval) && Array.IndexOf(intervals, tempInterval) > -1)
                         {
-                            setInterval(tempInterval);
+                            interval = tempInterval;
                             sendMessage("New Payout Interval: " + tempInterval);
                         }
                         else
@@ -1193,7 +1189,7 @@ namespace ModBot
         {
             if (tChannel.StartsWith("#"))
             {
-                admin = tChannel.Substring(1);
+                tChannel = tChannel.Substring(1);
             }
             else
             {
@@ -1211,16 +1207,6 @@ namespace ModBot
             {
                 currency = tCurrency;
             }
-        }
-
-        public static void setInterval(int tInterval)
-        {
-            g_iInterval = tInterval;
-        }
-
-        public static void setPayout(int tPayout)
-        {
-            payout = tPayout;
         }
 
         private static void sendRaw(string message)
@@ -1271,10 +1257,10 @@ namespace ModBot
         private static List<string> checkSubList()
         {
             List<string> lSubs = new List<string>();
-            Thread tThread = new Thread(() =>
+            string sSubURL = ini.GetValue("Settings", "Subsribers_URL", "");
+            if (sSubURL != "")
             {
-                string sSubURL = ini.GetValue("Settings", "Subsribers_URL", "");
-                if (sSubURL != "")
+                Thread tThread = new Thread(() =>
                 {
                     string json_data = "";
                     using (WebClient w = new WebClient())
@@ -1300,10 +1286,10 @@ namespace ModBot
                             errorLog.Close();
                         }
                     }
-                }
-            });
-            tThread.Start();
-            tThread.Join();
+                });
+                tThread.Start();
+                tThread.Join();
+            }
             return lSubs;
         }
 
@@ -1320,7 +1306,7 @@ namespace ModBot
             }
             catch (Exception e)
             {
-                Console.WriteLine("Problem reading sub list.  Skipping");
+                Console.WriteLine("Problem reading sub list. Skipping");
                 StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
                 errorLog.WriteLine("*************Error Message (via handoutCurrency()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                 errorLog.Close();

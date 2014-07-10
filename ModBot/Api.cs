@@ -139,7 +139,7 @@ namespace ModBot
                     try
                     {
                         w.Proxy = null;
-                        json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + Irc.admin.ToLower() + "&key=" + Irc.donationkey);
+                        json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + Irc.channel.Substring(1).ToLower() + "&key=" + Irc.donationkey);
                         while (json_data.Contains("\"DT_RowId\""))
                         {
                             string date = "Donated at some point", name = "Unknown", amount = "0.00", notes = "", transaction = "";
