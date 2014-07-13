@@ -19,6 +19,33 @@ namespace ModBot
             return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
 
+        public static bool IsFileLocked(string FileLocation, FileShare fs = FileShare.None)
+        {
+            FileInfo file = new FileInfo(FileLocation);
+            FileStream stream = null;
+
+            try
+            {
+                stream = file.Open(FileMode.Open, FileAccess.ReadWrite, fs);
+            }
+            catch (IOException)
+            {
+                //the file is unavailable because it is:
+                //still being written to
+                //or being processed by another thread
+                //or does not exist (has already been processed)
+                return true;
+            }
+            finally
+            {
+                if (stream != null)
+                    stream.Close();
+            }
+
+            //file is not locked
+            return false;
+        }
+
         public static string GetDisplayName(string user, bool bWait = false)
         {
             user = user.ToLower();

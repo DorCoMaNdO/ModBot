@@ -19,12 +19,10 @@ namespace ModBot
         public static TcpClient irc;
         public static StreamReader read;
         public static StreamWriter write;
-        public static string nick, password, channel, currency, admin, donationkey, user = "";
+        public static string nick, password, channel, currency, admin, donationkey = "";
         public static int interval, payout = 0;
         public static int[] intervals = { 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 };
         public static bool bettingOpen, auctionOpen, poolLocked = false;
-        private static Auction auction;
-        private static Pool pool;
         public static List<string> users = new List<string>(), IgnoredUsers = new List<string>();
         public static List<string> betOptions = new List<string>();
         public static Timer currencyQueue;
@@ -32,7 +30,6 @@ namespace ModBot
         public static Timer auctionLooper;
         public static string greeting;
         public static bool greetingOn = false;
-        public static int attempt = 0;
         public static int g_iLastCurrencyLockAnnounce = 0, g_iLastTop5Announce = 0;
         public static int g_iStreamStartTime = 0;
         public static bool g_bIsStreaming = false;
@@ -41,17 +38,10 @@ namespace ModBot
         public static int g_iLastHandout = 0;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
 
-        public static void Initialize(string Nick, string Password, string Channel, string Currency, int Interval, int Payout, string DonationKey)
+        public static void Initialize()
         {
+            Console.WriteLine("Initializing connection...");
             ini.SetValue("Settings", "ResourceKeeper", (g_bResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
-            nick = Nick.ToLower();
-            password = Password;
-            setAdmin(Channel);
-            setChannel(Channel);
-            setCurrency(Currency);
-            interval = Interval;
-            payout = Payout;
-            donationkey = DonationKey;
             if (donationkey == "")
             {
                 MainForm.Donations_ManageButton.Enabled = false;
@@ -89,31 +79,55 @@ namespace ModBot
 
         private static void Connect()
         {
-            if (irc != null)
+            int count = 0;
+            while (count < 5)
             {
-                //Console.WriteLine("Irc connection already exists.  Closing it and opening a new one.");
-                irc.Close();
-            }
+                if (irc != null)
+                {
+                    //Console.WriteLine("Irc connection already exists. Closing it and opening a new one.");
+                    irc.Close();
+                }
 
-            irc = new TcpClient();
+                irc = new TcpClient();
 
-            int count = 1;
-            while (!irc.Connected)
-            {
-                Console.WriteLine("Connect attempt " + count);
+                count++;
+                Console.WriteLine("Connection attempt number : " + count + "/5");
+
                 try
                 {
                     irc.Connect("199.9.250.229", 443);
+
+                    Console.WriteLine("Connection successful.\r\n\r\nConfiguring input/output...");
 
                     read = new StreamReader(irc.GetStream());
                     write = new StreamWriter(irc.GetStream());
 
                     write.AutoFlush = true;
+                    
+                    Console.WriteLine("Input/output configured.\r\n\r\nJoining to channel...");
 
                     sendRaw("PASS " + password);
                     sendRaw("NICK " + nick);
                     sendRaw("USER " + nick + " 8 * :" + nick);
-                    sendRaw("JOIN " + channel);
+                    sendRaw("JOIN " + channel.ToLower());
+
+                    if (!read.ReadLine().Contains("Login unsuccessful"))
+                    {
+                        Console.WriteLine("Joined channel.\r\n");
+
+                        new Thread(() =>
+                        {
+                            MainForm.GrabData();
+                        }).Start();
+                        MainForm.Show();
+                        StartThreads();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Username and/or password (oauth token) are incorrect!");
+                    }
+
+                    break;
                 }
                 catch (SocketException e)
                 {
@@ -125,45 +139,31 @@ namespace ModBot
                     errorLog.WriteLine("*************Error Message (via Connect()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                     errorLog.Close();
                 }
-                count++;
-                // Console.WriteLine("Connection failed.  Retrying in 5 seconds.");
-                Thread.Sleep(5000);
-            }
 
-            if (!read.ReadLine().Contains("Login unsuccessful"))
-            {
-                new Thread(() =>
-                {
-                    MainForm.GrabData();
-                }).Start();
-                MainForm.Show();
-                StartThreads();
-            }
-            else
-            {
-                Console.WriteLine("Username and/or password (oauth token) are incorrect!");
+                //count++;
+                // Console.WriteLine("Connection failed. Retrying in 5 seconds.");
+                Thread.Sleep(5000);
             }
         }
 
         private static void StartThreads()
         {
+            bool Running = false;
             new Thread(() =>
             {
                 while (true)
                 {
                     Thread.Sleep(60000);
-                    if (irc.Connected)
+                    if (irc.Connected && Running && g_bIsStreaming)
                     {
-                        if (g_bIsStreaming)
+                        foreach (string user in users)
                         {
-                            foreach (string user in users)
-                            {
-                                Database.addTimeWatched(user, 1);
-                            }
+                            Database.addTimeWatched(user, 1);
                         }
                     }
                 }
-            });
+            }).Start();
+
             new Thread(() =>
             {
                 while (true)
@@ -220,18 +220,28 @@ namespace ModBot
             //Listen();
             new Thread(() =>
             {
-                int attempts = 0;
-                while (attempts < 5)
+                int attempt = 0;
+                while (attempt < 5)
                 {
+                    attempt++;
+                    Console.WriteLine((Running ? "Fix " : "Listening to input ") + "attempt number : " + attempt + "/5");
                     try
                     {
                         while (irc.Connected)
                         {
                             parseMessage(read.ReadLine());
-                            if (attempts > 0)
+                            if (attempt > 0)
                             {
-                                Console.WriteLine("The attempt was successful, everything should keep running the way it should...");
-                                attempts = 0;
+                                if (!Running)
+                                {
+                                    Console.WriteLine("Listening to input.\r\n");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("The attempt was successful, everything should keep running the way it should.");
+                                }
+                                attempt = 0;
+                                Running = true;
                             }
                         }
                     }
@@ -240,19 +250,27 @@ namespace ModBot
                     }
                     catch (Exception e)
                     {
-                        if (attempts == 0)
+                        if (attempt == 0 || attempt == 5 && !Running)
                         {
-                            Console.WriteLine("Uh oh, there was an error! An attempt to keep everything running is being performed, but if you keep seeing this message, email your Error_log.log file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
+                            if (attempt == 0)
+                            {
+                                Console.WriteLine("Uh oh, there was an error! Attempts to keep everything running are being executed, if the attempts fail or if you keep seeing this message, email your Error_log.log file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Failed to listen to input... Please try restarting the bot... If this issue keeps occouring, please email your Error_log.log file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
+                            }
                             StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
                             errorLog.WriteLine("*************Error Message (via Listen()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                             errorLog.Close();
                         }
-                        attempts++;
-                        Console.WriteLine("Attempt number : " + attempts);
                     }
                     Thread.Sleep(500);
                 }
-                Console.WriteLine("The attempt was unsuccessful, some functions may still work... But in order get ModBot back to full functionality please restart it...");
+                Running = false;
+                MainForm.Hide();
+                System.Windows.Forms.MessageBox.Show("ModBot has encountered an error, more information available in the console...", "ModBot", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                Console.WriteLine("The attempts were unsuccessful... In order get ModBot back to function please restart it...");
             }).Start();
 
             //doWork();
@@ -261,10 +279,13 @@ namespace ModBot
                 g_iLastHandout = Api.GetUnixTimeNow();
                 while (true)
                 {
-                    if (Api.GetUnixTimeNow() - g_iLastHandout >= interval * 60 && g_bIsStreaming)
+                    if (Running)
                     {
-                        Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currency);
-                        handoutCurrency();
+                        if (Api.GetUnixTimeNow() - g_iLastHandout >= interval * 60 && g_bIsStreaming)
+                        {
+                            Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currency);
+                            handoutCurrency();
+                        }
                     }
                     Thread.Sleep(1000);
                     /*if (g_bResourceKeeper)
@@ -293,6 +314,7 @@ namespace ModBot
         {
             //Console.WriteLine(message);
             string[] msg = message.Split(' ');
+            string user = "";
 
             if (msg[0].Equals("PING"))
             {
@@ -316,16 +338,17 @@ namespace ModBot
                 }
                 //Console.WriteLine(message);
                 string temp = message.Substring(message.IndexOf(":", 1) + 1);
-                string sUser = Api.GetDisplayName(user);
-                Console.WriteLine(sUser + ": " + temp);
-                handleMessage(temp);
+                string name = Api.GetDisplayName(user);
+                Console.WriteLine(name + ": " + temp);
+                //handleMessage(temp);
+                Commands.CheckCommand(user, temp, true);
                 if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                 {
                     MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                     {
                         MainForm.Giveaway_WinnerChat.SelectionColor = Color.Blue;
-                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 8, FontStyle.Bold);
-                        MainForm.Giveaway_WinnerChat.SelectedText = sUser;
+                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
+                        MainForm.Giveaway_WinnerChat.SelectedText = name;
                         MainForm.Giveaway_WinnerChat.SelectionColor = Color.Black;
                         MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Microsoft Sans Serif", 8);
                         MainForm.Giveaway_WinnerChat.SelectedText = ": " + temp + "\r\n";
@@ -346,34 +369,52 @@ namespace ModBot
                         ActiveUsers.Add(user, Api.GetUnixTimeNow());
                     }
                 }
-                Console.WriteLine(user + " joined");
-                string name = Api.GetDisplayName(user);
-                if (greetingOn && greeting != "")
-                {
-                    sendMessage(greeting.Replace("@user", name));
-                }
                 if (!Database.userExists(user))
                 {
                     Database.newUser(user);
                     //db.addCurrency(user, payout);
                 }
+                string name = Api.GetDisplayName(user);
+                Console.WriteLine(name + " joined");
+                if (greetingOn && greeting != "")
+                {
+                    sendMessage(greeting.Replace("@user", name));
+                }
+                if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                {
+                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        MainForm.Giveaway_WinnerChat.SelectionColor = Color.Green;
+                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
+                        MainForm.Giveaway_WinnerChat.SelectedText = name + " has joined the channel.\r\n";
+                    });
+                }
             }
             else if (msg[1].Equals("PART"))
             {
-                removeUserFromList(getUser(message));
+                user = getUser(message);
+                removeUserFromList(user);
                 lock (ActiveUsers)
                 {
-                    if (ActiveUsers.ContainsKey(getUser(message)))
+                    if (ActiveUsers.ContainsKey(user))
                     {
-                        ActiveUsers.Remove(getUser(message));
+                        ActiveUsers.Remove(user);
                     }
                 }
-                if (MainForm.Giveaway_WinnerTimerLabel.Text.Equals(getUser(message)))
+                string name = Api.GetDisplayName(user);
+                Console.WriteLine(name + " left");
+                if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                 {
-                    MainForm.Giveaway_WinnerTimerLabel.Text = "The winner left!";
-                    MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
+                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        MainForm.Giveaway_WinnerTimerLabel.Text = "The winner left!";
+                        MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
+
+                        MainForm.Giveaway_WinnerChat.SelectionColor = Color.Red;
+                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
+                        MainForm.Giveaway_WinnerChat.SelectedText = name + " has left the channel.\r\n";
+                    });
                 }
-                Console.WriteLine(user + " left");
             }
             else if (msg[1].Equals("352"))
             {
@@ -387,13 +428,13 @@ namespace ModBot
                     }
                 }
             }
-            else
+            /*else
             {
                 //Console.WriteLine(message);
-            }
+            }*/
         }
 
-        private static void Command_Giveaway(string cmd, string[] args)
+        private static void Command_Giveaway(string user, string cmd, string[] args)
         {
             if (args != null && args.Length >= 1)
             {
@@ -466,7 +507,7 @@ namespace ModBot
             }
         }
 
-        private static void Command_Currency(string cmd, string[] args)
+        private static void Command_Currency(string user, string cmd, string[] args)
         {
             if (args != null)
             {
@@ -486,9 +527,19 @@ namespace ModBot
                                 }
                             }
                             IOrderedEnumerable<KeyValuePair<string, int>> top = TopPoints.OrderByDescending(key => key.Value);
-                            if (TopPoints.Count >= 5)
+                            if(TopPoints.Count > 0)
                             {
-                                sendMessage("The 5 users with the most points are: " + Api.GetDisplayName(top.ElementAt(0).Key) + " (" + top.ElementAt(0).Value + "), " + Api.GetDisplayName(top.ElementAt(1).Key) + " (" + top.ElementAt(1).Value + "), " + Api.GetDisplayName(top.ElementAt(2).Key) + " (" + top.ElementAt(2).Value + "), " + Api.GetDisplayName(top.ElementAt(3).Key) + " (" + top.ElementAt(3).Value + ") and " + Api.GetDisplayName(top.ElementAt(4).Key) + " (" + top.ElementAt(4).Value + ").");
+                                string output = "";
+                                int max = 5;
+                                if (TopPoints.Count < max)
+                                {
+                                    max = TopPoints.Count;
+                                }
+                                for(int i = 0; i < max; i++)
+                                {
+                                    output += Api.GetDisplayName(top.ElementAt(i).Key) + " (" + Database.getTimeWatched(top.ElementAt(i).Key).ToString(@"d\d\ hh\h\ mm\m") + ") - " + top.ElementAt(i).Value + ", ";
+                                }
+                                sendMessage("The " + max + " users with the most points are: " + output.Substring(0, output.Length - 2) + ".");
                             }
                             else
                             {
@@ -524,7 +575,7 @@ namespace ModBot
                             {
                                 if (Database.userExists(args[0]))
                                 {
-                                    sendMessage("Mod check: " + Api.GetDisplayName(args[0], true) + " has " + Database.checkCurrency(args[0]) + " " + currency + " (" + Database.getTimeWatched(args[0]).ToString(@"d\d\ hh\h\ mm\m") + ")");
+                                    sendMessage("Mod check: " + Api.GetDisplayName(args[0], true) + " (" + Database.getTimeWatched(args[0]).ToString(@"d\d\ hh\h\ mm\m") + ")" + " has " + Database.checkCurrency(args[0]) + " " + currency);
                                 }
                                 else
                                 {
@@ -630,9 +681,9 @@ namespace ModBot
             }
         }
 
-        private static void Command_Gamble(string cmd, string[] args)
+        private static void Command_Gamble(string user, string cmd, string[] args)
         {
-            if (args != null && args.Length >= 1 && Database.getUserLevel(user) >= 2)
+            if (args != null && Database.getUserLevel(user) >= 2)
             {
                 if (args[0].Equals("open") && args.Length >= 4)
                 {
@@ -641,89 +692,159 @@ namespace ModBot
                         int maxBet;
                         if (int.TryParse(args[1], out maxBet))
                         {
-                            buildBetOptions(args);
-                            pool = new Pool(maxBet, betOptions);
-                            bettingOpen = true;
-                            sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currency);
-                            string temp = "Betting open for: ";
-                            for (int i = 0; i < betOptions.Count; i++)
+                            if (maxBet > 0)
                             {
-                                temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
+                                buildBetOptions(args);
+                                if (betOptions.Count > 1)
+                                {
+                                    Pool.CreatePool(maxBet, betOptions);
+                                    bettingOpen = true;
+                                    sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currency);
+                                    string temp = "Betting open for: ";
+                                    for (int i = 0; i < betOptions.Count; i++)
+                                    {
+                                        temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
+                                    }
+                                    sendMessage(temp);
+                                    sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1, \"!bet 25 option2name\" to bet 25 on option 2, etc. You can also bet with \"!bet <amount> #OptionNumber\"");
+                                }
+                                else
+                                {
+                                    sendMessage("You need at least two betting options in order to start a betting pool!");
+                                }
                             }
-                            sendMessage(temp);
-                            sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1,  \"!bet 25 option2name\" to bet 25 on option 2, etc");
+                            else
+                            {
+                                sendMessage("Max bet can not be lower than 1!");
+                            }
                         }
-                        else sendMessage("Invalid syntax.  Open a betting pool with: !gamble open <maxBet> <option1>, <option2>, .... <optionN> (comma delimited options)");
+                        else
+                        {
+                            sendMessage("Invalid syntax. Open a betting pool with: !gamble open <maxBet> <option1>, <option2>, .... <optionN> (comma delimited options)");
+                        }
                     }
-                    else sendMessage("Betting Pool already opened.  Close or cancel the current one before starting a new one.");
+                    else
+                    {
+                        sendMessage("Betting Pool already opened. Close or cancel the current one before starting a new one.");
+                    }
                 }
                 else if (args[0].Equals("close"))
                 {
                     if (bettingOpen)
                     {
-                        poolLocked = true;
-                        sendMessage("Bets locked in.  Good luck everyone!");
-                    }
-                    else sendMessage("No pool currently open.");
-                }
-                else if (args[0].Equals("winner") && args.Length == 2)
-                {
-                    if (bettingOpen && poolLocked && betOptions.Contains(args[1]))
-                    {
-                        pool.closePool(args[1]);
-                        bettingOpen = false;
-                        poolLocked = false;
-                        sendMessage("Betting Pool closed! A total of " + pool.getTotalBets() + " " + currency + " were bet.");
-                        string output = "Bets for:";
-                        for (int i = 0; i < betOptions.Count; i++)
+                        if (!poolLocked)
                         {
-                            double x = ((double)pool.getTotalBetsOn(betOptions[i]) / pool.getTotalBets()) * 100;
-                            output += " " + betOptions[i] + " - " + pool.getNumberOfBets(betOptions[i]) + " (" + Math.Round(x) + "%);";
-                            //Console.WriteLine("TESTING: getTotalBetsOn(" + i + ") = " + pool.getTotalBetsOn(i) + " --- getTotalBets() = " + pool.getTotalBets() + " ---  (double)betsOn(i)/totalBets() = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) + " --- *100 = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100 + " --- Converted to a double = " + (double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100) + " --- Rounded double = " + Math.Round((double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100)));
+                            poolLocked = true;
+                            sendMessage("Bets locked in. Good luck everyone!");
                         }
-                        sendMessage(output);
-                        Dictionary<string, int> winners = pool.getWinners();
-                        output = "Winners:";
-                        if (winners.Count == 0)
+                        else
                         {
-                            sendMessage(output + " No One!");
-                        }
-                        for (int i = 0; i < winners.Count; i++)
-                        {
-                            output += " " + winners.ElementAt(i).Key + " - " + winners.ElementAt(i).Value + " (Bet " + pool.getBetAmount(winners.ElementAt(i).Key) + ")";
-                            if (i == 0 && i == winners.Count - 1)
-                            {
-                                sendMessage(output);
-                                output = "";
-                            }
-                            else if ((i != 0 && i % 10 == 0) || i == winners.Count - 1)
-                            {
-                                sendMessage(output);
-                                output = "";
-                            }
+                            sendMessage("Pool is already locked.");
                         }
                     }
                     else
                     {
-                        sendMessage("Close the betting pool by typing \"!gamble winner option1name\" if option 1 won, \"!gamble winner option2name\" for option 2, etc.");
-                        sendMessage("You can type !bet help to get a list of the options for a reminder of which option is each number if needed");
+                        sendMessage("No pool currently open.");
                     }
                 }
-                else sendMessage("Betting pool must be open and bets must be locked before you can specify a winner.");
-            }
-            else if (args[0].Equals("cancel"))
-            {
-                if (pool != null)
+                else if (args[0].Equals("winner") && args.Length >= 2)
                 {
-                    pool.cancel();
-                    bettingOpen = false;
-                    poolLocked = false;
-                    sendMessage("Betting Pool canceled.  All bets refunded");
+                    if (bettingOpen && poolLocked)
+                    {
+                        bool inQuote = false;
+                        string option = "";
+                        for (int i = 1; i < args.Length; i++)
+                        {
+                            if (args[i].StartsWith("\""))
+                            {
+                                inQuote = true;
+                            }
+                            if (!inQuote)
+                            {
+                                option = args[i];
+                            }
+                            if (inQuote)
+                            {
+                                option += args[i] + " ";
+                            }
+                            if (args[i].EndsWith("\""))
+                            {
+                                option = option.Substring(1, option.Length - 3);
+                                inQuote = false;
+                            }
+                        }
+                        if (option == args[1])
+                        {
+                            if (option.StartsWith("#"))
+                            {
+                                int optionnumber = Convert.ToInt32(option.Substring(1));
+                                if (("#" + optionnumber) == option)
+                                {
+                                    option = Pool.GetOptionFromNumber(optionnumber);
+                                }
+                            }
+                        }
+                        if (betOptions.Contains(option))
+                        {
+                            Pool.closePool(option);
+                            bettingOpen = false;
+                            poolLocked = false;
+                            sendMessage("Betting Pool closed! A total of " + Pool.getTotalBets() + " " + currency + " were bet.");
+                            string output = "Bets for:";
+                            for (int i = 0; i < betOptions.Count; i++)
+                            {
+                                double x = ((double)Pool.getTotalBetsOn(betOptions[i]) / Pool.getTotalBets()) * 100;
+                                output += " " + betOptions[i] + " - " + Pool.getNumberOfBets(betOptions[i]) + " (" + Math.Round(x) + "%);";
+                                //Console.WriteLine("TESTING: getTotalBetsOn(" + i + ") = " + pool.getTotalBetsOn(i) + " --- getTotalBets() = " + pool.getTotalBets() + " ---  (double)betsOn(i)/totalBets() = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) + " --- *100 = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100 + " --- Converted to a double = " + (double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100) + " --- Rounded double = " + Math.Round((double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100)));
+                            }
+                            sendMessage(output);
+                            Dictionary<string, int> winners = Pool.getWinners();
+                            output = "Winners:";
+                            if (winners.Count == 0)
+                            {
+                                sendMessage(output + " No One!");
+                            }
+                            for (int i = 0; i < winners.Count; i++)
+                            {
+                                output += " " + winners.ElementAt(i).Key + " - " + winners.ElementAt(i).Value + " (Bet " + Pool.getBetAmount(winners.ElementAt(i).Key) + ")";
+                                if (i == 0 && i == winners.Count - 1)
+                                {
+                                    sendMessage(output);
+                                    output = "";
+                                }
+                                else if ((i != 0 && i % 10 == 0) || i == winners.Count - 1)
+                                {
+                                    sendMessage(output);
+                                    output = "";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            sendMessage("The option you specified is not available in the current pool!");
+                        }
+                    }
+                    else
+                    {
+                        sendMessage("Betting pool must be open and bets must be locked before you can specify a winner, lock the bets by using \"!gamble close\".");
+                        sendMessage("Close the betting pool by typing \"!gamble winner option1name\" if option 1 won, \"!gamble winner option2name\" for option 2, etc.");
+                        sendMessage("You can type \"!bet help\" to get a list of the options as a reminder.");
+                    }
+                }
+                else if (args[0].Equals("cancel"))
+                {
+                    if (Pool.Running)
+                    {
+                        Pool.cancel();
+                        bettingOpen = false;
+                        poolLocked = false;
+                        sendMessage("Betting Pool canceled. All bets refunded");
+                    }
                 }
             }
         }
 
-        private static void Command_Bet(string cmd, string[] args)
+        private static void Command_Bet(string user, string cmd, string[] args)
         {
             if (bettingOpen)
             {
@@ -740,28 +861,66 @@ namespace ModBot
                                 temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
                             }
                             sendMessage(temp);
-                            sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1,  \"bet 25 option2name\" to bet 25 on option 2, etc");
+                            sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1, \"bet 25 option2name\" to bet 25 on option 2, etc. You can also bet with \"!bet <amount> #OptionNumber\"");
                         }
                     }
                     else if (int.TryParse(args[0], out betAmount) && args.Length >= 2 && bettingOpen && !poolLocked)
                     {
-                        if (betOptions.Contains(args[1]))
+                        bool inQuote = false;
+                        string option = "";
+                        for (int i = 1; i < args.Length; i++)
                         {
-                            pool.placeBet(user, args[1], betAmount);
+                            if (args[i].StartsWith("\""))
+                            {
+                                inQuote = true;
+                            }
+                            if (!inQuote)
+                            {
+                                option = args[i];
+                            }
+                            if (inQuote)
+                            {
+                                option += args[i] + " ";
+                            }
+                            if (args[i].EndsWith("\""))
+                            {
+                                option = option.Substring(1, option.Length - 3);
+                                inQuote = false;
+                            }
+                        }
+                        if(option == args[1])
+                        {
+                            if(option.StartsWith("#"))
+                            {
+                                int optionnumber = Convert.ToInt32(option.Substring(1));
+                                if(("#" + optionnumber) == option)
+                                {
+                                    option = Pool.GetOptionFromNumber(optionnumber);
+                                    if(option == "")
+                                    {
+                                        sendMessage(Api.GetDisplayName(user) + " the option number does not exist");
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                        if (Pool.placeBet(user, option, betAmount))
+                        {
+                            sendMessage(Api.GetDisplayName(user) + " you have placed a " + betAmount + " " + currency + " bet on \"" + option + "\"");
                         }
                     }
                 }
                 else
                 {
-                    if (pool.isInPool(user))
+                    if (Pool.isInPool(user))
                     {
-                        sendMessage(user + ": " + pool.getBetOn(user) + " (" + pool.getBetAmount(user) + ")");
+                        sendMessage(Api.GetDisplayName(user) + ": " + Pool.getBetOn(user) + " (" + Pool.getBetAmount(user) + ")");
                     }
                 }
             }
         }
 
-        private static void Command_Auction(string cmd, string[] args)
+        private static void Command_Auction(string user, string cmd, string[] args)
         {
             if (args != null && Database.getUserLevel(user) >= 2)
             {
@@ -769,18 +928,18 @@ namespace ModBot
                 {
                     if (!auctionOpen)
                     {
+                        Auction.Start();
                         auctionOpen = true;
-                        auction = new Auction();
                         sendMessage("Auction open!  Bid by typing \"!bid 50\", etc.");
                     }
-                    else sendMessage("Auction already open.  Close or cancel the previous one first.");
+                    else sendMessage("Auction already open. Close or cancel the previous one first.");
                 }
                 else if (args[0].Equals("close"))
                 {
                     if (auctionOpen)
                     {
                         auctionOpen = false;
-                        sendMessage("Auction closed!  Winner is: " + checkBtag(auction.highBidder) + " (" + auction.highBid + ")");
+                        sendMessage("Auction closed!  Winner is: " + checkBtag(Auction.highBidder) + " (" + Auction.highBid + ")");
                     }
                     else sendMessage("No auction open.");
                 }
@@ -789,15 +948,15 @@ namespace ModBot
                     if (auctionOpen)
                     {
                         auctionOpen = false;
-                        auction.Cancel();
-                        sendMessage("Auction cancelled.  Bids refunded.");
+                        Auction.Cancel();
+                        sendMessage("Auction cancelled. Bids refunded.");
                     }
                     else sendMessage("No auction open.");
                 }
             }
         }
 
-        private static void Command_Bid(string cmd, string[] args)
+        private static void Command_Bid(string user, string cmd, string[] args)
         {
             if (args != null)
             {
@@ -806,7 +965,7 @@ namespace ModBot
                 {
                     if (auctionOpen)
                     {
-                        if (auction.placeBid(user, amount))
+                        if (Auction.placeBid(user, amount))
                         {
                             auctionLooper.Change(0, 30000);
                         }
@@ -815,7 +974,7 @@ namespace ModBot
             }
         }
 
-        private static void Command_BTag(string cmd, string[] args)
+        private static void Command_BTag(string user, string cmd, string[] args)
         {
             if (args != null && args[1].Contains("#"))
             {
@@ -823,7 +982,7 @@ namespace ModBot
             }
         }
 
-        private static void Command_ModBot(string cmd, string[] args)
+        private static void Command_ModBot(string user, string cmd, string[] args)
         {
             if (args != null)
             {
@@ -837,7 +996,7 @@ namespace ModBot
                             payout = amount;
                             sendMessage("New Payout Amount: " + amount);
                         }
-                        else sendMessage("Can't change payout amount.  Must be a valid integer greater than 0");
+                        else sendMessage("Can't change payout amount. Must be a valid integer greater than 0");
                     }
                     if (args[0].Equals("interval") && args.Length >= 2)
                     {
@@ -850,7 +1009,7 @@ namespace ModBot
                         else
                         {
                             //Console.WriteLine(tempInterval + " " + Array.IndexOf(intervals, tempInterval));
-                            string output = "Can't change payout interval.  Accepted values: ";
+                            string output = "Can't change payout interval. Accepted values: ";
                             bool addComma = false;
                             foreach (int x in intervals)
                             {
@@ -897,7 +1056,7 @@ namespace ModBot
                         }
                         else
                         {
-                            sendMessage(Api.capName(args[1]) + " does not exist in the database.  Have them type !<currency> then try again.");
+                            sendMessage(Api.capName(args[1]) + " does not exist in the database. Have them type !<currency> then try again.");
                         }
                     }
                     if (args[0].Equals("removesub") && args.Length >= 2)
@@ -932,7 +1091,7 @@ namespace ModBot
                         }
                         else
                         {
-                            sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
+                            sendMessage(tNick + " does not exist in the database. Have them type !<currency>, then try to add them again.");
                         }
                     }
                     if (args[0].Equals("addsuper") && args.Length >= 2)
@@ -952,7 +1111,7 @@ namespace ModBot
                         }
                         else
                         {
-                            sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try to add them again.");
+                            sendMessage(tNick + " does not exist in the database. Have them type !<currency>, then try to add them again.");
                         }
                     }
                     if (args[0].Equals("demote") && args.Length >= 2)
@@ -974,12 +1133,12 @@ namespace ModBot
                             }
                             else
                             {
-                                sendMessage("User is already Access Level 0.  Cannot demote further.");
+                                sendMessage("User is already Access Level 0. Cannot demote further.");
                             }
                         }
                         else
                         {
-                            sendMessage(tNick + " does not exist in the database.  Have them type !<currency>, then try again.");
+                            sendMessage(tNick + " does not exist in the database. Have them type !<currency>, then try again.");
                         }
                     }
                     if (args[0].Equals("setlevel") && args.Length >= 3)
@@ -1001,7 +1160,7 @@ namespace ModBot
                         }
                         else
                         {
-                            sendMessage(tNick + " does not exist in the database.  Have them type !currency, then try again.");
+                            sendMessage(tNick + " does not exist in the database. Have them type !currency, then try again.");
                         }
                     }
                 }
@@ -1030,7 +1189,7 @@ namespace ModBot
                         }
                         else 
                         {
-                            sendMessage("Invalid syntax.  Correct syntax is \"!modbot addcommand <access level> <command> <text you want to output>");
+                            sendMessage("Invalid syntax. Correct syntax is \"!modbot addcommand <access level> <command> <text you want to output>");
                         }
                     }
                     else if (args[0].Equals("removecommand") && args.Length >= 2)
@@ -1065,19 +1224,19 @@ namespace ModBot
             }
         }
 
-        private static void handleMessage(string message)
+        /*private static void handleMessage(string message)
         {
             if (Commands.CheckCommand(user, message, true)) return;
 
             //string[] msg = message.Split(' ');
 
-            /*if (msg[0].Equals("!restart") && db.getUserLevel(user) == 3)
-            {
-                irc.Close();
-                //Flush();
-                Connect();
-            }*/
-        }
+            //if (msg[0].Equals("!restart") && db.getUserLevel(user) == 3)
+            //{
+            //    irc.Close();
+            //    //Flush();
+            //    Connect();
+            //}
+        }*/
 
 
 
@@ -1168,68 +1327,34 @@ namespace ModBot
 
         private static string getUser(string message)
         {
-            string[] temp = message.Split('!');
-            user = temp[0].Substring(1);
-            return Api.capName(user);
-        }
-
-        private static void setChannel(string tChannel)
-        {
-            if (tChannel.StartsWith("#"))
-            {
-                channel = tChannel;
-            }
-            else
-            {
-                channel = "#" + tChannel;
-            }
-        }
-
-        private static void setAdmin(string tChannel)
-        {
-            if (tChannel.StartsWith("#"))
-            {
-                tChannel = tChannel.Substring(1);
-            }
-            else
-            {
-                admin = tChannel;
-            }
-        }
-
-        public static void setCurrency(string tCurrency)
-        {
-            if (tCurrency.StartsWith("!"))
-            {
-                currency = tCurrency.Substring(1);
-            }
-            else
-            {
-                currency = tCurrency;
-            }
+            return Api.capName(message.Split('!')[0].Substring(1));
         }
 
         private static void sendRaw(string message)
         {
-            try
-            {
-                write.WriteLine(message);
-                attempt = 0;
-            }
-            catch (Exception)
+            int attempt = 0;
+            while (attempt < 6)
             {
                 attempt++;
-                //Console.WriteLine("Can't send data.  Attempt: " + attempt);
-                if (attempt >= 5)
+                try
                 {
-                    Console.WriteLine("Disconnected.  Attempting to reconnect.");
-                    irc.Close();
-                    //Flush();
-                    Connect();
-                    attempt = 0;
+                    write.WriteLine(message);
+                    break;
+                }
+                catch (Exception)
+                {
+                    if (attempt == 6)
+                    {
+                        Console.Clear();
+                        //Console.WriteLine("Can't send data. Attempt: " + attempt);
+                        Console.WriteLine("Disconnected. Attempting to reconnect.");
+                        irc.Close();
+                        //Flush();
+                        Connect();
+                        break;
+                    }
                 }
             }
-
         }
 
         public static void sendMessage(string message, bool usemecommand = true)
@@ -1363,11 +1488,31 @@ namespace ModBot
                 lock (betOptions)
                 {
                     betOptions.Clear();
+                    bool inQuote = false;
+                    string option = "";
                     for (int i = 2; i < temp.Length; i++)
                     {
-                        if (!betOptions.Contains(temp[i]))
+                        if(temp[i].StartsWith("\""))
                         {
-                            betOptions.Add(temp[i]);
+                            inQuote = true;
+                        }
+                        if (!inQuote)
+                        {
+                            option = temp[i];
+                        }
+                        if (inQuote)
+                        {
+                            option += temp[i] + " ";
+                        }
+                        if (temp[i].EndsWith("\""))
+                        {
+                            option = option.Substring(1, option.Length - 3);
+                            inQuote = false;
+                        }
+                        if (!inQuote && !option.StartsWith("#") && !betOptions.Contains(option))
+                        {
+                            betOptions.Add(option);
+                            option = "";
                         }
                     }
                 }
@@ -1413,16 +1558,16 @@ namespace ModBot
                         output += " " + Api.GetDisplayName(person) + " (" + Database.getTimeWatched(person).ToString(@"d\d\ hh\h\ mm\m") + ")" + " - " + Database.checkCurrency(person);
                         if (bettingOpen)
                         {
-                            if (pool.isInPool(person))
+                            if (Pool.isInPool(person))
                             {
-                                output += "[" + pool.getBetAmount(person) + "]";
+                                output += " [" + Pool.getBetAmount(person) + "]";
                             }
                         }
                         if (auctionOpen)
                         {
-                            if (auction.highBidder.Equals(person))
+                            if (Auction.highBidder.Equals(person))
                             {
-                                output += "{" + auction.highBid + "}";
+                                output += " {" + Auction.highBid + "}";
                             }
                         }
                         addComma = true;
@@ -1438,7 +1583,7 @@ namespace ModBot
         {
             if (auctionOpen)
             {
-                sendMessage(auction.highBidder + " is currently winning, with a bid of " + auction.highBid + "!");
+                sendMessage(Api.GetDisplayName(Auction.highBidder) + " is currently winning, with a bid of " + Auction.highBid + "!");
             }
         }
 

@@ -23,16 +23,16 @@ namespace ModBot
         public int iSettingsPresent = -2;
         private Donations donations = new Donations();
         private bool g_bLoaded = false;
+        private Dictionary<CheckBox, Panel> WindowButtons = new Dictionary<CheckBox, Panel>();
 
         public MainWindow()
         {
             InitializeComponent();
-
-            Giveaway_WinnerChat.Select(0, 7);
-            Giveaway_WinnerChat.SelectionColor = Color.Blue;
-            Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 8, FontStyle.Bold);
-            Giveaway_WinnerChat.Select(Giveaway_WinnerChat.Text.Length, Giveaway_WinnerChat.Text.Length);
-
+            Text = "ModBot v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString().Replace("." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
+            CurrencyLabel.Location = new Point(CurrencySpacer.Location.X + CurrencySpacer.Size.Width / 2 - CurrencyLabel.Size.Width / 2, CurrencySpacer.Location.Y + 2);
+            GiveawayLabel.Location = new Point(GiveawaySpacer.Location.X + GiveawaySpacer.Size.Width / 2 - GiveawayLabel.Size.Width / 2, GiveawaySpacer.Location.Y + 2);
+            WindowButtons.Add(checkBox1, panel1);
+            WindowButtons.Add(checkBox2, panel2);
             //string[] lines = File.ReadAllLines("modbot.txt");
             //Dictionary<string, string> dict = lines.Select(l => l.Split('=')).ToDictionary(a => a[0], a => a[1]);
             //iniUtil ini = new iniUtil(@"C:\program files (x86)\myapp\myapp.ini");
@@ -103,10 +103,10 @@ namespace ModBot
 
         public void GetSettings()
         {
-            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini"))
+            /*if (!File.Exists("ModBot.ini"))
             {
-                File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini", "\r\n[Default]");
-            }
+                File.WriteAllText("ModBot.ini", "\r\n[Default]");
+            }*/
 
             if (!bIgnoreUpdates)
             {
@@ -384,7 +384,7 @@ namespace ModBot
                         }
                         if (donations.UpdateLastDonorCheckBox.Checked && !sLatestIgnores.Contains(transaction.id) && sLatestDonor == "")
                         {
-                            File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "LatestDonation.txt", (sLatestDonor = transaction.ToString("$AMOUNT - DONOR")));
+                            File.WriteAllText("LatestDonation.txt", (sLatestDonor = transaction.ToString("$AMOUNT - DONOR")));
                         }
 
                         if (donations.UpdateTopDonorsCheckBox.Checked)
@@ -412,7 +412,7 @@ namespace ModBot
 
                     if (donations.UpdateRecentDonorsCheckBox.Checked)
                     {
-                        File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "RecentDonors.txt", sRecentDonors);
+                        File.WriteAllText("RecentDonors.txt", sRecentDonors);
                     }
 
                     Trans = Donors.OrderByDescending(key => float.Parse(key.amount));
@@ -436,7 +436,7 @@ namespace ModBot
                                 iCount++;
                             }
                         }
-                        File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "TopDonors.txt", sTopDonors);
+                        File.WriteAllText("TopDonors.txt", sTopDonors);
                     }
                 }
 
@@ -734,9 +734,9 @@ namespace ModBot
                 }
             }
 
-            if (Giveaway.iLastWin > 0)
+            if (Giveaway.LastRoll > 0)
             {
-                int time = Api.GetUnixTimeNow() - Giveaway.iLastWin;
+                int time = Api.GetUnixTimeNow() - Giveaway.LastRoll;
                 int color = time;
                 if (color >= 0 && color < 60)
                 {
@@ -826,6 +826,25 @@ namespace ModBot
         private void Currency_HandoutLastActive_ValueChanged(object sender, EventArgs e)
         {
             ini.SetValue("Settings", "Currency_HandoutTime", Currency_HandoutLastActive.Value.ToString());
+        }
+
+        private void WindowChanged(object sender, EventArgs e)
+        {
+            CheckBox CB = (CheckBox)sender;
+            if (CB.Checked)
+            {
+                CB.Enabled = false;
+                WindowButtons[CB].Visible = true;
+                foreach (CheckBox cb in WindowButtons.Keys)
+                {
+                    if (cb != CB)
+                    {
+                        cb.Enabled = true;
+                        cb.Checked = false;
+                        WindowButtons[cb].Visible = false;
+                    }
+                }
+            }
         }
     }
 }

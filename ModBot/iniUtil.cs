@@ -25,9 +25,13 @@ public class iniUtil
     /// .ctor with INI file name
     /// </summary>
     /// <param name="fileName">Fullpath to the INI file</param>
-    public iniUtil(string fileName)
+    public iniUtil(string fileName, string sDefault="\r\n")
     {
         m_sIniFile = fileName;
+        if (!System.IO.File.Exists(fileName))
+        {
+            System.IO.File.WriteAllText(fileName, sDefault);
+        }
     }
 
     /// <summary>

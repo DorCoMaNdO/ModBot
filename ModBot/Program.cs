@@ -12,7 +12,8 @@ namespace ModBot
 {
     static class Program
     {
-        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini");
+        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini", "\r\n[Default]");
+        //private static FileStream stream = null;
 
         /// <summary>
         /// The main entry point for the application.
@@ -20,13 +21,17 @@ namespace ModBot
         [STAThread]
         static void Main()
         {
-            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini"))
-            {
-                File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini", "\r\n[Default]");
-            }
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            while (File.Exists("ModBot.ini") && Api.IsFileLocked("ModBot.ini", FileShare.Read))
+            {
+                MessageBox.Show("ModBot's config file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            if (!File.Exists("ModBot.ini"))
+            {
+                File.WriteAllText("ModBot.ini", "\r\n[Default]");
+            }
+            //stream = new FileInfo("ModBot.ini").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
             Updates.ExtractUpdater();
             Updates.CheckUpdate();
             Application.Run(new SettingsDialog());
@@ -36,7 +41,7 @@ namespace ModBot
         {
             public static bool CheckUpdate(bool bConsole=true, bool bMessageBox=true)
             {
-                if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe"))
+                if (File.Exists("ModBotUpdater.exe"))
                 {
                     string sLatestVersion = "", sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
                     using (WebClient w = new WebClient())
@@ -61,11 +66,11 @@ namespace ModBot
                                     {
                                         if (MessageBox.Show("An update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
                                         {
-                                            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe"))
+                                            if (!File.Exists("ModBotUpdater.exe"))
                                             {
                                                 ExtractUpdater();
                                             }
-                                            Process.Start(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe");
+                                            Process.Start("ModBotUpdater.exe");
                                             Environment.Exit(0);
                                         }
                                     }
@@ -88,24 +93,24 @@ namespace ModBot
             {
                 byte[] rawUpdater = ModBot.Properties.Resources.ModBotUpdater;
                 string sLatestVersion = Assembly.Load(rawUpdater).GetName().Version.ToString();
-                if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe"))
+                if (File.Exists("ModBotUpdater.exe"))
                 {
-                    string sCurrentVersion = FileVersionInfo.GetVersionInfo(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe").FileVersion.ToString();
+                    string sCurrentVersion = FileVersionInfo.GetVersionInfo("ModBotUpdater.exe").FileVersion.ToString();
                     string[] sCurrent = sCurrentVersion.Split('.');
                     string[] sLatest = sLatestVersion.Split('.');
                     int iCurrentMajor = Convert.ToInt32(sCurrent[0]), iCurrentMinor = Convert.ToInt32(sCurrent[1]), iCurrentBuild = Convert.ToInt32(sCurrent[2]), iCurrentRev = Convert.ToInt32(sCurrent[3]);
                     int iLatestMajor = Convert.ToInt32(sLatest[0]), iLatestMinor = Convert.ToInt32(sLatest[1]), iLatestBuild = Convert.ToInt32(sLatest[2]), iLatestRev = Convert.ToInt32(sLatest[3]);
                     if (iLatestMajor > iCurrentMajor || iLatestMajor == iCurrentMajor && iLatestMinor > iCurrentMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild > iCurrentBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iLatestRev > iCurrentRev)
                     {
-                        while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe"))
+                        while (File.Exists("ModBotUpdater.exe") && Api.IsFileLocked("ModBotUpdater.exe"))
                         {
                             MessageBox.Show("Please close ModBot's Updater, a new version of the updater is available and will be extracted.", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
 
-                        File.Delete(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe");
-                        while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe")) { }
+                        File.Delete("ModBotUpdater.exe");
+                        while (File.Exists("ModBotUpdater.exe")) { }
 
-                        using (FileStream fsUpdater = new FileStream(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe", FileMode.CreateNew, FileAccess.Write))
+                        using (FileStream fsUpdater = new FileStream("ModBotUpdater.exe", FileMode.CreateNew, FileAccess.Write))
                         {
                             fsUpdater.Write(rawUpdater, 0, rawUpdater.Length);
                         }
@@ -114,39 +119,12 @@ namespace ModBot
                 }
                 else
                 {
-                    using (FileStream fsUpdater = new FileStream(AppDomain.CurrentDomain.BaseDirectory + "ModBotUpdater.exe", FileMode.CreateNew, FileAccess.Write))
+                    using (FileStream fsUpdater = new FileStream("ModBotUpdater.exe", FileMode.CreateNew, FileAccess.Write))
                     {
                         fsUpdater.Write(rawUpdater, 0, rawUpdater.Length);
                     }
                     MessageBox.Show("ModBot Updater has been extracted sucessfully (v" + sLatestVersion + ").", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-            }
-
-            private static bool IsFileLocked(string FileLocation)
-            {
-                FileInfo file = new FileInfo(FileLocation);
-                FileStream stream = null;
-
-                try
-                {
-                    stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-                }
-                catch (IOException)
-                {
-                    //the file is unavailable because it is:
-                    //still being written to
-                    //or being processed by another thread
-                    //or does not exist (has already been processed)
-                    return true;
-                }
-                finally
-                {
-                    if (stream != null)
-                        stream.Close();
-                }
-
-                //file is not locked
-                return false;
             }
         }
     }

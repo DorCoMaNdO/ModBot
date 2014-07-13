@@ -5,37 +5,42 @@ using System.Text;
 
 namespace ModBot
 {
-    public class Auction
+    public static class Auction
     {
-        public string highBidder {get; private set;}
-        public int highBid { get; private set; }
+        public static string highBidder { get; private set; }
+        public static int highBid { get; private set; }
 
-        public Auction()
+        public static void Start()
         {
             highBidder = "";
             highBid = 0;
         }
 
-        public bool placeBid(string nick, int amount)
+        public static bool placeBid(string nick, int amount)
         {
             if (Database.checkCurrency(nick) >= amount)
             {
                 if (amount > highBid)
                 {
-                    Database.addCurrency(highBidder, highBid);
+                    if (highBidder != "")
+                    {
+                        Database.addCurrency(highBidder, highBid);
+                    }
                     highBid = amount;
                     highBidder = nick;
-                    Database.removeCurrency(highBidder, highBid);
+                    Database.removeCurrency(nick, amount);
                     return true;
                 }
-                return false;
             }
             return false;
         }
 
-        public void Cancel()
+        public static void Cancel()
         {
-            Database.addCurrency(highBidder, highBid);
+            if (highBidder != "")
+            {
+                Database.addCurrency(highBidder, highBid);
+            }
             highBidder = "";
             highBid = 0;
         }

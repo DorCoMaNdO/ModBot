@@ -4,6 +4,7 @@ using System.Text;
 using System.Data.SQLite;
 using System.IO;
 using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace ModBot
 {
@@ -17,96 +18,85 @@ namespace ModBot
         {
             channel = Irc.channel.Substring(1);
 
-            if (File.Exists("ModBot.sqlite"))
-            {
-                DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
-                DB.Open();
-
-                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-
-                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS commands (id INTEGER PRIMARY KEY, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", DB))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-
-                using (cmd = new SQLiteCommand("SELECT display_name FROM '" + channel + "';", DB))
-                {
-                    try
-                    {
-                        cmd.ExecuteNonQuery();
-                        /*using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", myDB))
-                        {
-                            using (SQLiteDataReader r = cmd.ExecuteReader())
-                            {
-                                while (r.Read())
-                                {
-                                    if (r["display_name"].ToString() == "")
-                                    {
-                                        Console.WriteLine(r["user"].ToString());
-                                        Api.GetDisplayName(r["user"].ToString(), true);
-                                    }
-                                }
-                            }
-                        }*/
-                    }
-                    catch(SQLiteException)
-                    {
-                        using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN display_name TEXT DEFAULT null;", DB))
-                        {
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
-                }
-
-                using (cmd = new SQLiteCommand("SELECT time_watched FROM '" + channel + "';", DB))
-                {
-                    try
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
-                    catch (SQLiteException)
-                    {
-                        using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN time_watched INTEGER DEFAULT 0;", DB))
-                        {
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
-                }
-
-                if (tableExists("transfers") && !tableHasData(channel))
-                {
-                    using (cmd = new SQLiteCommand("INSERT INTO '" + channel + "' SELECT * FROM transfers;", DB))
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    /*sql = "DROP TABLE transfers;";
-
-                    using (cmd = new SQLiteCommand(sql, myDB))
-                    {
-                        cmd.ExecuteNonQuery();
-                    }*/
-                }
-                
-            }
-            else
+            if (!File.Exists("ModBot.sqlite"))
             {
                 SQLiteConnection.CreateFile("ModBot.sqlite");
-                DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
-                DB.Open();
+            }
 
-                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB))
+            while (ModBot.Api.IsFileLocked("ModBot.sqlite", FileShare.Read))
+            {
+                MessageBox.Show("ModBot's database file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
+            DB.Open();
+
+            using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'commands' (id INTEGER PRIMARY KEY, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", DB))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            // Handle old users
+            using (cmd = new SQLiteCommand("SELECT display_name FROM '" + channel + "';", DB))
+            {
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                    /*using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", myDB))
+                    {
+                        using (SQLiteDataReader r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                if (r["display_name"].ToString() == "")
+                                {
+                                    Console.WriteLine(r["user"].ToString());
+                                    Api.GetDisplayName(r["user"].ToString(), true);
+                                }
+                            }
+                        }
+                    }*/
+                }
+                catch (SQLiteException)
+                {
+                    using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN display_name TEXT DEFAULT null;", DB))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+
+            using (cmd = new SQLiteCommand("SELECT time_watched FROM '" + channel + "';", DB))
+            {
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (SQLiteException)
+                {
+                    using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN time_watched INTEGER DEFAULT 0;", DB))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+
+            if (tableExists("transfers") && !tableHasData(channel))
+            {
+                using (cmd = new SQLiteCommand("INSERT INTO '" + channel + "' SELECT * FROM transfers;", DB))
                 {
                     cmd.ExecuteNonQuery();
                 }
 
-                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS commands (id INTEGER PRIMARY KEY, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", DB))
+                /*using (cmd = new SQLiteCommand("DROP TABLE transfers;", myDB))
                 {
                     cmd.ExecuteNonQuery();
-                }
+                }*/
             }
 
             /*Commands.Add("test", new CommandExecutedHandler((string command, string[] args) =>
@@ -193,6 +183,10 @@ namespace ModBot
         public static void setCurrency(string user, int amount)
         {
             user = Api.capName(user);
+            if (amount < 0)
+            {
+                amount = 0;
+            }
             if (!userExists(user))
             {
                 newUser(user);
@@ -201,7 +195,6 @@ namespace ModBot
             {
                 cmd.ExecuteNonQuery();
             }
-
         }
 
         public static int checkCurrency(string user)
@@ -215,7 +208,13 @@ namespace ModBot
                         if (r.Read())
                         {
                             //Console.WriteLine("1: " + r["currency"].ToString());
-                            return int.Parse(r["currency"].ToString());
+                            int currency = int.Parse(r["currency"].ToString());
+                            if (currency < 0)
+                            {
+                                setCurrency(user, 0);
+                                return 0;
+                            }
+                            return currency;
                         }
                         else return 0;
                     }
@@ -230,6 +229,10 @@ namespace ModBot
         public static void addCurrency(string user, int amount)
         {
             user = Api.capName(user);
+            if (amount < 0)
+            {
+                amount = -amount;
+            }
             if (!userExists(user))
             {
                 newUser(user);
@@ -243,6 +246,14 @@ namespace ModBot
         public static void removeCurrency(string user, int amount)
         {
             user = Api.capName(user);
+            if (amount < 0)
+            {
+                amount = -amount;
+            }
+            if (amount > checkCurrency(user))
+            {
+                amount = checkCurrency(user);
+            }
             if (!userExists(user))
             {
                 newUser(user);

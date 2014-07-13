@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace ModBot
 {
-    public delegate void CommandExecutedHandler(string command, string[] args);
+    public delegate void CommandExecutedHandler(string user, string command, string[] args);
 
     public static class Commands
     {
@@ -52,7 +52,19 @@ namespace ModBot
                 {
                     new System.Threading.Thread(() =>
                     {
-                        Executed(Cmd, args);
+                        Executed("", Cmd, args);
+                    }).Start();
+                }
+            }
+
+            public void Call(string user, string message)
+            {
+                string[] args = message.Contains(" ") ? message.Substring(message.IndexOf(" ") + 1).Split(' ') : null;
+                if (Executed != null)
+                {
+                    new System.Threading.Thread(() =>
+                    {
+                        Executed(user, Cmd, args);
                     }).Start();
                 }
             }
@@ -174,7 +186,7 @@ namespace ModBot
                     {
                         if (call)
                         {
-                            Command.Call(message);
+                            Command.Call(user, message);
                         }
                         return true;
                     }

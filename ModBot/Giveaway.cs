@@ -14,7 +14,7 @@ namespace ModBot
     {
         private static MainWindow MainForm = Irc.MainForm;
         private static string sWinner;
-        public static int iLastWin;
+        public static int LastRoll;
         private static float fChance;
 
         public static void startGiveaway()
@@ -41,7 +41,7 @@ namespace ModBot
                 MainForm.Giveaway_WinnerStatusLabel.Text = "";
             });
             sWinner = "";
-            iLastWin = 0;
+            LastRoll = 0;
         }
 
         public static void endGiveaway()
@@ -68,7 +68,7 @@ namespace ModBot
                 MainForm.Giveaway_WinnerStatusLabel.Text = "";
             });
             sWinner = "";
-            iLastWin = 0;
+            LastRoll = 0;
         }
 
         private static int GetMinCurrency()
@@ -84,7 +84,7 @@ namespace ModBot
         {
             if (MainForm.Giveaway_StartButton.Visible) startGiveaway();
             sWinner = "";
-            iLastWin = 0;
+            LastRoll = 0;
             MainForm.BeginInvoke((MethodInvoker)delegate
             {
                 MainForm.Giveaway_RerollButton.Enabled = false;
@@ -100,7 +100,7 @@ namespace ModBot
                 MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
                 MainForm.Giveaway_WinnerChat.Clear();
             });
-            Irc.buildUserList();
+            //Irc.buildUserList(); // ToDo : Check lag cause
 
             try
             {
@@ -147,7 +147,7 @@ namespace ModBot
                         MainForm.Giveaway_CopyWinnerButton.Enabled = true;
                         MainForm.Giveaway_AnnounceWinnerButton.Enabled = true;
                         MainForm.Giveaway_RerollButton.Enabled = true;
-                        iLastWin = Api.GetUnixTimeNow();
+                        LastRoll = Api.GetUnixTimeNow();
                         if (MainForm.Giveaway_AutoBanWinnerCheckBox.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(sWinner)) MainForm.Giveaway_BanListListBox.Items.Add(Api.capName(sWinner));
                     });
                     new Thread(() =>

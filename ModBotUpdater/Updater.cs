@@ -51,35 +51,35 @@ namespace ModBotUpdater
         private void startDownload()
         {
             CurrentVersionLabel.Text = "Not Found";
-            if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+            if (File.Exists("ModBot.exe"))
             {
                 try
                 {
-                    CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe").FileVersion.ToString();
+                    CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo("ModBot.exe").FileVersion.ToString();
                 }
                 catch (NullReferenceException)
                 {
-                    while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+                    while (File.Exists("ModBot.exe") && IsFileLocked("ModBot.exe"))
                     {
                         MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
-                    File.Delete(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe");
+                    File.Delete("ModBot.exe");
                 }
             }
 
-            if (!Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "Updater"))
+            if (!Directory.Exists("Updater"))
             {
-                Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + "Updater");
+                Directory.CreateDirectory("Updater");
             }
             else
             {
-                if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe"))
+                if (File.Exists(@"Updater\ModBot.exe"))
                 {
-                    while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe"))
+                    while (File.Exists(@"Updater\ModBot.exe") && IsFileLocked(@"Updater\ModBot.exe"))
                     {
                         MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
-                    File.Delete(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe");
+                    File.Delete(@"Updater\ModBot.exe");
                 }
             } 
 
@@ -118,7 +118,7 @@ namespace ModBotUpdater
                                 });
                             }
                         });
-                        client.DownloadFileAsync(new Uri("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + LatestVersionLabel.Text + "/ModBot.exe"), AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe");
+                        client.DownloadFileAsync(new Uri("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + LatestVersionLabel.Text + "/ModBot.exe"), @"Updater\ModBot.exe");
                     }
                     catch (SocketException)
                     {
@@ -136,24 +136,24 @@ namespace ModBotUpdater
 
         private void DoneDownloading()
         {
-            if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe"))
+            if (File.Exists(@"Updater\ModBot.exe"))
             {
-                while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe"))
+                while (File.Exists(@"Updater\ModBot.exe") && IsFileLocked(@"Updater\ModBot.exe"))
                 {
                     MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
 
-                FileStream fiLockFile = new FileInfo(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                FileStream fiLockFile = new FileInfo(@"Updater\ModBot.exe").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
                 StateLabel.Text = "Checking for older version...";
-                if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+                if (File.Exists("ModBot.exe"))
                 {
                     StateLabel.Text = "Deleting older version...";
-                    while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+                    while (File.Exists("ModBot.exe") && IsFileLocked("ModBot.exe"))
                     {
                         MessageBox.Show("Please close ModBot inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
-                    File.Delete(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe");
-                    while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe")) { }
+                    File.Delete("ModBot.exe");
+                    while (File.Exists("ModBot.exe")) { }
                 }
 
                 if (fiLockFile != null)
@@ -161,15 +161,15 @@ namespace ModBotUpdater
                     fiLockFile.Close();
                 }
 
-                while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe"))
+                while (File.Exists(@"Updater\ModBot.exe") && IsFileLocked(@"Updater\ModBot.exe"))
                 {
                     MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
 
                 StateLabel.Text = "Moving updated version...";
-                using (Stream inStream = File.Open(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe", FileMode.Open))
+                using (Stream inStream = File.Open(@"Updater\ModBot.exe", FileMode.Open))
                 {
-                    using (Stream outStream = File.Create(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+                    using (Stream outStream = File.Create("ModBot.exe"))
                     {
                         while (inStream.Position < inStream.Length)
                         {
@@ -178,21 +178,21 @@ namespace ModBotUpdater
                         }
                     }
                 }
-                File.Delete(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe");
-                //File.Move(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe", AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe");
-                while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + @"Updater\ModBot.exe")) { }
+                File.Delete(@"Updater\ModBot.exe");
+                //File.Move(@"Updater\ModBot.exe", "ModBot.exe");
+                while (File.Exists(@"Updater\ModBot.exe")) { }
 
-                if (Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "Updater"))
+                if (Directory.Exists("Updater"))
                 {
-                    Directory.Delete(AppDomain.CurrentDomain.BaseDirectory + "Updater", true);
+                    Directory.Delete("Updater", true);
                 }
 
                 DownloadProgressBar.Value = 100;
                 CurrentVersionLabel.Text = "Not Found";
                 StateLabel.Text = "Done updating!";
-                if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+                if (File.Exists("ModBot.exe"))
                 {
-                    CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe").FileVersion.ToString();
+                    CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo("ModBot.exe").FileVersion.ToString();
                     if (CurrentVersionLabel.Text == LatestVersionLabel.Text)
                     {
                         StateLabel.Text = "Done updating and up-to-date!";
@@ -215,19 +215,19 @@ namespace ModBotUpdater
         private void CheckUpdates()
         {
             CurrentVersionLabel.Text = "Not Found";
-            if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+            if (File.Exists("ModBot.exe"))
             {
                 try
                 {
-                    CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe").FileVersion.ToString();
+                    CurrentVersionLabel.Text = FileVersionInfo.GetVersionInfo("ModBot.exe").FileVersion.ToString();
                 }
                 catch (NullReferenceException)
                 {
-                    while (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe") && IsFileLocked(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe"))
+                    while (File.Exists("ModBot.exe") && IsFileLocked("ModBot.exe"))
                     {
                         MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
-                    File.Delete(AppDomain.CurrentDomain.BaseDirectory + "ModBot.exe");
+                    File.Delete("ModBot.exe");
                 }
             }
 

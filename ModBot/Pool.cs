@@ -5,23 +5,27 @@ using System.Text;
 
 namespace ModBot
 {
-    public class Pool
+    public static class Pool
     {
-        private Dictionary<string, int> winners;
-        private Dictionary<string, PoolUser> bets = new Dictionary<string, PoolUser>();
-        private int maxBet, totalBets;
-        private List<string> options;
+        private static Dictionary<string, int> winners = new Dictionary<string, int>();
+        private static Dictionary<string, PoolUser> bets = new Dictionary<string, PoolUser>();
+        private static int maxBet, totalBets;
+        private static List<string> options;
+        public static bool Running { get; private set; }
 
-        public Pool(int maxBet, List<string> options)
+        public static void CreatePool(int max, List<string> lOptions)
         {
-            this.maxBet = maxBet;
-            this.options = options;
+            maxBet = max;
+            options = lOptions;
             totalBets = 0;
+            bets.Clear();
+            winners.Clear();
+            Running = true;
         }
 
-        public void placeBet(string nick, string option, int amount)
+        public static bool placeBet(string nick, string option, int amount)
         {
-            if (options.Contains(option) && amount <= maxBet)
+            if (Running && options.Contains(option) && amount <= maxBet)
             {
                 if (bets.ContainsKey(nick))
                 {
@@ -39,6 +43,7 @@ namespace ModBot
                             bets[nick].betAmount = amount;
                             bets[nick].betOn = option;
                         }
+                        return true;
                     }
                 }
                 else
@@ -47,20 +52,22 @@ namespace ModBot
                     {
                         Database.removeCurrency(nick, amount);
                         bets.Add(nick, new PoolUser(option, amount));
+                        return true;
                     }
                 }
             }
+            return false;
         }
 
-        public void closePool(string winBet)
+        public static void closePool(string winBet)
         {
             buildTotalBets();
             buildWinners(winBet);            
         }
 
-        private void buildWinners(string winBet)
+        private static void buildWinners(string winBet)
         {
-            winners = new Dictionary<string, int>();
+            winners.Clear();
             foreach (string nick in bets.Keys)
             {
                 if (bets[nick].betOn == winBet)
@@ -79,9 +86,10 @@ namespace ModBot
                     }
                 }
             }
+            Running = false;
         }
 
-        private void buildTotalBets()
+        private static void buildTotalBets()
         {
             totalBets = 0;
             foreach (string nick in bets.Keys)
@@ -90,12 +98,12 @@ namespace ModBot
             }
         }
 
-        public int getTotalBets()
+        public static int getTotalBets()
         {
             return totalBets;
         }
 
-        public int getNumberOfBets(string bet)
+        public static int getNumberOfBets(string bet)
         {
             int numberOfBets = 0;
             foreach (string nick in bets.Keys)
@@ -108,7 +116,7 @@ namespace ModBot
             return numberOfBets;
         }
 
-        public int getTotalBetsOn(string bet)
+        public static int getTotalBetsOn(string bet)
         {
             int totalBetsOnOption = 0;
             foreach (string nick in bets.Keys)
@@ -122,33 +130,45 @@ namespace ModBot
             return totalBetsOnOption;
         }
 
-        public Dictionary<string, int> getWinners()
+        public static Dictionary<string, int> getWinners()
         {
             return winners;
         }
 
-        public int getBetAmount(string nick)
+        public static int getBetAmount(string nick)
         {
             return bets[nick].betAmount;
         }
 
-        public string getBetOn(string nick)
+        public static string getBetOn(string nick)
         {
             return bets[nick].betOn;
         }
 
-        public void cancel()
+        public static void cancel()
         {
             foreach (string nick in bets.Keys)
             {
                 Database.addCurrency(nick, bets[nick].betAmount);
             }
             bets.Clear();
+            winners.Clear();
+            Running = false;
         }
 
-        public bool isInPool(string nick)
+        public static bool isInPool(string nick)
         {
             return bets.ContainsKey(nick);
+        }
+
+        public static string GetOptionFromNumber(int optionnumber)
+        {
+            optionnumber--;
+            if (optionnumber >= 0 && optionnumber < options.Count)
+            {
+                return options[optionnumber];
+            }
+            return "";
         }
     }
 

@@ -37,22 +37,31 @@ namespace ModBot
             //save session settings
             ini.SetValue("Settings", "BOT_Name", Irc.nick = botNameBox.Text);
             ini.SetValue("Settings", "BOT_Password", Irc.password = passwordBox.Text);
-            ini.SetValue("Settings", "Channel_Name", Irc.channel = channelBox.Text);
-            ini.SetValue("Settings", "Currency_Name", Irc.currency = currencyBox.Text);
+            ini.SetValue("Settings", "Channel_Name", channelBox.Text);
+            Irc.admin = channelBox.Text.Replace("#", "");
+            Irc.channel = "#" + channelBox.Text.Replace("#", "");
+            ini.SetValue("Settings", "Currency_Name", currencyBox.Text);
+            Irc.currency = currencyBox.Text.Replace("!", "");
             ini.SetValue("Settings", "Currency_Interval", intervalBox.SelectedIndex.ToString());
             Irc.interval = Convert.ToInt32(intervalBox.SelectedItem.ToString());
             ini.SetValue("Settings", "Currency_Payout", payoutBox.SelectedIndex.ToString());
             Irc.payout = Convert.ToInt32(payoutBox.SelectedItem.ToString());
             ini.SetValue("Settings", "Donations_Key", Irc.donationkey = DonationsKeyBox.Text);
-            if ((subBox.Text.StartsWith("https://spreadsheets.google.com") || subBox.Text.StartsWith("http://spreadsheets.google.com")) && subBox.Text.EndsWith("?alt=json"))
+            if (subBox.Text != "")
             {
-                ini.SetValue("Settings", "Subsribers_URL", subBox.Text);
+                if ((subBox.Text.StartsWith("https://spreadsheets.google.com") || subBox.Text.StartsWith("http://spreadsheets.google.com")) && subBox.Text.EndsWith("?alt=json"))
+                {
+                    ini.SetValue("Settings", "Subsribers_URL", subBox.Text);
+                }
+                else
+                {
+                    Console.WriteLine("Invalid subscriber link. Reverting to the last known good link, or blank. Restart the program to fix it.");
+                }
             }
-            else Console.WriteLine("Invalid subscriber link. Reverting to the last known good link, or blank. Restart the program to fix it.");
             ////
 
             //Console.WriteLine(nick + ' ' + password + ' ' + channel + ' ' + currency + ' ' + interval);
-            Irc.Initialize(botNameBox.Text.ToLower(), passwordBox.Text, channelBox.Text.ToLower(), currencyBox.Text, int.Parse(intervalBox.SelectedItem.ToString()), int.Parse(payoutBox.SelectedItem.ToString()), DonationsKeyBox.Text);
+            Irc.Initialize();
         }
 
         private void aboutButton_Click(object sender, EventArgs e)
