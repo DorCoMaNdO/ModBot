@@ -35,7 +35,8 @@ namespace ModBot
         {
             this.Hide();
             //save session settings
-            ini.SetValue("Settings", "BOT_Name", Irc.nick = botNameBox.Text.ToLower());
+            ini.SetValue("Settings", "BOT_Name", Irc.nick = botNameBox.Text);
+            Irc.nick = botNameBox.Text.ToLower();
             ini.SetValue("Settings", "BOT_Password", Irc.password = passwordBox.Text);
             ini.SetValue("Settings", "Channel_Name", channelBox.Text);
             Irc.admin = channelBox.Text.Replace("#", "");

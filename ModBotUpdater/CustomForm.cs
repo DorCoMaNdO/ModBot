@@ -16,8 +16,8 @@ namespace ModBotUpdater
         private bool bMove = false;
         private int iMoveX = 0;
         private int iMoveY = 0;
-        private Control.ControlCollection ExcludedControls;
-        public bool bActivated = false;
+        public List<Control> BaseControls = new List<Control>();
+        public bool IsActivated = false;
 
         public CustomForm()
         {
@@ -35,20 +35,19 @@ namespace ModBotUpdater
             if (CustomFormBorderStyle == FormBorderStyles.Custom1)
             {
                 //Size = new Size(Width + 16, Height + 38);
-                ExcludedControls = new Control.ControlCollection(this);
-                ExcludedControls.Add(FormCloseButton);
-                ExcludedControls.Add(FormMaximizeButton);
-                ExcludedControls.Add(FormMinimizeButton);
-                ExcludedControls.Add(FormText);
-                ExcludedControls.Add(FormIcon);
-                ExcludedControls.Add(LeftBorderCleaner);
-                ExcludedControls.Add(LeftBorder);
-                ExcludedControls.Add(RightBorderCleaner);
-                ExcludedControls.Add(LowBorderCleaner);
-                ExcludedControls.Add(RightBorder);
-                ExcludedControls.Add(TopBorderCleaner);
-                ExcludedControls.Add(LowBorder);
-                ExcludedControls.Add(TopBorder);
+                BaseControls.Add(FormCloseButton);
+                BaseControls.Add(FormMaximizeButton);
+                BaseControls.Add(FormMinimizeButton);
+                BaseControls.Add(FormText);
+                BaseControls.Add(FormIcon);
+                BaseControls.Add(LeftBorderCleaner);
+                BaseControls.Add(LeftBorder);
+                BaseControls.Add(RightBorderCleaner);
+                BaseControls.Add(LowBorderCleaner);
+                BaseControls.Add(RightBorder);
+                BaseControls.Add(TopBorderCleaner);
+                BaseControls.Add(LowBorder);
+                BaseControls.Add(TopBorder);
 
                 FormIcon.Image = Icon.ToBitmap();
                 FormIcon.Location = new Point(8, 8);
@@ -196,7 +195,7 @@ namespace ModBotUpdater
             {
                 SetItemsColor(BorderActiveColor);
 
-                bActivated = true;
+                IsActivated = true;
 
                 bMove = false;
             }
@@ -208,7 +207,7 @@ namespace ModBotUpdater
             {
                 SetItemsColor(BorderInactiveColor);
 
-                bActivated = false;
+                IsActivated = false;
 
                 bMove = false;
             }
