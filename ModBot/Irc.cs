@@ -23,7 +23,7 @@ namespace ModBot
         public static int interval, payout = 0;
         public static int[] intervals = { 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 };
         public static bool bettingOpen, auctionOpen, poolLocked = false;
-        public static List<string> users = new List<string>(), IgnoredUsers = new List<string>();
+        public static List<string> IgnoredUsers = new List<string>();
         public static List<string> betOptions = new List<string>();
         public static Timer currencyQueue;
         public static List<string> usersToLookup = new List<string>();
@@ -104,7 +104,7 @@ namespace ModBot
 
                     write.AutoFlush = true;
                     
-                    Console.WriteLine("Input/output configured.\r\n\r\nJoining to channel...");
+                    Console.WriteLine("Input/output configured.\r\n\r\nJoining the channel...");
 
                     sendRaw("PASS " + password);
                     sendRaw("NICK " + nick);
@@ -113,7 +113,9 @@ namespace ModBot
 
                     if (!read.ReadLine().Contains("Login unsuccessful"))
                     {
-                        Console.WriteLine("Joined channel.\r\n");
+                        nick = Api.GetDisplayName(nick);
+                        Console.WriteLine("Joined the channel.\r\n");
+                        sendMessage("ModBot has entered the building.");
 
                         new Thread(() =>
                         {
@@ -156,7 +158,7 @@ namespace ModBot
                     Thread.Sleep(60000);
                     if (irc.Connected && Running && g_bIsStreaming)
                     {
-                        foreach (string user in users)
+                        foreach (string user in ActiveUsers.Keys)
                         {
                             Database.addTimeWatched(user, 1);
                         }
@@ -325,17 +327,6 @@ namespace ModBot
             {
                 user = getUser(message);
                 addUserToList(user);
-                lock (ActiveUsers)
-                {
-                    if (!ActiveUsers.ContainsKey(user))
-                    {
-                        ActiveUsers.Add(user, Api.GetUnixTimeNow());
-                    }
-                    else
-                    {
-                        ActiveUsers[user] = Api.GetUnixTimeNow();
-                    }
-                }
                 //Console.WriteLine(message);
                 string temp = message.Substring(message.IndexOf(":", 1) + 1);
                 string name = Api.GetDisplayName(user);
@@ -361,14 +352,8 @@ namespace ModBot
             else if (msg[1].Equals("JOIN"))
             {
                 user = getUser(message);
+                if (user == Api.capName(nick)) return;
                 addUserToList(user);
-                lock (ActiveUsers)
-                {
-                    if (!ActiveUsers.ContainsKey(user))
-                    {
-                        ActiveUsers.Add(user, Api.GetUnixTimeNow());
-                    }
-                }
                 if (!Database.userExists(user))
                 {
                     Database.newUser(user);
@@ -394,13 +379,6 @@ namespace ModBot
             {
                 user = getUser(message);
                 removeUserFromList(user);
-                lock (ActiveUsers)
-                {
-                    if (ActiveUsers.ContainsKey(user))
-                    {
-                        ActiveUsers.Remove(user);
-                    }
-                }
                 string name = Api.GetDisplayName(user);
                 Console.WriteLine(name + " left");
                 if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
@@ -420,13 +398,6 @@ namespace ModBot
             {
                 //Console.WriteLine(message);
                 addUserToList(msg[4]);
-                lock (ActiveUsers)
-                {
-                    if (!ActiveUsers.ContainsKey(Api.capName(msg[4])))
-                    {
-                        ActiveUsers.Add(Api.capName(msg[4]), Api.GetUnixTimeNow());
-                    }
-                }
             }
             /*else
             {
@@ -519,11 +490,11 @@ namespace ModBot
                         {
                             g_iLastTop5Announce = Api.GetUnixTimeNow();
                             Dictionary<string, int> TopPoints = new Dictionary<string, int>();
-                            foreach (string nick in Database.GetAllUsers())
+                            foreach (string usr in Database.GetAllUsers())
                             {
-                                if (!IgnoredUsers.Any(c => c.Equals(nick.ToLower())))
+                                if (!IgnoredUsers.Any(c => c.Equals(usr.ToLower())))
                                 {
-                                    TopPoints.Add(nick, Database.checkCurrency(nick));
+                                    TopPoints.Add(usr, Database.checkCurrency(usr));
                                 }
                             }
                             IOrderedEnumerable<KeyValuePair<string, int>> top = TopPoints.OrderByDescending(key => key.Value);
@@ -550,22 +521,20 @@ namespace ModBot
                     else if (args[0].Equals("lock") && Database.getUserLevel(user) >= 2)
                     {
                         MainForm.Misc_LockCurrencyCmdCheckBox.Checked = true;
-                        sendMessage("The !" + currency + " command is temporarily disabled.");
-                        Log(user + " Locked the currency command.");
+                        sendMessage("The !" + currency + " command is temporarily disabled.", user + " locked the currency command.");
                     }
                     else if (args[0].Equals("unlock") && Database.getUserLevel(user) >= 2)
                     {
                         MainForm.Misc_LockCurrencyCmdCheckBox.Checked = false;
-                        sendMessage("The !" + currency + " command is now available to use.");
-                        Log(user + " Unlocked the currency command.");
+                        sendMessage("The !" + currency + " command is now available to use.", user + " unlocked the currency command.");
                     }
                     else if (args[0].Equals("clear") && Database.getUserLevel(user) >= 3)
                     {
-                        foreach (string nick in Database.GetAllUsers())
+                        foreach (string usr in Database.GetAllUsers())
                         {
-                            Database.setCurrency(nick, 0);
+                            Database.setCurrency(usr, 0);
                         }
-                        sendMessage("Cleared all the " + currency + "!");
+                        sendMessage("Cleared all the " + currency + "!", user + " cleared all the " + currency + "!");
                     }
                     else
                     {
@@ -602,18 +571,24 @@ namespace ModBot
                         {
                             if (args[2].Equals("all"))
                             {
-                                foreach (string nick in Database.GetAllUsers())
+                                foreach (string usr in Database.GetAllUsers())
                                 {
-                                    Database.addCurrency(nick, amount);
+                                    Database.addCurrency(usr, amount);
                                 }
-                                sendMessage("Added " + amount + " " + currency + " to everyone.");
-                                Log(user + " added " + amount + " " + currency + " to everyone.");
+                                sendMessage("Added " + amount + " " + currency + " to everyone.", user + " added " + amount + " " + currency + " to everyone.");
+                            }
+                            else if (args[2].Equals("online"))
+                            {
+                                foreach (string usr in ActiveUsers.Keys)
+                                {
+                                    Database.addCurrency(usr, amount);
+                                }
+                                sendMessage("Added " + amount + " " + currency + " to online users.", user + " added " + amount + " " + currency + " to online users.");
                             }
                             else
                             {
                                 Database.addCurrency(args[2], amount);
-                                sendMessage("Added " + amount + " " + currency + " to " + Api.capName(args[2]));
-                                Log(user + " added " + amount + " " + currency + " to " + Api.capName(args[2]));
+                                sendMessage("Added " + amount + " " + currency + " to " + Api.GetDisplayName(args[2]), user + " added " + amount + " " + currency + " to " + Api.GetDisplayName(args[2]));
                             }
                         }
                     }
@@ -624,18 +599,24 @@ namespace ModBot
                         {
                             if (args[2].Equals("all"))
                             {
-                                foreach (string nick in Database.GetAllUsers())
+                                foreach (string usr in Database.GetAllUsers())
                                 {
-                                    Database.setCurrency(nick, amount);
+                                    Database.setCurrency(usr, amount);
                                 }
-                                sendMessage("Set everyone's " + currency + " to " + amount + ".");
-                                Log(user + " set everyone's " + currency + " to " + amount + ".");
+                                sendMessage("Set everyone's " + currency + " to " + amount + ".", user + " set everyone's " + currency + " to " + amount + ".");
+                            }
+                            else if (args[2].Equals("online"))
+                            {
+                                foreach (string usr in ActiveUsers.Keys)
+                                {
+                                    Database.setCurrency(usr, amount);
+                                }
+                                sendMessage("Set online users's " + currency + " to " + amount + ".", user + " set online users's " + currency + " to " + amount + ".");
                             }
                             else
                             {
                                 Database.setCurrency(args[2], amount);
-                                sendMessage("Set " + Api.capName(args[2]) + "'s " + currency + " to " + amount + ".");
-                                Log(user + " set " + Api.capName(args[2]) + "'s " + currency + " to " + amount + ".");
+                                sendMessage("Set " + Api.capName(args[2]) + "'s " + currency + " to " + amount + ".", user + " set " + Api.capName(args[2]) + "'s " + currency + " to " + amount + ".");
                             }
                         }
                     }
@@ -649,18 +630,24 @@ namespace ModBot
 
                             if (args[2].Equals("all"))
                             {
-                                foreach (string nick in Database.GetAllUsers())
+                                foreach (string usr in Database.GetAllUsers())
                                 {
-                                    Database.removeCurrency(nick, amount);
+                                    Database.removeCurrency(usr, amount);
                                 }
-                                sendMessage("Removed " + amount + " " + currency + " from everyone.");
-                                Log(user + " removed " + amount + " " + currency + " from everyone.");
+                                sendMessage("Removed " + amount + " " + currency + " from everyone.", user + " removed " + amount + " " + currency + " from everyone.");
+                            }
+                            else if (args[2].Equals("online"))
+                            {
+                                foreach (string usr in ActiveUsers.Keys)
+                                {
+                                    Database.removeCurrency(usr, amount);
+                                }
+                                sendMessage("Removed " + amount + " " + currency + " from online users.", user + " removed " + amount + " " + currency + " from online users.");
                             }
                             else
                             {
                                 Database.removeCurrency(args[2], amount);
-                                sendMessage("Removed " + amount + " " + currency + " from " + Api.capName(args[2]));
-                                Log(user + " removed " + amount + " " + currency + " from " + Api.capName(args[2]));
+                                sendMessage("Removed " + amount + " " + currency + " from " + Api.capName(args[2]), user + " removed " + amount + " " + currency + " from " + Api.capName(args[2]));
                             }
 
                         }
@@ -1081,8 +1068,7 @@ namespace ModBot
                             if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
                             {
                                 Database.setUserLevel(tNick, 1);
-                                sendMessage(tNick + " added as a bot moderator.");
-                                Log(user + " added " + tNick + "as a bot moderator.");
+                                sendMessage(tNick + " added as a bot moderator.", user + " added " + tNick + "as a bot moderator.");
                             }
                             else
                             {
@@ -1102,7 +1088,7 @@ namespace ModBot
                             if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
                             {
                                 Database.setUserLevel(tNick, 2);
-                                sendMessage(tNick + " added as a bot Super Mod.");
+                                sendMessage(tNick + " added as a bot Super Mod.", user + " added " + tNick + "as a super bot moderator.");
                             }
                             else
                             {
@@ -1124,7 +1110,7 @@ namespace ModBot
                                 if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
                                 {
                                     Database.setUserLevel(tNick, Database.getUserLevel(tNick) - 1);
-                                    sendMessage(tNick + " demoted.");
+                                    sendMessage(tNick + " demoted.", user + "demoted " + tNick);
                                 }
                                 else
                                 {
@@ -1152,7 +1138,7 @@ namespace ModBot
                                 if (int.TryParse(args[2], out level) && level >= 0 && (level < 4 && Database.getUserLevel(user) >= 4 || level < 3))
                                 {
                                     Database.setUserLevel(tNick, level);
-                                    sendMessage(tNick + " set to Access Level " + level);
+                                    sendMessage(tNick + " set to Access Level " + level, user + "set " + tNick + "'s Access Level to " + level);
                                 }
                                 else sendMessage("Level must be greater than or equal to 0, and less than 3 (0>=Level<3)");
                             }
@@ -1180,7 +1166,7 @@ namespace ModBot
                                     output += args[i] + " ";
                                 }
                                 Commands.addCommand(command, level, output.Substring(0, output.Length - 1));
-                                sendMessage(command + " command added.");
+                                sendMessage(command + " command added.", user + " added the command " + command);
                             }
                             else
                             {
@@ -1198,7 +1184,7 @@ namespace ModBot
                         if (Commands.cmdExists(command))
                         {
                             Commands.removeCommand(command);
-                            sendMessage(command + " command removed.");
+                            sendMessage(command + " command removed.", user + " removed the command " + command);
                         }
                         else
                         {
@@ -1240,22 +1226,28 @@ namespace ModBot
 
 
 
-        private static void addUserToList(string nick)
+        private static void addUserToList(string usr)
         {
-            lock (users)
+            usr = Api.capName(usr);
+            lock (ActiveUsers)
             {
-                if (!users.Contains(Api.capName(nick)))
+                if (!ActiveUsers.ContainsKey(usr))
                 {
-                    users.Add(Api.capName(nick));
+                    ActiveUsers.Add(usr, Api.GetUnixTimeNow());
+                }
+                else
+                {
+                    ActiveUsers[usr] = Api.GetUnixTimeNow();
                 }
             }
         }
 
-        public static bool IsUserInList(string nick)
+        public static bool IsUserInList(string usr)
         {
-            lock (users)
+            usr = Api.capName(usr);
+            lock (ActiveUsers)
             {
-                if (users.Contains(Api.capName(nick)))
+                if (ActiveUsers.ContainsKey(usr))
                 {
                     return true;
                 }
@@ -1263,13 +1255,14 @@ namespace ModBot
             return false;
         }
 
-        private static void removeUserFromList(string nick)
+        private static void removeUserFromList(string usr)
         {
-            lock (users)
+            usr = Api.capName(usr);
+            lock (ActiveUsers)
             {
-                if (users.Contains(Api.capName(nick)))
+                if (ActiveUsers.ContainsKey(usr))
                 {
-                    users.Remove(Api.capName(nick));
+                    ActiveUsers.Remove(usr);
                 }
             }
         }
@@ -1304,9 +1297,15 @@ namespace ModBot
                                 }
                             }
                         }
-                        lock (users)
+                        lock (ActiveUsers)
                         {
-                            users = lUsers;
+                            foreach(string usr in lUsers)
+                            {
+                                if(!ActiveUsers.ContainsKey(usr))
+                                {
+                                    addUserToList(usr);
+                                }
+                            }
                         }
                     }
                     catch (SocketException)
@@ -1333,7 +1332,7 @@ namespace ModBot
         private static void sendRaw(string message)
         {
             int attempt = 0;
-            while (attempt < 6)
+            while (attempt < 5)
             {
                 attempt++;
                 try
@@ -1343,7 +1342,7 @@ namespace ModBot
                 }
                 catch (Exception)
                 {
-                    if (attempt == 6)
+                    if (attempt == 5)
                     {
                         Console.Clear();
                         //Console.WriteLine("Can't send data. Attempt: " + attempt);
@@ -1351,20 +1350,19 @@ namespace ModBot
                         irc.Close();
                         //Flush();
                         Connect();
-                        break;
                     }
                 }
             }
         }
 
-        public static void sendMessage(string message, bool usemecommand = true)
+        public static void sendMessage(string message, string log="", bool usemecommand = true)
         {
-            if (usemecommand)
+            sendRaw("PRIVMSG " + channel.ToLower() + " :" + (usemecommand ? "/me " : "") + message);
+            if(log != "")
             {
-                message = "/me " + message;
+                Log(log);
             }
-            sendRaw("PRIVMSG " + channel + " :" + message);
-            Console.WriteLine(nick + ": " + message.Substring(4));
+            Console.WriteLine(nick + ": " + message);
         }
 
         private static string checkBtag(string person)
@@ -1437,7 +1435,7 @@ namespace ModBot
                 errorLog.Close();
             }
 
-            List<string> lHandoutUsers = users;
+            List<string> lHandoutUsers = ActiveUsers.Keys.ToList();
             if (MainForm.Currency_HandoutActiveStream.Checked || MainForm.Currency_HandoutActiveTime.Checked)
             {
                 lHandoutUsers = new List<string>();
@@ -1445,7 +1443,7 @@ namespace ModBot
                 {
                     foreach (KeyValuePair<string, int> kv in ActiveUsers)
                     {
-                        if (!lHandoutUsers.Contains(kv.Key) && IsUserInList(kv.Key))
+                        if (!lHandoutUsers.Contains(kv.Key))
                         {
                             if (MainForm.Currency_HandoutActiveStream.Checked && kv.Value >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - kv.Value <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60)
                             {
@@ -1456,28 +1454,26 @@ namespace ModBot
                 }
             }
 
-            lock (lHandoutUsers)
+            if (!lHandoutUsers.Contains(Api.capName(nick)))
             {
-                if (!lHandoutUsers.Contains(Api.capName(nick)))
+                lHandoutUsers.Add(Api.capName(nick));
+            }
+            if (!lHandoutUsers.Contains(Api.capName(admin)))
+            {
+                lHandoutUsers.Add(Api.capName(admin));
+            }
+
+            foreach (string person in lHandoutUsers)
+            {
+                if (Database.isSubscriber(person) || temp.Contains(person))
                 {
-                    lHandoutUsers.Add(Api.capName(nick));
+                    Database.addCurrency(person, payout * 2);
                 }
-                if (!lHandoutUsers.Contains(Api.capName(admin)))
+                else
                 {
-                    lHandoutUsers.Add(Api.capName(admin));
+                    Database.addCurrency(person, payout);
                 }
 
-                foreach (string person in lHandoutUsers)
-                {
-                    if (Database.isSubscriber(person) || temp.Contains(person))
-                    {
-                        Database.addCurrency(person, payout * 2);
-                    }
-                    else
-                    {
-                        Database.addCurrency(person, payout);
-                    }
-                }
             }
         }
 
@@ -1528,15 +1524,15 @@ namespace ModBot
             }
         }
 
-        private static void addToLookups(string nick)
+        private static void addToLookups(string usr)
         {
             if (usersToLookup.Count == 0)
             {
                 currencyQueue.Change(4000, Timeout.Infinite);
             }
-            if (!usersToLookup.Contains(nick))
+            if (!usersToLookup.Contains(usr))
             {
-                usersToLookup.Add(nick);
+                usersToLookup.Add(usr);
             }
         }
 

@@ -110,7 +110,7 @@ namespace ModBot
                 {
                     foreach (KeyValuePair<string, int> user in Irc.ActiveUsers)
                     {
-                        if (!Irc.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && Irc.IsUserInList(user.Key))
+                        if (!Irc.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())))
                         {
                             if (!MainForm.Giveaway_BanListListBox.Items.Contains(user.Key))
                             {

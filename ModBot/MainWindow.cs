@@ -125,7 +125,7 @@ namespace ModBot
                 bool bRecreateSections = false;
                 foreach (string section in ini.GetSectionNames())
                 {
-                    if(section != "Settings" && !dSettings.Keys.Contains(section))
+                    if(section != "Settings" && !dSettings.ContainsKey(section))
                     {
                         bRecreateSections = true;
                         SettingsPresents.TabPages.Clear();
@@ -176,7 +176,7 @@ namespace ModBot
                             }
                             else
                             {
-                                if (dSettings.Keys.Contains(section))
+                                if (dSettings.ContainsKey(section))
                                 {
                                     dSettings[section] = dSectionSettings;
                                 }
