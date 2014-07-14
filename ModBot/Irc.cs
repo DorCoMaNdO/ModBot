@@ -693,7 +693,7 @@ namespace ModBot
                                         temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
                                     }
                                     sendMessage(temp);
-                                    sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1, \"!bet 25 option2name\" to bet 25 on option 2, etc. You can also bet with \"!bet <amount> #OptionNumber\"");
+                                    sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1, \"!bet 25 option2name\" to bet 25 on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\"");
                                 }
                                 else
                                 {
@@ -848,7 +848,7 @@ namespace ModBot
                                 temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
                             }
                             sendMessage(temp);
-                            sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1, \"bet 25 option2name\" to bet 25 on option 2, etc. You can also bet with \"!bet <amount> #OptionNumber\"");
+                            sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1, \"bet 25 option2name\" to bet 25 on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\".");
                         }
                     }
                     else if (int.TryParse(args[0], out betAmount) && args.Length >= 2 && bettingOpen && !poolLocked)
@@ -1039,22 +1039,22 @@ namespace ModBot
                     {
                         if (Database.addSub(args[1]))
                         {
-                            sendMessage(Api.capName(args[1]) + " added as a subscriber.");
+                            sendMessage(Api.GetDisplayName(args[1]) + " added as a subscriber.");
                         }
                         else
                         {
-                            sendMessage(Api.capName(args[1]) + " does not exist in the database. Have them type !<currency> then try again.");
+                            sendMessage(Api.GetDisplayName(args[1]) + " does not exist in the database. Have them type !<currency> then try again.");
                         }
                     }
                     if (args[0].Equals("removesub") && args.Length >= 2)
                     {
                         if (Database.removeSub(args[1]))
                         {
-                            sendMessage(Api.capName(args[1]) + " removed from subscribers.");
+                            sendMessage(Api.GetDisplayName(args[1]) + " removed from subscribers.");
                         }
                         else
                         {
-                            sendMessage(Api.capName(args[1]) + " does not exist in the database.");
+                            sendMessage(Api.GetDisplayName(args[1]) + " does not exist in the database.");
                         }
                     }
                 }
@@ -1062,13 +1062,13 @@ namespace ModBot
                 {
                     if (args[0].Equals("addmod") && args.Length >= 2)
                     {
-                        string tNick = Api.capName(args[1]);
+                        string tNick = Api.GetDisplayName(args[1]);
                         if (Database.userExists(tNick))
                         {
                             if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
                             {
                                 Database.setUserLevel(tNick, 1);
-                                sendMessage(tNick + " added as a bot moderator.", user + " added " + tNick + "as a bot moderator.");
+                                sendMessage(tNick + " added as a bot moderator.", Api.GetDisplayName(user) + " added " + tNick + "as a bot moderator.");
                             }
                             else
                             {
@@ -1082,13 +1082,13 @@ namespace ModBot
                     }
                     if (args[0].Equals("addsuper") && args.Length >= 2)
                     {
-                        string tNick = Api.capName(args[1]);
+                        string tNick = Api.GetDisplayName(args[1]);
                         if (Database.userExists(tNick))
                         {
                             if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
                             {
                                 Database.setUserLevel(tNick, 2);
-                                sendMessage(tNick + " added as a bot Super Mod.", user + " added " + tNick + "as a super bot moderator.");
+                                sendMessage(tNick + " added as a bot Super Mod.", Api.GetDisplayName(user) + " added " + tNick + "as a super bot moderator.");
                             }
                             else
                             {
@@ -1102,7 +1102,7 @@ namespace ModBot
                     }
                     if (args[0].Equals("demote") && args.Length >= 2)
                     {
-                        string tNick = Api.capName(args[1]);
+                        string tNick = Api.GetDisplayName(args[1]);
                         if (Database.userExists(tNick))
                         {
                             if (Database.getUserLevel(tNick) > 0)
@@ -1110,7 +1110,7 @@ namespace ModBot
                                 if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
                                 {
                                     Database.setUserLevel(tNick, Database.getUserLevel(tNick) - 1);
-                                    sendMessage(tNick + " demoted.", user + "demoted " + tNick);
+                                    sendMessage(tNick + " has been demoted.", Api.GetDisplayName(user) + "demoted " + tNick);
                                 }
                                 else
                                 {
@@ -1129,7 +1129,7 @@ namespace ModBot
                     }
                     if (args[0].Equals("setlevel") && args.Length >= 3)
                     {
-                        string tNick = Api.capName(args[1]);
+                        string tNick = Api.GetDisplayName(args[1]);
                         if (Database.userExists(tNick))
                         {
                             if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
@@ -1138,7 +1138,7 @@ namespace ModBot
                                 if (int.TryParse(args[2], out level) && level >= 0 && (level < 4 && Database.getUserLevel(user) >= 4 || level < 3))
                                 {
                                     Database.setUserLevel(tNick, level);
-                                    sendMessage(tNick + " set to Access Level " + level, user + "set " + tNick + "'s Access Level to " + level);
+                                    sendMessage(tNick + " set to Access Level " + level, Api.GetDisplayName(user) + "set " + tNick + "'s Access Level to " + level);
                                 }
                                 else sendMessage("Level must be greater than or equal to 0, and less than 3 (0>=Level<3)");
                             }
@@ -1166,7 +1166,7 @@ namespace ModBot
                                     output += args[i] + " ";
                                 }
                                 Commands.addCommand(command, level, output.Substring(0, output.Length - 1));
-                                sendMessage(command + " command added.", user + " added the command " + command);
+                                sendMessage(command + " command added.", Api.GetDisplayName(user) + " added the command " + command);
                             }
                             else
                             {
@@ -1184,7 +1184,7 @@ namespace ModBot
                         if (Commands.cmdExists(command))
                         {
                             Commands.removeCommand(command);
-                            sendMessage(command + " command removed.", user + " removed the command " + command);
+                            sendMessage(command + " command removed.", Api.GetDisplayName(user) + " removed the command " + command);
                         }
                         else
                         {
