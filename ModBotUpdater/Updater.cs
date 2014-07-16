@@ -232,7 +232,7 @@ namespace ModBotUpdater
             }
 
             string sLatestVersion = "", sFileSizeSuffix = "Bytes";
-            double iFileSize = 0;
+            double dFileSize = 0;
             LatestVersionLabel.Text = "Checking...";
             StateLabel.Text = "Checking for updates...";
 
@@ -246,7 +246,7 @@ namespace ModBotUpdater
                             w.Proxy = null;
                             sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
                             w.OpenRead("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + sLatestVersion + "/ModBot.exe");
-                            iFileSize = Convert.ToDouble(w.ResponseHeaders["Content-Length"]);
+                            dFileSize = Convert.ToDouble(w.ResponseHeaders["Content-Length"]);
                         }
                         catch (SocketException)
                         {
@@ -259,9 +259,9 @@ namespace ModBotUpdater
             thread.Start();
             thread.Join();
 
-            while(iFileSize >= 1024)
+            while(dFileSize >= 1024)
             {
-                iFileSize /= 1024;
+                dFileSize /= 1024;
                 if(sFileSizeSuffix == "Bytes")
                 {
                     sFileSizeSuffix = "KBs";
@@ -288,9 +288,9 @@ namespace ModBotUpdater
                     if (iLatestMajor > iCurrentMajor || iLatestMajor == iCurrentMajor && iLatestMinor > iCurrentMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild > iCurrentBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iLatestRev > iCurrentRev)
                     {
                         DownloadProgressBar.Value = 0;
-                        if (iFileSize > 0)
+                        if (dFileSize > 0)
                         {
-                            StateLabel.Text = "Updates available... (" + iFileSize + " " + sFileSizeSuffix + ")";
+                            StateLabel.Text = "Updates available... (" + dFileSize.ToString("0.00") + " " + sFileSizeSuffix + ")";
                         }
                         else
                         {
@@ -305,9 +305,9 @@ namespace ModBotUpdater
                 else
                 {
                     DownloadProgressBar.Value = 0;
-                    if (iFileSize > 0)
+                    if (dFileSize > 0)
                     {
-                        StateLabel.Text = "Updates available... (" + iFileSize + " " + sFileSizeSuffix + ")";
+                        StateLabel.Text = "Updates available... (" + dFileSize.ToString("0.00") + " " + sFileSizeSuffix + ")";
                     }
                     else
                     {
