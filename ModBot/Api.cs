@@ -166,7 +166,7 @@ namespace ModBot
                     try
                     {
                         w.Proxy = null;
-                        json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + Irc.channel.Substring(1).ToLower() + "&key=" + Irc.donationkey);
+                        json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + Irc.channel.Substring(1) + "&key=" + Irc.donationkey);
                         while (json_data.Contains("\"DT_RowId\""))
                         {
                             string date = "Donated at some point", name = "Unknown", amount = "0.00", notes = "", transaction = "";
@@ -198,7 +198,7 @@ namespace ModBot
                     }
                     catch (SocketException)
                     {
-                        Console.WriteLine("Unable to connect to Stream Dontaions to check the transactions.");
+                        Console.WriteLine("Unable to connect to Stream Donations to check the transactions.");
                     }
                     catch (Exception e)
                     {

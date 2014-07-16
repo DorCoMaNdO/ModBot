@@ -440,7 +440,7 @@ namespace ModBot
                     }
                 }
 
-                string sName = Api.capName(Irc.channel.Substring(1)), sTitle = "Unavailable...", sGame = "Unavailable...", sViewers = "";
+                string sTitle = "Unavailable...", sGame = "Unavailable...";
                 int iStatus = 0;
                 if (Irc.irc.Connected)
                 {
@@ -461,24 +461,8 @@ namespace ModBot
                         w.Proxy = null;
                         json_data = w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1));
                         JObject stream = JObject.Parse(json_data);
-                        if (!stream["display_name"].ToString().Equals("")) sName = stream["display_name"].ToString();
                         if (!stream["status"].ToString().Equals("")) sTitle = stream["status"].ToString();
                         if (!stream["game"].ToString().Equals("")) sGame = stream["game"].ToString();
-
-                        json_data = w.DownloadString("http://tmi.twitch.tv/group/user/" + Irc.channel.Substring(1) + "/chatters");
-                        if (json_data.Replace("\"", "") != "")
-                        {
-                            stream = JObject.Parse(json_data);
-                            int iViewers = int.Parse(stream["chatter_count"].ToString());
-                            foreach (string user in Irc.IgnoredUsers)
-                            {
-                                if (json_data.Contains("\"" + user + "\""))
-                                {
-                                    iViewers--;
-                                }
-                            }
-                            sViewers += " (" + iViewers + ")";
-                        }
                     }
                     catch (SocketException)
                     {
@@ -500,12 +484,20 @@ namespace ModBot
 
                         Giveaway_MinCurrencyCheckBox.Text = "Min. " + Irc.currency;
 
-                        ChannelLabel.Text = sName;
+                        ChannelLabel.Text = Irc.admin;
                         ChannelLabel.ForeColor = Color.Red;
                         if (iStatus == 2)
                         {
                             ChannelLabel.ForeColor = Color.Green;
-                            ChannelLabel.Text += sViewers;
+                            int iViewers = Irc.ActiveUsers.Count;
+                            foreach (string user in Irc.IgnoredUsers)
+                            {
+                                if (Irc.ActiveUsers.ContainsKey(user))
+                                {
+                                    iViewers--;
+                                }
+                            }
+                            ChannelLabel.Text += " (" + iViewers + ")";
                         }
                         else if (iStatus == 1)
                         {

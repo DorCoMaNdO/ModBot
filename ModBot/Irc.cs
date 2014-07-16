@@ -37,10 +37,12 @@ namespace ModBot
         public static MainWindow MainForm = new MainWindow();
         public static int g_iLastHandout = 0;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
+        private static bool CommandsRegistered = false;
+        private static List<Thread> Threads = new List<Thread>();
 
         public static void Initialize()
         {
-            Console.WriteLine("Initializing connection...");
+            Console.WriteLine("Configuring settings...");
             ini.SetValue("Settings", "ResourceKeeper", (g_bResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
             if (donationkey == "")
             {
@@ -58,29 +60,36 @@ namespace ModBot
 
             ini.SetValue("Settings", "Channel_Greeting", greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!"));
 
-            Connect();
+            Console.WriteLine("Settings configured\r\n");
 
-            RegisterCommands();
+            Connect();
         }
 
         private static void RegisterCommands()
         {
-            Commands.Add("!raffle", Command_Giveaway);
-            Commands.Add("!giveaway", Command_Giveaway);
-            Commands.Add("!" + currency, Command_Currency);
-            Commands.Add("!gamble", Command_Gamble);
-            Commands.Add("!bet", Command_Bet);
-            Commands.Add("!auction", Command_Auction);
-            Commands.Add("!bid", Command_Bid);
-            Commands.Add("!btag", Command_BTag);
-            Commands.Add("!battletag", Command_BTag);
-            Commands.Add("!modbot", Command_ModBot);
+            if (!CommandsRegistered)
+            {
+                Console.WriteLine("Registering commands...");
+                Commands.Add("!raffle", Command_Giveaway);
+                Commands.Add("!giveaway", Command_Giveaway);
+                Commands.Add("!" + currency, Command_Currency);
+                Commands.Add("!gamble", Command_Gamble);
+                Commands.Add("!bet", Command_Bet);
+                Commands.Add("!auction", Command_Auction);
+                Commands.Add("!bid", Command_Bid);
+                Commands.Add("!btag", Command_BTag);
+                Commands.Add("!battletag", Command_BTag);
+                Commands.Add("!modbot", Command_ModBot);
+                Console.WriteLine("Commands registered.\r\n");
+                CommandsRegistered = true;
+            }
         }
 
         private static void Connect()
         {
-            int count = 0;
-            while (count < 5)
+            Console.WriteLine("Initializing connection...");
+
+            for (int attempt = 1; attempt <= 5; attempt++)
             {
                 if (irc != null)
                 {
@@ -90,8 +99,7 @@ namespace ModBot
 
                 irc = new TcpClient();
 
-                count++;
-                Console.WriteLine("Connection attempt number : " + count + "/5");
+                Console.WriteLine("Connection attempt number : " + attempt + "/5");
 
                 try
                 {
@@ -109,20 +117,37 @@ namespace ModBot
                     sendRaw("PASS " + password);
                     sendRaw("NICK " + nick);
                     sendRaw("USER " + nick + " 8 * :" + nick);
-                    sendRaw("JOIN " + channel.ToLower());
+                    sendRaw("JOIN " + channel);
 
                     if (!read.ReadLine().Contains("Login unsuccessful"))
                     {
                         nick = Api.GetDisplayName(nick);
-                        Console.WriteLine("Joined the channel.\r\n");
-                        sendMessage("ModBot has entered the building.");
+                        admin = Api.GetDisplayName(admin);
 
-                        new Thread(() =>
+                        Console.WriteLine("Joined the channel.\r\n\r\nSending lame entrance line...\r\n");
+                        int r = new Random().Next(0, 3);
+                        if(r == 0)
                         {
-                            MainForm.GrabData();
-                        }).Start();
-                        MainForm.Show();
+                            sendRaw("PRIVMSG " + channel + " :/me ModBot has entered the building.");
+                        }
+                        else if(r == 1)
+                        {
+                            sendRaw("PRIVMSG " + channel + " :/me No fear, ModBot is here!");
+                        }
+                        else if(r == 2)
+                        {
+                            sendRaw("PRIVMSG " + channel + " :/me ModBot with style.");
+                        }
+                        else
+                        {
+                            sendRaw("PRIVMSG " + channel + " :/me Fear not, here's the (Mod)Bot.");
+                        }
+
+                        RegisterCommands();
+
                         StartThreads();
+
+                        MainForm.Show();
                     }
                     else
                     {
@@ -131,9 +156,8 @@ namespace ModBot
 
                     break;
                 }
-                catch (SocketException e)
+                catch (SocketException)
                 {
-                    Console.WriteLine("Unable to connect. Retrying in 5 seconds (" + e + ")");
                 }
                 catch (Exception e)
                 {
@@ -142,16 +166,45 @@ namespace ModBot
                     errorLog.Close();
                 }
 
-                //count++;
-                // Console.WriteLine("Connection failed. Retrying in 5 seconds.");
-                Thread.Sleep(5000);
+                if (attempt < 5)
+                {
+                    Console.WriteLine("Failed connect or configure post-connection settings.\r\nRetrying in 5 seconds.\r\n");
+                    Thread.Sleep(5000);
+                }
+                else
+                {
+                    Console.WriteLine("Failed to connect to Twitch.TV chat servers...");
+                    MainForm.Hide();
+                    foreach (Thread t in Threads)
+                    {
+                        t.Abort();
+                    }
+                    Thread.Sleep(TimeSpan.FromDays(365));
+                }
             }
         }
 
         private static void StartThreads()
         {
+            if (Threads.Count > 0)
+            {
+                Console.WriteLine("Stopping previously created threads...");
+                foreach (Thread t in Threads)
+                {
+                    t.Abort();
+                }
+                Console.WriteLine("Previously created threads stopped.\r\nClearing threads list...");
+                Threads.Clear();
+                Console.WriteLine("Threads list clear.");
+            }
+
+            Console.WriteLine("Creating and starting threads and timers...");
+
             bool Running = false;
-            new Thread(() =>
+
+            Console.Write("Time watched thread... ");
+
+            Thread thread = new Thread(() =>
             {
                 while (true)
                 {
@@ -164,18 +217,26 @@ namespace ModBot
                         }
                     }
                 }
-            }).Start();
+            });
+            Threads.Add(thread);
+            thread.Start();
 
-            new Thread(() =>
+            Console.Write("DONE\r\nUser list thread... ");
+
+            thread = new Thread(() =>
             {
                 while (true)
                 {
                     buildUserList();
                     Thread.Sleep(10000);
                 }
-            }).Start();
+            });
+            Threads.Add(thread);
+            thread.Start();
 
-            new Thread(() =>
+            Console.Write("DONE\r\nStream status thread... ");
+
+            thread = new Thread(() =>
             {
                 while (true)
                 {
@@ -217,10 +278,71 @@ namespace ModBot
                         Thread.Sleep(30000);
                     }
                 }
-            }).Start();
+            });
+            Threads.Add(thread);
+            thread.Start();
+
+            Console.Write("DONE\r\nCurrency handout thread... ");
+
+            //doWork();
+            thread = new Thread(() =>
+            {
+                g_iLastHandout = Api.GetUnixTimeNow();
+                while (true)
+                {
+                    if (Running)
+                    {
+                        if (Api.GetUnixTimeNow() - g_iLastHandout >= interval * 60 && g_bIsStreaming)
+                        {
+                            Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currency);
+                            handoutCurrency();
+                        }
+                    }
+                    Thread.Sleep(1000);
+                    /*if (g_bResourceKeeper)
+                    {
+                        Thread.Sleep(29000);
+                    }*/
+                }
+            });
+            Threads.Add(thread);
+            thread.Start();
+
+            Console.Write("DONE\r\nConnection ping thread... ");
+
+            //KeepAlive();
+            thread = new Thread(() =>
+            {
+                while (true)
+                {
+                    Thread.Sleep(30000);
+                    sendRaw("PING 1245");
+                }
+            });
+            Threads.Add(thread);
+            thread.Start();
+
+            Console.Write("DONE\r\nCreating currency check queue timer... ");
+
+            currencyQueue = new Timer(handleCurrencyQueue, null, Timeout.Infinite, Timeout.Infinite);
+
+            Console.Write("DONE\r\nAuction highest bidder timer... ");
+
+            auctionLooper = new Timer(auctionLoop, null, Timeout.Infinite, Timeout.Infinite);
+
+            Console.Write("DONE\r\nLayout updating thread... ");
+
+            thread = new Thread(() =>
+            {
+                MainForm.GrabData();
+            });
+            Threads.Add(thread);
+            thread.Start();
+
+            Console.Write("DONE\r\nInput listening thread... ");
 
             //Listen();
-            new Thread(() =>
+            thread = new Thread(() =>
             {
                 int attempt = 0;
                 while (attempt < 5)
@@ -273,43 +395,11 @@ namespace ModBot
                 MainForm.Hide();
                 System.Windows.Forms.MessageBox.Show("ModBot has encountered an error, more information available in the console...", "ModBot", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 Console.WriteLine("The attempts were unsuccessful... In order get ModBot back to function please restart it...");
-            }).Start();
+            });
+            Threads.Add(thread);
+            thread.Start();
 
-            //doWork();
-            new Thread(() =>
-            {
-                g_iLastHandout = Api.GetUnixTimeNow();
-                while (true)
-                {
-                    if (Running)
-                    {
-                        if (Api.GetUnixTimeNow() - g_iLastHandout >= interval * 60 && g_bIsStreaming)
-                        {
-                            Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currency);
-                            handoutCurrency();
-                        }
-                    }
-                    Thread.Sleep(1000);
-                    /*if (g_bResourceKeeper)
-                    {
-                        Thread.Sleep(29000);
-                    }*/
-                }
-            }).Start();
-
-            //KeepAlive();
-            new Thread(() =>
-            {
-                while (true)
-                {
-                    Thread.Sleep(30000);
-                    sendRaw("PING 1245");
-                }
-            }).Start();
-
-            currencyQueue = new Timer(handleCurrencyQueue, null, Timeout.Infinite, Timeout.Infinite);
-
-            auctionLooper = new Timer(auctionLoop, null, Timeout.Infinite, Timeout.Infinite);
+            Console.Write("DONE\r\nSuccessfully created and started all threads and timers!\r\n\r\n");
         }
 
         private static void parseMessage(string message)
@@ -330,6 +420,11 @@ namespace ModBot
                 //Console.WriteLine(message);
                 string temp = message.Substring(message.IndexOf(":", 1) + 1);
                 string name = Api.GetDisplayName(user);
+                if (user == "Jtv" && temp.StartsWith("HISTORYEND"))
+                {
+                    Console.WriteLine("Everything should be set and ready!\r\nModBot is good to go!\r\n");
+                    return;
+                }
                 Console.WriteLine(name + ": " + temp);
                 //handleMessage(temp);
                 Commands.CheckCommand(user, temp, true);
@@ -1357,7 +1452,7 @@ namespace ModBot
 
         public static void sendMessage(string message, string log="", bool usemecommand = true)
         {
-            sendRaw("PRIVMSG " + channel.ToLower() + " :" + (usemecommand ? "/me " : "") + message);
+            sendRaw("PRIVMSG " + channel + " :" + (usemecommand ? "/me " : "") + message);
             if(log != "")
             {
                 Log(log);

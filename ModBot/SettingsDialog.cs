@@ -40,7 +40,7 @@ namespace ModBot
             ini.SetValue("Settings", "BOT_Password", Irc.password = passwordBox.Text);
             ini.SetValue("Settings", "Channel_Name", channelBox.Text);
             Irc.admin = channelBox.Text.Replace("#", "");
-            Irc.channel = "#" + channelBox.Text.Replace("#", "");
+            Irc.channel = "#" + channelBox.Text.Replace("#", "").ToLower();
             ini.SetValue("Settings", "Currency_Name", currencyBox.Text);
             Irc.currency = currencyBox.Text.Replace("!", "");
             ini.SetValue("Settings", "Currency_Interval", intervalBox.SelectedIndex.ToString());
