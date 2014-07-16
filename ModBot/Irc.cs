@@ -43,24 +43,28 @@ namespace ModBot
         public static void Initialize()
         {
             Console.WriteLine("Configuring settings...");
+
             ini.SetValue("Settings", "ResourceKeeper", (g_bResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
+
             if (donationkey == "")
             {
                 MainForm.Donations_ManageButton.Enabled = false;
             }
-            Database.Initialize();
+
+            ini.SetValue("Settings", "Channel_Greeting", greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!"));
+
             IgnoredUsers.Add("jtv");
             IgnoredUsers.Add("moobot");
             IgnoredUsers.Add("nightbot");
             IgnoredUsers.Add(nick.ToLower());
             IgnoredUsers.Add(admin.ToLower());
 
+            Console.WriteLine("Settings configured.\r\n");
+
+            Database.Initialize();
+
             Database.newUser(admin);
             Database.setUserLevel(admin, 4);
-
-            ini.SetValue("Settings", "Channel_Greeting", greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!"));
-
-            Console.WriteLine("Settings configured\r\n");
 
             Connect();
         }
@@ -859,8 +863,8 @@ namespace ModBot
                         {
                             if (option.StartsWith("#"))
                             {
-                                int optionnumber = Convert.ToInt32(option.Substring(1));
-                                if (("#" + optionnumber) == option)
+                                int optionnumber = 0;
+                                if (int.TryParse(option.Substring(1), out optionnumber))
                                 {
                                     option = Pool.GetOptionFromNumber(optionnumber);
                                 }
@@ -972,13 +976,13 @@ namespace ModBot
                         }
                         if(option == args[1])
                         {
-                            if(option.StartsWith("#"))
+                            if (option.StartsWith("#"))
                             {
-                                int optionnumber = Convert.ToInt32(option.Substring(1));
-                                if(("#" + optionnumber) == option)
+                                int optionnumber = 0;
+                                if (int.TryParse(option.Substring(1), out optionnumber))
                                 {
                                     option = Pool.GetOptionFromNumber(optionnumber);
-                                    if(option == "")
+                                    if (option == "")
                                     {
                                         sendMessage(Api.GetDisplayName(user) + " the option number does not exist");
                                         return;

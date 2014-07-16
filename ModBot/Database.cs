@@ -16,95 +16,102 @@ namespace ModBot
 
         public static void Initialize()
         {
-            channel = Irc.channel.Substring(1);
-
-            if (!File.Exists("ModBot.sqlite"))
+            if (DB == null)
             {
-                SQLiteConnection.CreateFile("ModBot.sqlite");
-            }
+                Console.WriteLine("Setting up the database...");
 
-            while (ModBot.Api.IsFileLocked("ModBot.sqlite", FileShare.Read))
-            {
-                MessageBox.Show("ModBot's database file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
+                channel = Irc.channel.Substring(1);
 
-            DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
-            DB.Open();
+                if (!File.Exists("ModBot.sqlite"))
+                {
+                    SQLiteConnection.CreateFile("ModBot.sqlite");
+                }
 
-            using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB))
-            {
-                cmd.ExecuteNonQuery();
-            }
+                while (ModBot.Api.IsFileLocked("ModBot.sqlite", FileShare.Read))
+                {
+                    MessageBox.Show("ModBot's database file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
 
-            using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'commands' (id INTEGER PRIMARY KEY, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", DB))
-            {
-                cmd.ExecuteNonQuery();
-            }
+                DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
+                DB.Open();
 
-            // Handle old users
-            using (cmd = new SQLiteCommand("SELECT display_name FROM '" + channel + "';", DB))
-            {
-                try
+                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB))
                 {
                     cmd.ExecuteNonQuery();
-                    /*using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", myDB))
+                }
+
+                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'commands' (id INTEGER PRIMARY KEY, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", DB))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Handle old users
+                using (cmd = new SQLiteCommand("SELECT display_name FROM '" + channel + "';", DB))
+                {
+                    try
                     {
-                        using (SQLiteDataReader r = cmd.ExecuteReader())
+                        cmd.ExecuteNonQuery();
+                        /*using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", myDB))
                         {
-                            while (r.Read())
+                            using (SQLiteDataReader r = cmd.ExecuteReader())
                             {
-                                if (r["display_name"].ToString() == "")
+                                while (r.Read())
                                 {
-                                    Console.WriteLine(r["user"].ToString());
-                                    Api.GetDisplayName(r["user"].ToString(), true);
+                                    if (r["display_name"].ToString() == "")
+                                    {
+                                        Console.WriteLine(r["user"].ToString());
+                                        Api.GetDisplayName(r["user"].ToString(), true);
+                                    }
                                 }
                             }
+                        }*/
+                    }
+                    catch (SQLiteException)
+                    {
+                        using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN display_name TEXT DEFAULT null;", DB))
+                        {
+                            cmd.ExecuteNonQuery();
                         }
+                    }
+                }
+
+                using (cmd = new SQLiteCommand("SELECT time_watched FROM '" + channel + "';", DB))
+                {
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                    catch (SQLiteException)
+                    {
+                        using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN time_watched INTEGER DEFAULT 0;", DB))
+                        {
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+
+                if (tableExists("transfers") && !tableHasData(channel))
+                {
+                    using (cmd = new SQLiteCommand("INSERT INTO '" + channel + "' SELECT * FROM transfers;", DB))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    /*using (cmd = new SQLiteCommand("DROP TABLE transfers;", myDB))
+                    {
+                        cmd.ExecuteNonQuery();
                     }*/
                 }
-                catch (SQLiteException)
+
+                /*Commands.Add("test", new CommandExecutedHandler((string command, string[] args) =>
                 {
-                    using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN display_name TEXT DEFAULT null;", DB))
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+                    if (args != null) Console.WriteLine("Command : " + command + " Args : " + args[0]); else Console.WriteLine("Command : " + command);
+                    System.Threading.Thread.Sleep(5000);
+                    Console.WriteLine("Test 2");
+                }));*/
+
+                Console.WriteLine("Database set.\r\n");
             }
-
-            using (cmd = new SQLiteCommand("SELECT time_watched FROM '" + channel + "';", DB))
-            {
-                try
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                catch (SQLiteException)
-                {
-                    using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN time_watched INTEGER DEFAULT 0;", DB))
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-            }
-
-            if (tableExists("transfers") && !tableHasData(channel))
-            {
-                using (cmd = new SQLiteCommand("INSERT INTO '" + channel + "' SELECT * FROM transfers;", DB))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-
-                /*using (cmd = new SQLiteCommand("DROP TABLE transfers;", myDB))
-                {
-                    cmd.ExecuteNonQuery();
-                }*/
-            }
-
-            /*Commands.Add("test", new CommandExecutedHandler((string command, string[] args) =>
-            {
-                if (args != null) Console.WriteLine("Command : " + command + " Args : " + args[0]); else Console.WriteLine("Command : " + command);
-                System.Threading.Thread.Sleep(5000);
-                Console.WriteLine("Test 2");
-            }));*/
         }
 
         public static void newUser(string user, bool bCheckDisplayName = true)

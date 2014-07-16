@@ -21,6 +21,15 @@ namespace ModBot
         [STAThread]
         static void Main()
         {
+            EmbeddedAssembly.Load("ModBot.Resources.System.Data.SQLite.dll", "System.Data.SQLite.dll");
+            EmbeddedAssembly.Load("ModBot.Resources.Newtonsoft.Json.dll", "Newtonsoft.Json.dll");
+            EmbeddedAssembly.Load("ModBot.Resources.MySql.Data.dll", "MySql.Data.dll");
+
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+            {
+                return EmbeddedAssembly.Get(args.Name);
+            };
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             while (File.Exists("ModBot.ini") && Api.IsFileLocked("ModBot.ini", FileShare.Read))
