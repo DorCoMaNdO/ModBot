@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace ModBot
@@ -13,7 +14,20 @@ namespace ModBot
     static class Program
     {
         public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini", "\r\n[Default]");
+        public static MainWindow MainForm;
         //private static FileStream stream = null;
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("kernel32.dll", ExactSpelling = true)]
+        static extern IntPtr GetConsoleWindow();
+
+        /*[DllImport("user32.dll", EntryPoint = "FindWindow", SetLastError = true)]
+        public static extern IntPtr FindWindowByCaption(IntPtr zeroOnly, string lpWindowName);
+
+        public static IntPtr handle;*/
 
         /// <summary>
         /// The main entry point for the application.
@@ -30,12 +44,26 @@ namespace ModBot
                 return EmbeddedAssembly.Get(args.Name);
             };
 
+            /*string originalTitle = Console.Title;
+            //string uniqueTitle = Guid.NewGuid().ToString();
+            //Console.Title = uniqueTitle;
+            //System.Threading.Thread.Sleep(50);
+            handle = FindWindowByCaption(IntPtr.Zero, Console.Title = Guid.NewGuid().ToString());
+
+            if (handle == IntPtr.Zero)
+            {
+                Console.WriteLine("Oops, cant find main window.");
+                //return;
+            }
+            Console.Title = originalTitle;*/
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            while (File.Exists("ModBot.ini") && Api.IsFileLocked("ModBot.ini", FileShare.Read))
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
+            /*while (File.Exists("ModBot.ini") && Api.IsFileLocked("ModBot.ini", FileShare.Read))
             {
                 MessageBox.Show("ModBot's config file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
+            }*/
             if (!File.Exists("ModBot.ini"))
             {
                 File.WriteAllText("ModBot.ini", "\r\n[Default]");
@@ -43,7 +71,22 @@ namespace ModBot
             //stream = new FileInfo("ModBot.ini").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
             Updates.ExtractUpdater();
             Updates.CheckUpdate();
-            Application.Run(new SettingsDialog());
+            Application.Run(MainForm = new MainWindow());
+        }
+
+        public static void FocusConsole()
+        {
+            SetForegroundWindow(GetConsoleWindow());
+        }
+
+        private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            e.Cancel = true;
+            if (MainForm == null) return;
+            MainForm.BeginInvoke((MethodInvoker)delegate
+            {
+                MainForm.Close();
+            });
         }
 
         public static class Updates
@@ -79,7 +122,7 @@ namespace ModBot
                                             {
                                                 ExtractUpdater();
                                             }
-                                            Process.Start("ModBotUpdater.exe");
+                                            Process.Start("ModBotUpdater.exe", "-force");
                                             Environment.Exit(0);
                                         }
                                     }

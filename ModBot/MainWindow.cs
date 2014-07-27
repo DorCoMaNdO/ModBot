@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Windows.Forms;
 using System.Globalization;
-using System.Reflection;
 using System.Threading;
-using System.Diagnostics;
 
 namespace ModBot
 {
@@ -21,18 +18,86 @@ namespace ModBot
         public Dictionary<string, Dictionary<string, string>> dSettings = new Dictionary<string, Dictionary<string, string>>();
         private bool bIgnoreUpdates = false;
         public int iSettingsPresent = -2;
-        private Donations donations = new Donations();
-        private bool g_bLoaded = false;
-        private Dictionary<CheckBox, Panel> WindowButtons = new Dictionary<CheckBox, Panel>();
+        //private bool g_bLoaded = false;
+        public Dictionary<CheckBox, Panel> Windows = new Dictionary<CheckBox, Panel>();
+        public Panel CurrentWindow = null;
+        private List<Thread> Threads = new List<Thread>();
 
         public MainWindow()
         {
             InitializeComponent();
-            Text = "ModBot v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString().Replace("." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
-            CurrencyLabel.Location = new Point(CurrencySpacer.Location.X + CurrencySpacer.Size.Width / 2 - CurrencyLabel.Size.Width / 2, CurrencySpacer.Location.Y + 2);
-            GiveawayLabel.Location = new Point(GiveawaySpacer.Location.X + GiveawaySpacer.Size.Width / 2 - GiveawayLabel.Size.Width / 2, GiveawaySpacer.Location.Y + 2);
-            WindowButtons.Add(checkBox1, panel1);
-            WindowButtons.Add(checkBox2, panel2);
+            Text = "ModBot v" + (VersionLabel.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString()).Replace("." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
+
+            ConnectionLabel.Location = new Point(ConnectionSpacer.Location.X + ConnectionSpacer.Size.Width / 2 - ConnectionLabel.Size.Width / 2, ConnectionSpacer.Location.Y);
+            CurrencyLabel.Location = new Point(CurrencySpacer.Location.X + CurrencySpacer.Size.Width / 2 - CurrencyLabel.Size.Width / 2, CurrencySpacer.Location.Y);
+            SubscribersLabel.Location = new Point(SubscribersSpacer.Location.X + SubscribersSpacer.Size.Width / 2 - SubscribersLabel.Size.Width / 2, SubscribersSpacer.Location.Y);
+            DonationsLabel.Location = new Point(DonationsSpacer.Location.X + DonationsSpacer.Size.Width / 2 - DonationsLabel.Size.Width / 2, DonationsSpacer.Location.Y);
+
+            CurrencyLabel2.Location = new Point(CurrencySpacer2.Location.X + CurrencySpacer2.Size.Width / 2 - CurrencyLabel2.Size.Width / 2, CurrencySpacer2.Location.Y);
+            GiveawayLabel.Location = new Point(GiveawaySpacer.Location.X + GiveawaySpacer.Size.Width / 2 - GiveawayLabel.Size.Width / 2, GiveawaySpacer.Location.Y);
+            Panel panel = new Panel();
+            panel.Size = new Size(1, 2);
+            panel.Location = new Point(GiveawaySpacer.Location.X + GiveawaySpacer.Size.Width - 1, GiveawaySpacer.Location.Y + 9);
+            GiveawayWindow.Controls.Add(panel);
+            panel.BringToFront();
+
+            Windows.Add(SettingsWindowButton, SettingsWindow);
+            Windows.Add(ChannelWindowButton, ChannelWindow);
+            Windows.Add(CurrencyWindowButton, CurrencyWindow);
+            Windows.Add(GiveawayWindowButton, GiveawayWindow);
+            Windows.Add(DonationsWindowButton, DonationsWindow);
+            Windows.Add(AboutWindowButton, AboutWindow);
+
+            int y = -((Height - 38) / Windows.Keys.Count * Windows.Keys.Count - Height + 38);
+            int y2 = y;
+            foreach (CheckBox btn in Windows.Keys)
+            {
+                btn.Size = new Size(100, (Height - 38) / Windows.Keys.Count);
+            }
+            while(y > 0)
+            {
+                foreach (CheckBox btn in Windows.Keys)
+                {
+                    if (y == 0) break;
+                    btn.Size = new Size(btn.Size.Width, btn.Size.Height + 1);
+                    y--;
+                }
+            }
+            y = 30;
+            foreach(CheckBox btn in Windows.Keys)
+            {
+                btn.Location = new Point(8, y);
+                y += btn.Size.Height;
+            }
+
+            CurrentWindow = SettingsWindow;
+            SettingsWindow.BringToFront();
+
+            ini.SetValue("Settings", "BOT_Name", BotNameBox.Text = ini.GetValue("Settings", "BOT_Name", "ModBot"));
+            ini.SetValue("Settings", "BOT_Password", BotPasswordBox.Text = ini.GetValue("Settings", "BOT_Password", ""));
+            ini.SetValue("Settings", "Channel_Name", ChannelBox.Text = ini.GetValue("Settings", "Channel_Name", "ModChannel"));
+            ini.SetValue("Settings", "Currency_Name", CurrencyNameBox.Text = ini.GetValue("Settings", "Currency_Name", "Mod Coins"));
+            ini.SetValue("Settings", "Currency_Command", CurrencyCommandBox.Text = ini.GetValue("Settings", "Currency_Command", "ModCoins"));
+            int interval = Convert.ToInt32(ini.GetValue("Settings", "Currency_Interval", "5"));
+            if (interval > CurrencyHandoutInterval.Maximum || interval < CurrencyHandoutInterval.Minimum)
+            {
+                interval = 5;
+            }
+            ini.SetValue("Settings", "Currency_Interval", (CurrencyHandoutInterval.Value = interval).ToString());
+            int payout = Convert.ToInt32(ini.GetValue("Settings", "Currency_Payout", "5"));
+            if (payout > CurrencyHandoutAmount.Maximum || payout < CurrencyHandoutAmount.Minimum)
+            {
+                payout = 1;
+            }
+            ini.SetValue("Settings", "Currency_Payout", (CurrencyHandoutAmount.Value = payout).ToString());
+            ini.SetValue("Settings", "Subsribers_URL", SubLinkBox.Text = ini.GetValue("Settings", "Subsribers_URL", ""));
+            ini.SetValue("Settings", "Donations_Key", DonationsKeyBox.Text = ini.GetValue("Settings", "Donations_Key", ""));
+
+            ini.SetValue("Settings", "Donations_UpdateTop", (UpdateTopDonorsCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateTop", "0") == "1")) ? "1" : "0");
+            ini.SetValue("Settings", "Donations_Top_Limit", (TopDonorsLimit.Value = Convert.ToInt32(ini.GetValue("Settings", "Donations_Top_Limit", "20"))).ToString());
+            ini.SetValue("Settings", "Donations_UpdateRecent", (UpdateRecentDonorsCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateRecent", "0") == "1")) ? "1" : "0");
+            ini.SetValue("Settings", "Donations_Recent_Limit", (RecentDonorsLimit.Value = Convert.ToInt32(ini.GetValue("Settings", "Donations_Recent_Limit", "5"))).ToString());
+            ini.SetValue("Settings", "Donations_UpdateLast", (UpdateLastDonorCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateLast", "0") == "1")) ? "1" : "0");
             //string[] lines = File.ReadAllLines("modbot.txt");
             //Dictionary<string, string> dict = lines.Select(l => l.Split('=')).ToDictionary(a => a[0], a => a[1]);
             //iniUtil ini = new iniUtil(@"C:\program files (x86)\myapp\myapp.ini");
@@ -51,7 +116,7 @@ namespace ModBot
         private void MainWindow_Load(object sender, EventArgs e)
         {
             //Settings loading
-            Dictionary<Control, bool> dState = new Dictionary<Control, bool>();
+            /*Dictionary<Control, bool> dState = new Dictionary<Control, bool>();
             Thread tLoad = new Thread(() =>
             {
                 while (!g_bLoaded)
@@ -82,23 +147,32 @@ namespace ModBot
                     GetSettings();
                 });
             });
-            tLoad.Start();
+            tLoad.Start();*/
 
             //Update checking
-            new Thread(() =>
+            Thread thread = new Thread(() =>
             {
-                bool bUpdateNote = false, bNote = false;
-                while (true)
+                try
                 {
-                    bNote = false;
-                    if (IsActivated && !bUpdateNote)
+                    bool bUpdateNote = false, bNote = false;
+                    while (!bUpdateNote)
                     {
-                        bUpdateNote = bNote = true;
+                        bNote = false;
+                        if (IsActivated)
+                        {
+                            bUpdateNote = bNote = true;
+                        }
+                        Program.Updates.CheckUpdate(true, bNote);
+                        Thread.Sleep(60000);
                     }
-                    Program.Updates.CheckUpdate(true, bNote);
-                    Thread.Sleep(60000);
                 }
-            }).Start();
+                catch(Exception)
+                {
+                }
+            });
+            Threads.Add(thread);
+            thread.Name = "Update checking";
+            thread.Start();
         }
 
         public void GetSettings()
@@ -141,9 +215,6 @@ namespace ModBot
                         if (!section.Equals("Settings"))
                         {
                             Dictionary<string, string> dSectionSettings = new Dictionary<string, string>();
-                            string sLockCurrencyCmd = ini.GetValue(section, "Misc_LockCurrencyCmd", "0");
-                            ini.SetValue(section, "Misc_LockCurrencyCmd", sLockCurrencyCmd);
-                            dSectionSettings.Add("Misc_LockCurrencyCmd", sLockCurrencyCmd);
                             string sMinCurrencyChecked = ini.GetValue(section, "Giveaway_MinCurrencyChecked", "0");
                             ini.SetValue(section, "Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
                             dSectionSettings.Add("Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
@@ -197,6 +268,9 @@ namespace ModBot
                     }
                 }
 
+                string sLockCurrencyCmd = ini.GetValue("Settings", "Currency_LockCmd", "0");
+                ini.SetValue("Settings", "Currency_LockCmd", sLockCurrencyCmd);
+
                 string sCurrencyHandout = ini.GetValue("Settings", "Currency_Handout", "0");
                 ini.SetValue("Settings", "Currency_Handout", sCurrencyHandout);
                 if (sCurrencyHandout.Equals("0"))
@@ -241,11 +315,7 @@ namespace ModBot
                         {
                             if (KeyValue.Key != "")
                             {
-                                if (KeyValue.Key.Equals("Misc_LockCurrencyCmd"))
-                                {
-                                    Misc_LockCurrencyCmdCheckBox.Checked = KeyValue.Value.Equals("1");
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MinCurrencyChecked"))
+                                if (KeyValue.Key.Equals("Giveaway_MinCurrencyChecked"))
                                 {
                                     Giveaway_MinCurrencyCheckBox.Checked = KeyValue.Value.Equals("1");
                                 }
@@ -287,9 +357,6 @@ namespace ModBot
                     SettingsPresents.TabPages.Add("Default");
                     iSettingsPresent = 0;
                     Dictionary<string, string> dSectionSettings = new Dictionary<string, string>();
-                    string sLockCurrencyCmd = ini.GetValue("Default", "Misc_LockCurrencyCmd", "0");
-                    ini.SetValue("Default", "Misc_LockCurrencyCmd", sLockCurrencyCmd);
-                    dSectionSettings.Add("Misc_LockCurrencyCmd", sLockCurrencyCmd);
                     string sMinCurrencyChecked = ini.GetValue("Default", "Giveaway_MinCurrencyChecked", "0");
                     ini.SetValue("Default", "Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
                     dSectionSettings.Add("Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
@@ -317,15 +384,28 @@ namespace ModBot
             }
         }
 
+        private void SetDonationsList(List<Transaction> transactions, string[] sRecentIgnores, string[] sLatestIgnores, string[] sTopIgnores)
+        {
+            if (IsHandleCreated && !DonationsWindowButton.Checked)
+            {
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    Donations_List.Rows.Clear();
+                    for (int i = 0; i < transactions.Count; i++)
+                    {
+                        Donations_List.Rows.Add(transactions[i].date, transactions[i].donor, transactions[i].amount, transactions[i].id, transactions[i].notes, !sRecentIgnores.Contains(transactions[i].id), !sLatestIgnores.Contains(transactions[i].id), !sTopIgnores.Contains(transactions[i].id), true);
+                    }
+                });
+            }
+        }
+
         public void GrabData()
         {
             while (true)
             {
-                List<Transaction> transactions = Api.UpdateTransactions();
+                List<Transaction> transactions = Api.UpdateTransactions().OrderByDescending(key => Convert.ToDateTime(key.date)).ToList();
                 if (transactions.Count > 0)
                 {
-                    IOrderedEnumerable<Transaction> Trans = transactions.OrderByDescending(key => key.date);
-
                     string sDonationsIgnoreRecent = ini.GetValue("Settings", "Donations_Ignore_Recent", "");
                     ini.SetValue("Settings", "Donations_Ignore_Recent", sDonationsIgnoreRecent);
                     string[] sRecentIgnores = sDonationsIgnoreRecent.Split(',');
@@ -336,31 +416,21 @@ namespace ModBot
                     ini.SetValue("Settings", "Donations_Ignore_Top", sDonationsIgnoreTop);
                     string[] sTopIgnores = sDonationsIgnoreTop.Split(',');
 
-                    if (!donations.Visible)
+                    /*if (IsHandleCreated && !DonationsWindowButton.Checked)
                     {
-                        if (donations.IsHandleCreated)
+                        BeginInvoke((MethodInvoker)delegate
                         {
-                            donations.BeginInvoke((MethodInvoker)delegate
-                            {
-                                donations.Donations_List.Rows.Clear();
-                                for (int i = 0; i < transactions.Count; i++)
-                                {
-                                    donations.Donations_List.Rows.Add(Trans.ElementAt(i).date, Trans.ElementAt(i).donor, Trans.ElementAt(i).amount, Trans.ElementAt(i).id, Trans.ElementAt(i).notes, !sRecentIgnores.Contains(Trans.ElementAt(i).id), !sLatestIgnores.Contains(Trans.ElementAt(i).id), !sTopIgnores.Contains(Trans.ElementAt(i).id), true);
-                                }
-                            });
-                        }
-                        else
-                        {
-                            donations.Donations_List.Rows.Clear();
+                            Donations_List.Rows.Clear();
                             for (int i = 0; i < transactions.Count; i++)
                             {
-                                donations.Donations_List.Rows.Add(Trans.ElementAt(i).date, Trans.ElementAt(i).donor, Trans.ElementAt(i).amount, Trans.ElementAt(i).id, Trans.ElementAt(i).notes, !sRecentIgnores.Contains(Trans.ElementAt(i).id), !sLatestIgnores.Contains(Trans.ElementAt(i).id), !sTopIgnores.Contains(Trans.ElementAt(i).id), true);
+                                Console.WriteLine(i + ": " + transactions[i].date + ", " + transactions[i].donor + ", " + transactions[i].amount + ", " + transactions[i].id + ".");
+                                Donations_List.Rows.Add(transactions[i].date, transactions[i].donor, transactions[i].amount, transactions[i].id, transactions[i].notes, !sRecentIgnores.Contains(transactions[i].id), !sLatestIgnores.Contains(transactions[i].id), !sTopIgnores.Contains(transactions[i].id), true);
                             }
-                            //donations.FirstDonationLabel.Text = Trans.ElementAt(Trans.Count() - 1).date;
-                        }
-                    }
+                        });
+                    }*/
+                    SetDonationsList(transactions, sRecentIgnores, sLatestIgnores, sTopIgnores); // for some reason the method above lost items...
 
-                    int count = Convert.ToInt32(donations.RecentDonorsLimit.Value);
+                    int count = Convert.ToInt32(RecentDonorsLimit.Value);
                     if (transactions.Count < count)
                     {
                         count = transactions.Count;
@@ -368,9 +438,9 @@ namespace ModBot
                     string sTopDonors = "", sRecentDonors = "", sLatestDonor = "";
                     int iCount = 0;
                     List<Transaction> Donors = new List<Transaction>();
-                    foreach (Transaction transaction in Trans)
+                    foreach (Transaction transaction in transactions)
                     {
-                        if (donations.UpdateRecentDonorsCheckBox.Checked)
+                        if (UpdateRecentDonorsCheckBox.Checked)
                         {
                             if (!sRecentIgnores.Contains(transaction.id) && iCount < count)
                             {
@@ -382,12 +452,12 @@ namespace ModBot
                                 iCount++;
                             }
                         }
-                        if (donations.UpdateLastDonorCheckBox.Checked && !sLatestIgnores.Contains(transaction.id) && sLatestDonor == "")
+                        if (UpdateLastDonorCheckBox.Checked && !sLatestIgnores.Contains(transaction.id) && sLatestDonor == "")
                         {
                             File.WriteAllText("LatestDonation.txt", (sLatestDonor = transaction.ToString("$AMOUNT - DONOR")));
                         }
 
-                        if (donations.UpdateTopDonorsCheckBox.Checked)
+                        if (UpdateTopDonorsCheckBox.Checked)
                         {
                             if (!sTopIgnores.Contains(transaction.id))
                             {
@@ -410,15 +480,15 @@ namespace ModBot
                         }
                     }
 
-                    if (donations.UpdateRecentDonorsCheckBox.Checked)
+                    if (UpdateRecentDonorsCheckBox.Checked)
                     {
                         File.WriteAllText("RecentDonors.txt", sRecentDonors);
                     }
 
-                    Trans = Donors.OrderByDescending(key => float.Parse(key.amount));
-                    if (donations.UpdateTopDonorsCheckBox.Checked)
+                    transactions = Donors.OrderByDescending(key => float.Parse(key.amount)).ToList();
+                    if (UpdateTopDonorsCheckBox.Checked)
                     {
-                        count = Convert.ToInt32(donations.TopDonorsLimit.Value);
+                        count = Convert.ToInt32(TopDonorsLimit.Value);
                         if (Donors.Count < count)
                         {
                             count = Donors.Count;
@@ -432,7 +502,7 @@ namespace ModBot
                                 {
                                     sTopDonors += "\r\n";
                                 }
-                                sTopDonors += Trans.ElementAt(iCount).ToString("$AMOUNT - DONOR");
+                                sTopDonors += transactions[iCount].ToString("$AMOUNT - DONOR");
                                 iCount++;
                             }
                         }
@@ -464,15 +534,13 @@ namespace ModBot
                         if (!stream["status"].ToString().Equals("")) sTitle = stream["status"].ToString();
                         if (!stream["game"].ToString().Equals("")) sGame = stream["game"].ToString();
                     }
-                    catch (SocketException)
+                    catch (System.Net.Sockets.SocketException)
                     {
-                        Console.WriteLine("Unable to connect to twitch API to check stream data.");
+                        Console.WriteLine("Unable to connect to Twitch API to check stream data.");
                     }
                     catch (Exception e)
                     {
-                        StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                        errorLog.WriteLine("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************\r\nUnable to connect to twitch API to check stream data.\r\n" + e + "\r\n");
-                        errorLog.Close();
+                        Api.LogError("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************\r\nUnable to connect to Twitch API to check stream data.\r\n" + e + "\r\n");
                     }
                 }
 
@@ -480,15 +548,16 @@ namespace ModBot
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        Currency_HandoutLabel.Text = "Handout " + Irc.currency + " to :";
+                        Currency_HandoutLabel.Text = "Handout " + Irc.currencyName + " to :";
 
-                        Giveaway_MinCurrencyCheckBox.Text = "Min. " + Irc.currency;
+                        Giveaway_MinCurrencyCheckBox.Text = "Must have at least                       " + Irc.currencyName;
 
-                        ChannelLabel.Text = Irc.admin;
-                        ChannelLabel.ForeColor = Color.Red;
+                        ChannelStatusLabel.Text = "DISCONNECTED";
+                        ChannelStatusLabel.ForeColor = Color.Red;
                         if (iStatus == 2)
                         {
-                            ChannelLabel.ForeColor = Color.Green;
+                            ChannelStatusLabel.Text = "ON AIR";
+                            ChannelStatusLabel.ForeColor = Color.Green;
                             int iViewers = Irc.ActiveUsers.Count;
                             foreach (string user in Irc.IgnoredUsers)
                             {
@@ -497,16 +566,17 @@ namespace ModBot
                                     iViewers--;
                                 }
                             }
-                            ChannelLabel.Text += " (" + iViewers + ")";
+                            ChannelStatusLabel.Text += " (" + iViewers + ")";
                         }
                         else if (iStatus == 1)
                         {
-                            ChannelLabel.ForeColor = Color.Blue;
+                            ChannelStatusLabel.Text = "OFF AIR";
+                            ChannelStatusLabel.ForeColor = Color.Blue;
                         }
                         ChannelTitleTextBox.Text = sTitle;
                         ChannelGameTextBox.Text = sGame;
 
-                        g_bLoaded = true;
+                        //g_bLoaded = true;
                     });
                 }
                 /*else
@@ -537,13 +607,6 @@ namespace ModBot
             }
         }
 
-        private void aboutButton_Click(object sender, EventArgs e)
-        {
-            About about = new About();
-            about.ShowDialog();
-            about.Dispose();
-        }
-
         private void Giveaway_MinCurrencyCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             Giveaway_MinCurrency.Enabled = Giveaway_MinCurrencyCheckBox.Checked;
@@ -568,7 +631,7 @@ namespace ModBot
         private void Giveaway_AnnounceWinnerButton_Click(object sender, EventArgs e)
         {
             TimeSpan t = Database.getTimeWatched(Giveaway_WinnerLabel.Text);
-            Irc.sendMessage(Giveaway_WinnerLabel.Text + " has won the giveaway! (" + (Api.IsFollowingChannel(Giveaway_WinnerLabel.Text) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currency + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
+            Irc.sendMessage(Giveaway_WinnerLabel.Text + " has won the giveaway! (" + (Api.IsFollowingChannel(Giveaway_WinnerLabel.Text) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
         }
 
         private void Giveaway_BanButton_Click(object sender, EventArgs e)
@@ -625,7 +688,7 @@ namespace ModBot
             SaveSettings();
         }
 
-        private void Misc_LockCurrencyCmdCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void Currency_LockCmdCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             SaveSettings();
             Irc.g_iLastCurrencyLockAnnounce = 0;
@@ -657,12 +720,12 @@ namespace ModBot
             }
             if (!bIgnoreUpdates)
             {
+                ini.SetValue("Settings", "Currency_LockCmd", Currency_LockCmdCheckBox.Checked ? "1" : "0");
                 if (SettingsPresent > -1)
                 {
                     if (dSettings.ContainsKey(SettingsPresents.TabPages[SettingsPresent].Text))
                     {
                         //ini.SetValue("Settings", "SelectedPresent", SettingsPresents.TabPages[SettingsPresent].Text);
-                        ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Misc_LockCurrencyCmd", Misc_LockCurrencyCmdCheckBox.Checked ? "1" : "0");
                         ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_MustFollow", Giveaway_MustFollowCheckBox.Checked ? "1" : "0");
                         ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_MinCurrencyChecked", Giveaway_MinCurrencyCheckBox.Checked ? "1" : "0");
                         ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_MinCurrency", Giveaway_MinCurrency.Value.ToString());
@@ -676,8 +739,8 @@ namespace ModBot
                         }
                         ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_BanList", items);
                     }
-                    GetSettings();
                 }
+                GetSettings();
             }
         }
 
@@ -772,14 +835,33 @@ namespace ModBot
 
         private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
         {
-            DialogResult result = MessageBox.Show("ModBot is currently active! Are you sure you want to close it?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
-            if (result == DialogResult.No)
-            {
-                e.Cancel = true;
-            }
-            else if (result == DialogResult.Yes)
+            if (!(e.Cancel = (MessageBox.Show(DisconnectButton.Enabled ? "ModBot is currently active! Are you sure you want to close it?" : "Are you sure you want to close ModBot?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.No)))
             {
                 Environment.Exit(0);
+                /*Console.WriteLine("Closing...");
+                List<Thread> Ts = new List<Thread>();
+                foreach (Thread t in Threads)
+                {
+                    t.Abort();
+                    Ts.Add(t);
+                }
+                Threads.Clear();
+                foreach (Thread t in Irc.Threads)
+                {
+                    t.Abort();
+                    Ts.Add(t);
+                }
+                Irc.Threads.Clear();
+                foreach (Thread t in Api.dCheckingDisplayName.Values)
+                {
+                    t.Abort();
+                    Ts.Add(t);
+                }
+                Api.dCheckingDisplayName.Clear();
+                foreach (Thread t in Ts)
+                {
+                    while (t.IsAlive) Thread.Sleep(10);
+                }*/
             }
         }
 
@@ -792,11 +874,6 @@ namespace ModBot
                 SaveSettings(iSettingsPresent);
                 iSettingsPresent = SettingsPresents.SelectedIndex;
             }
-        }
-
-        private void Donations_ManageButton_Click(object sender, EventArgs e)
-        {
-            donations.ShowDialog();
         }
 
         private void Currency_HandoutEveryone_CheckedChanged(object sender, EventArgs e)
@@ -822,7 +899,7 @@ namespace ModBot
 
         private void WindowChanged(object sender, EventArgs e)
         {
-            CheckBox CB = (CheckBox)sender;
+            /*CheckBox CB = (CheckBox)sender;
             if (CB.Checked)
             {
                 CB.Enabled = false;
@@ -836,7 +913,166 @@ namespace ModBot
                         WindowButtons[cb].Visible = false;
                     }
                 }
+            }*/
+            CheckBox CB = (CheckBox)sender;
+            if (CB.Checked)
+            {
+                //CB.Enabled = false;
+                CurrentWindow = Windows[CB];
+                Windows[CB].BringToFront();
+                foreach (CheckBox cb in Windows.Keys)
+                {
+                    if (cb != CB)
+                    {
+                        //cb.Enabled = true;
+                        cb.Checked = false;
+                    }
+                }
             }
+            else
+            {
+                if(Windows[CB] == CurrentWindow)
+                {
+                    CB.Checked = true;
+                }
+            }
+        }
+
+        private void ConnectButton_Click(object sender, EventArgs e)
+        {
+            ini.SetValue("Settings", "BOT_Name", Irc.nick = BotNameBox.Text);
+            Irc.nick = BotNameBox.Text.ToLower();
+            ini.SetValue("Settings", "BOT_Password", Irc.password = BotPasswordBox.Text);
+            ini.SetValue("Settings", "Channel_Name", ChannelBox.Text);
+            Irc.admin = ChannelBox.Text.Replace("#", "");
+            Irc.channel = "#" + ChannelBox.Text.Replace("#", "").ToLower();
+            ini.SetValue("Settings", "Currency_Name", Irc.currencyName = CurrencyNameBox.Text);
+            ini.SetValue("Settings", "Currency_Command", Irc.currency = CurrencyCommandBox.Text);
+            ini.SetValue("Settings", "Currency_Interval", CurrencyHandoutInterval.Value.ToString());
+            Irc.interval = Convert.ToInt32(CurrencyHandoutInterval.Value.ToString());
+            ini.SetValue("Settings", "Currency_Payout", CurrencyHandoutAmount.Value.ToString());
+            Irc.payout = Convert.ToInt32(CurrencyHandoutAmount.Value.ToString());
+            ini.SetValue("Settings", "Donations_Key", Irc.donationkey = DonationsKeyBox.Text);
+            if (SubLinkBox.Text != "")
+            {
+                if ((SubLinkBox.Text.StartsWith("https://spreadsheets.google.com") || SubLinkBox.Text.StartsWith("http://spreadsheets.google.com")) && SubLinkBox.Text.EndsWith("?alt=json"))
+                {
+                    ini.SetValue("Settings", "Subsribers_URL", SubLinkBox.Text);
+                }
+                else
+                {
+                    Console.WriteLine("Invalid subscriber link. Reverting to the last known good link, or blank. Restart the program to fix it.");
+                }
+            }
+
+            new Thread(() => { Irc.Initialize(); }).Start();
+        }
+
+        private void DisconnectButton_Click(object sender, EventArgs e)
+        {
+            new Thread(() => { Irc.Disconnect(); }).Start();
+        }
+
+        private void WebsiteLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://sourceforge.net/projects/twitchmodbot/");
+            System.Diagnostics.Process.Start("http://modbot.wordpress.com/");
+        }
+
+        private void SupportLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("http://modbot.wordpress.com/about/");
+        }
+
+        private void EmailLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("mailto:DorCoMaNdO@gmail.com");
+        }
+
+        private void Donations_List_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex > 4)
+            {
+                string sDonationsIgnoreRecent = "";
+                string sDonationsIgnoreLatest = "";
+                string sDonationsIgnoreTop = "";
+
+                foreach (DataGridViewRow row in Donations_List.Rows)
+                {
+                    string sId = row.Cells["ID"].Value.ToString();
+                    if (row.Cells["IncludeRecent"].Value.ToString().Equals("False"))
+                    {
+                        sDonationsIgnoreRecent += sId + ",";
+                    }
+                    if (row.Cells["IncludeLatest"].Value.ToString().Equals("False"))
+                    {
+                        sDonationsIgnoreLatest += sId + ",";
+                    }
+                    if (row.Cells["IncludeTop"].Value.ToString().Equals("False"))
+                    {
+                        sDonationsIgnoreTop += sId + ",";
+                    }
+                }
+                ini.SetValue("Settings", "Donations_Ignore_Recent", sDonationsIgnoreRecent);
+                ini.SetValue("Settings", "Donations_Ignore_Latest", sDonationsIgnoreLatest);
+                ini.SetValue("Settings", "Donations_Ignore_Top", sDonationsIgnoreTop);
+            }
+        }
+
+        private void UpdateTopDonorsCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            ini.SetValue("Settings", "Donations_UpdateTop", UpdateTopDonorsCheckBox.Checked ? "1" : "0");
+            TopDonorsLimit.Enabled = UpdateTopDonorsCheckBox.Checked;
+        }
+
+        private void UpdateRecentDonorsCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            ini.SetValue("Settings", "Donations_UpdateRecent", UpdateRecentDonorsCheckBox.Checked ? "1" : "0");
+            RecentDonorsLimit.Enabled = UpdateRecentDonorsCheckBox.Checked;
+        }
+
+        private void UpdateLastDonorCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            ini.SetValue("Settings", "Donations_UpdateLast", UpdateLastDonorCheckBox.Checked ? "1" : "0");
+        }
+
+        private void RecentDonorsLimit_ValueChanged(object sender, EventArgs e)
+        {
+            ini.SetValue("Settings", "Donations_Recent_Limit", RecentDonorsLimit.Value.ToString());
+        }
+
+        private void TopDonorsLimit_ValueChanged(object sender, EventArgs e)
+        {
+            ini.SetValue("Settings", "Donations_Top_Limit", TopDonorsLimit.Value.ToString());
+        }
+
+        private void Donations_List_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
+        {
+            if(e.Column.Name == "Date")
+            {
+                e.SortResult = Convert.ToDateTime(e.CellValue1.ToString()).CompareTo(Convert.ToDateTime(e.CellValue2.ToString()));
+                e.Handled = true;
+            }
+            else if (e.Column.Name == "Amount")
+            {
+                e.SortResult = float.Parse(e.CellValue1.ToString()).CompareTo(float.Parse(e.CellValue2.ToString()));
+                e.Handled = true;
+            }
+        }
+
+        private void ConnectionDetailsChanged(object sender, EventArgs e)
+        {
+            //ConnectButton.Enabled = !(BotNameBox.Text.Length < 5 || !BotPasswordBox.Text.StartsWith("oauth:") || ChannelBox.Text.Length < 5 || CurrencyNameBox.Text.Length < 5);
+            ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 5 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Password field is empty.\r\n" : "Password must be an oauth token.\r\n") : "") + (ChannelBox.Text.Length < 5 ? "Channel name too short or the field is empty.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty." : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty." : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces." : "")) == "");
+            /*ConnectButton.Enabled = (new Func<bool>(() =>
+            {
+                if (BotNameBox.Text.Length < 5 || !BotPasswordBox.Text.StartsWith("oauth:") || ChannelBox.Text.Length < 5 || CurrencyNameBox.Text.Length < 5)
+                {
+                    SettingsErrorLabel.Text = (BotNameBox.Text.Length < 5 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Password field is empty.\r\n" : "Password must be an oauth token.\r\n") : "") + (ChannelBox.Text.Length < 5 ? "Channel name too short or the field is empty.\r\n" : "");
+                    return false;
+                }
+                return true;
+            }) == new Func<bool>(() => { return true; }));*/
         }
     }
 }

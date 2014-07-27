@@ -151,12 +151,13 @@ namespace ModBot
             }
             if (message.StartsWith(" ")) message = message.Substring(1);
             if (message.EndsWith(" ")) message = message.Substring(0, message.Length - 1);
+            message = message.ToLower();
             string[] cmd = message.Split(' ');
             lock (lCommands)
             {
                 foreach (Command Command in lCommands)
                 {
-                    if (Command.Cmd.ToLower() == cmd[0].ToLower())
+                    if (Command.Cmd.ToLower() == cmd[0])
                     {
                         if (call)
                         {
@@ -177,12 +178,13 @@ namespace ModBot
             }
             if (message.StartsWith(" ")) message = message.Substring(1);
             if (message.EndsWith(" ")) message = message.Substring(0, message.Length - 1);
+            message = message.ToLower();
             string[] cmd = message.Split(' ');
             lock (lCommands)
             {
                 foreach (Command Command in lCommands)
                 {
-                    if (Command.Cmd.ToLower() == cmd[0].ToLower())
+                    if (Command.Cmd.ToLower() == cmd[0])
                     {
                         if (call)
                         {

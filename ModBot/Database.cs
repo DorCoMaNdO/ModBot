@@ -27,9 +27,14 @@ namespace ModBot
                     SQLiteConnection.CreateFile("ModBot.sqlite");
                 }
 
-                while (ModBot.Api.IsFileLocked("ModBot.sqlite", FileShare.Read))
+                while (ModBot.Api.IsFileLocked("ModBot.sqlite", FileShare.Read) && File.Exists("ModBot.sqlite"))
                 {
                     MessageBox.Show("ModBot's database file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                if (!File.Exists("ModBot.sqlite"))
+                {
+                    SQLiteConnection.CreateFile("ModBot.sqlite");
                 }
 
                 DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
@@ -102,6 +107,8 @@ namespace ModBot
                         cmd.ExecuteNonQuery();
                     }*/
                 }
+
+                //DB.Close();
 
                 /*Commands.Add("test", new CommandExecutedHandler((string command, string[] args) =>
                 {
@@ -411,6 +418,10 @@ namespace ModBot
         public static void setUserLevel(string user, int level)
         {
             user = Api.capName(user);
+            if(!userExists(user))
+            {
+                newUser(user);
+            }
             using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET userlevel = " + level + " WHERE user = '" + user + "';", DB))
             {
                 cmd.ExecuteNonQuery();
@@ -443,6 +454,10 @@ namespace ModBot
         public static void addTimeWatched(string user, int time)
         {
             user = Api.capName(user);
+            if (!userExists(user))
+            {
+                newUser(user);
+            }
             using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", DB))
             {
                 cmd.ExecuteNonQuery();

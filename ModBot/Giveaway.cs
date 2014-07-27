@@ -12,10 +12,10 @@ namespace ModBot
 {
     public static class Giveaway
     {
-        private static MainWindow MainForm = Irc.MainForm;
+        private static MainWindow MainForm = Program.MainForm;
         private static string sWinner;
         public static int LastRoll;
-        private static float fChance;
+        public static float Chance { get; private set; }
 
         public static void startGiveaway()
         {
@@ -132,13 +132,13 @@ namespace ModBot
                 if (ValidUsers.Count > 0)
                 {
                     sWinner = Api.GetDisplayName(ValidUsers[new Random().Next(0, ValidUsers.Count - 1)]);
-                    fChance = 100F / ValidUsers.Count;
+                    Chance = 100F / ValidUsers.Count;
                     MainForm.BeginInvoke((MethodInvoker)delegate
                     {
                         //string WinnerLabel = "Winner : ";
                         string WinnerLabel = "";
                         if (Api.IsFollowingChannel(sWinner)) WinnerLabel += "Following | ";
-                        WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currency + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + fChance.ToString("0.00") + "%";
+                        WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currencyName + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + Chance.ToString("0.00") + "%";
                         MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel;
                         MainForm.Giveaway_WinnerLabel.Text = sWinner;
                         MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);
@@ -150,14 +150,16 @@ namespace ModBot
                         LastRoll = Api.GetUnixTimeNow();
                         if (MainForm.Giveaway_AutoBanWinnerCheckBox.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(sWinner)) MainForm.Giveaway_BanListListBox.Items.Add(Api.capName(sWinner));
                     });
-                    new Thread(() =>
+                    Thread thread = new Thread(() =>
                     {
                         sWinner = Api.GetDisplayName(sWinner, true);
                         MainForm.BeginInvoke((MethodInvoker)delegate
                         {
                             MainForm.Giveaway_WinnerLabel.Text = sWinner;
                         });
-                    }).Start();
+                    });
+                    thread.Name = "Use winner's display name";
+                    thread.Start();
                     return;
                 }
             }
@@ -165,6 +167,7 @@ namespace ModBot
             {
                 Console.WriteLine("Error while rolling, retrying");
                 Thread thread = new Thread(new ThreadStart(GetWinnerThread));
+                thread.Name = "Roll for winner";
                 thread.Start();
                 thread.Join();
                 return;
@@ -180,14 +183,10 @@ namespace ModBot
         public static string getWinner()
         {
             Thread thread = new Thread(new ThreadStart(GetWinnerThread));
+            thread.Name = "Roll for winner";
             thread.Start();
             thread.Join();
             return sWinner;
-        }
-
-        public static float getLastRollWinChance()
-        {
-            return fChance;
         }
     }
 }

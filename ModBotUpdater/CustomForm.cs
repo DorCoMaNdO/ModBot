@@ -139,6 +139,8 @@ namespace ModBotUpdater
 
                 FormCloseButton.Visible = false;
             }
+            Hide();
+            Show();
         }
 
         private void FixBorders()

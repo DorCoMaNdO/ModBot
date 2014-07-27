@@ -12,6 +12,7 @@ namespace ModBot
         private static int maxBet, totalBets;
         private static List<string> options;
         public static bool Running { get; private set; }
+        public static bool Locked = false;
 
         public static void CreatePool(int max, List<string> lOptions)
         {
@@ -20,6 +21,7 @@ namespace ModBot
             totalBets = 0;
             bets.Clear();
             winners.Clear();
+            Locked = false;
             Running = true;
         }
 
@@ -62,7 +64,9 @@ namespace ModBot
         public static void closePool(string winBet)
         {
             buildTotalBets();
-            buildWinners(winBet);            
+            buildWinners(winBet);
+            Locked = false;
+            Running = false;
         }
 
         private static void buildWinners(string winBet)
@@ -154,6 +158,7 @@ namespace ModBot
             bets.Clear();
             winners.Clear();
             Running = false;
+            Locked = false;
         }
 
         public static bool isInPool(string nick)

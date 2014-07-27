@@ -19,6 +19,10 @@ namespace ModBotUpdater
             InitializeComponent();
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
             CheckUpdates();
+            if(Program.LaunchUpdate && UpdateButton.Enabled)
+            {
+                startDownload();
+            }
         }
 
         private bool IsFileLocked(string FileLocation)

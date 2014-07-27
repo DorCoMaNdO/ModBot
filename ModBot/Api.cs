@@ -11,8 +11,9 @@ namespace ModBot
 {
     public static class Api
     {
-        private static MainWindow MainForm = Irc.MainForm;
-        private static Dictionary<string, Thread> g_lCheckingDisplayName = new Dictionary<string, Thread>();
+        private static MainWindow MainForm = Program.MainForm;
+        public static Dictionary<string, Thread> dCheckingDisplayName = new Dictionary<string, Thread>();
+        private static StreamWriter errorLog = new StreamWriter("Error_Log.txt", true);
 
         public static int GetUnixTimeNow()
         {
@@ -49,12 +50,11 @@ namespace ModBot
         public static string GetDisplayName(string user, bool bWait = false)
         {
             user = user.ToLower();
-            if (!g_lCheckingDisplayName.ContainsKey(user))
+            if (!dCheckingDisplayName.ContainsKey(user))
             {
                 if (Database.getDisplayName(user) == "")
                 {
-                    Thread thread = new Thread(
-                    () =>
+                    Thread thread = new Thread(() =>
                     {
                         using (WebClient w = new WebClient())
                         {
@@ -72,14 +72,15 @@ namespace ModBot
                             {
                             }
                         }
-                        if (g_lCheckingDisplayName.ContainsKey(user))
+                        if (dCheckingDisplayName.ContainsKey(user))
                         {
-                            g_lCheckingDisplayName.Remove(user);
+                            dCheckingDisplayName.Remove(user);
                         }
                     });
-                    if (!g_lCheckingDisplayName.ContainsKey(user))
+                    if (!dCheckingDisplayName.ContainsKey(user))
                     {
-                        g_lCheckingDisplayName.Add(user, thread);
+                        dCheckingDisplayName.Add(user, thread);
+                        thread.Name = "Display name check for " + user;
                         thread.Start();
                         if (bWait)
                         {
@@ -92,7 +93,7 @@ namespace ModBot
             {
                 if (bWait)
                 {
-                    g_lCheckingDisplayName[user].Join();
+                    dCheckingDisplayName[user].Join();
                 }
             }
             /*else
@@ -126,6 +127,7 @@ namespace ModBot
 
         public static bool IsFollowingChannel(string user)
         {
+            user = user.ToLower();
             bool bFollowing = false;
             Thread thread = new Thread(
                 () =>
@@ -150,6 +152,7 @@ namespace ModBot
                         }
                     }
                 });
+            thread.Name = "Follower check for " + user;
             thread.Start();
             thread.Join();
             return bFollowing;
@@ -162,37 +165,36 @@ namespace ModBot
             {
                 using (WebClient w = new WebClient())
                 {
-                    string json_data = "";
                     try
                     {
                         w.Proxy = null;
-                        json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + Irc.channel.Substring(1) + "&key=" + Irc.donationkey);
-                        while (json_data.Contains("\"DT_RowId\""))
+                        string data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + Irc.channel.Substring(1) + "&key=" + Irc.donationkey);
+                        while (data.Contains("\"DT_RowId\""))
                         {
                             string date = "Donated at some point", name = "Unknown", amount = "0.00", notes = "", transaction = "";
-                            json_data = json_data.Substring(json_data.IndexOf("\"0\":") + 4);
-                            if (!json_data.StartsWith("null"))
+                            data = data.Substring(data.IndexOf("\"0\":") + 4);
+                            if (!data.StartsWith("null"))
                             {
-                                name = json_data.Substring(1, json_data.IndexOf("\",") - 1);
+                                name = data.Substring(1, data.IndexOf("\",") - 1);
                             }
-                            json_data = json_data.Substring(json_data.IndexOf(",\"1\":") + 4);
-                            if (!json_data.StartsWith("null"))
+                            data = data.Substring(data.IndexOf(",\"1\":") + 4);
+                            if (!data.StartsWith("null"))
                             {
-                                notes = json_data.Substring(2, json_data.IndexOf("\",") - 2).Replace("&lt;", "<").Replace("&gt;", ">");
+                                notes = data.Substring(2, data.IndexOf("\",") - 2).Replace("&lt;", "<").Replace("&gt;", ">");
                             }
-                            json_data = json_data.Substring(json_data.IndexOf(",\"2\":") + 4);
-                            if (!json_data.StartsWith("null"))
+                            data = data.Substring(data.IndexOf(",\"2\":") + 4);
+                            if (!data.StartsWith("null"))
                             {
-                                date = json_data.Substring(2, json_data.IndexOf("\",") - 2);
+                                date = data.Substring(2, data.IndexOf("\",") - 2);
                             }
-                            json_data = json_data.Substring(json_data.IndexOf(",\"3\":") + 4);
-                            if (!json_data.StartsWith("null"))
+                            data = data.Substring(data.IndexOf(",\"3\":") + 4);
+                            if (!data.StartsWith("null"))
                             {
-                                amount = json_data.Substring(2, json_data.IndexOf("\",") - 2);
+                                amount = data.Substring(2, data.IndexOf("\",") - 2);
                             }
 
-                            json_data = json_data.Substring(json_data.IndexOf("\"DT_RowId\":\"") + 12);
-                            transaction = json_data.Substring(0, json_data.IndexOf("\""));
+                            data = data.Substring(data.IndexOf("\"DT_RowId\":\"") + 12);
+                            transaction = data.Substring(0, data.IndexOf("\""));
                             Transactions.Add(new Transaction(transaction, date, amount, name, notes));
                         }
                     }
@@ -202,13 +204,30 @@ namespace ModBot
                     }
                     catch (Exception e)
                     {
-                        StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                        errorLog.WriteLine("*************Error Message (via UpdateTransactions()): " + DateTime.Now + "*********************************\r\nUnable to connect to Stream Dontaions to check the transactions.\r\n" + e + "\r\n");
-                        errorLog.Close();
+                        LogError("*************Error Message (via UpdateTransactions()): " + DateTime.Now + "*********************************\r\nUnable to connect to Stream Dontaions to check the transactions.\r\n" + e + "\r\n");
                     }
                 }
             }
             return Transactions;
+        }
+
+        public static void LogError(string error)
+        {
+            if (!error.Contains("System.Threading.ThreadAbortException"))
+            {
+                for (int attempts = 0; attempts < 5; attempts++)
+                {
+                    try
+                    {
+                        errorLog.WriteLine(error);
+                        break;
+                    }
+                    catch (IOException)
+                    {
+                        System.Threading.Thread.Sleep(100);
+                    }
+                }
+            }
         }
     }
 }

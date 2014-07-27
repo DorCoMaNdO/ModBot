@@ -19,10 +19,9 @@ namespace ModBot
         public static TcpClient irc;
         public static StreamReader read;
         public static StreamWriter write;
-        public static string nick, password, channel, currency, admin, donationkey = "";
+        public static string nick, password, channel, currency, currencyName, admin, donationkey = "";
         public static int interval, payout = 0;
-        public static int[] intervals = { 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 };
-        public static bool bettingOpen, auctionOpen, poolLocked = false;
+        public static bool auctionOpen = false;
         public static List<string> IgnoredUsers = new List<string>();
         public static List<string> betOptions = new List<string>();
         public static Timer currencyQueue;
@@ -34,22 +33,115 @@ namespace ModBot
         public static int g_iStreamStartTime = 0;
         public static bool g_bIsStreaming = false;
         public static bool g_bResourceKeeper = false;
-        public static MainWindow MainForm = new MainWindow();
+        public static MainWindow MainForm = Program.MainForm;
         public static int g_iLastHandout = 0;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
         private static bool CommandsRegistered = false;
-        private static List<Thread> Threads = new List<Thread>();
+        public static List<Thread> Threads = new List<Thread>();
 
         public static void Initialize()
         {
+            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
+                {
+                    if (ctrl.GetType() != typeof(System.Windows.Forms.Label))
+                    {
+                        ctrl.Enabled = false;
+                    }
+                }
+            });
+
+            Program.FocusConsole();
+
+            Console.WriteLine("Confirming channel's existence in Twitch...");
+
+            bool bConfirmed = false;
+            Thread thread = new Thread(() =>
+            {
+                for (int attempts = 0; attempts < 5; attempts++)
+                {
+                    Console.WriteLine("Channel's existence confirming attempt : " + (attempts + 1) + "/5");
+                    using (WebClient w = new WebClient())
+                    {
+                        try
+                        {
+                            w.Proxy = null;
+                            w.DownloadString("https://api.twitch.tv/kraken/channels/" + channel.Substring(1));
+                            Console.WriteLine("Channel existence confirmed.\r\n");
+                            bConfirmed = true;
+                            return;
+                        }
+                        catch (SocketException)
+                        {
+                            Console.WriteLine("Unable to connect to Twitch API to confirm channel, retrying...");
+                        }
+                        catch (IOException)
+                        {
+                        }
+                        catch (Exception e)
+                        {
+                            if (e.Message.Contains("(404) Not Found."))
+                            {
+                                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                {
+                                    Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
+                                });
+                                System.Threading.Thread.Sleep(10);
+                                break;
+                            }
+                            else
+                            {
+                                Api.LogError("*************Error Message (via confirmStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            }
+                        }
+                    }
+
+                    if (attempts == 4)
+                    {
+                        Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
+                    }
+                    System.Threading.Thread.Sleep(100);
+                }
+
+                Console.WriteLine("Aborting connection.\r\n");
+
+                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                {
+                    foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
+                    {
+                        ctrl.Enabled = true;
+                    }
+                    MainForm.DisconnectButton.Enabled = false;
+                    MainForm.ConnectButton.Enabled = false;
+                });
+            });
+            Threads.Add(thread);
+            thread.Name = "Channel confirming";
+            thread.Start();
+            thread.Join();
+            if (Threads.Contains(thread)) Threads.Remove(thread);
+
+            if (!bConfirmed) return;
+
+            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                MainForm.CurrencyWindowButton.Text = currencyName;
+                while (MainForm.CreateGraphics().MeasureString(currencyName, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16)
+                {
+                    MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, MainForm.CurrencyWindowButton.Font.Size - 1, FontStyle.Bold);
+                }
+                MainForm.ChannelWindowButton.Text = admin;
+            });
+
             Console.WriteLine("Configuring settings...");
 
             ini.SetValue("Settings", "ResourceKeeper", (g_bResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
 
-            if (donationkey == "")
+            /*if (donationkey == "")
             {
                 MainForm.Donations_ManageButton.Enabled = false;
-            }
+            }*/
 
             ini.SetValue("Settings", "Channel_Greeting", greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!"));
 
@@ -63,7 +155,7 @@ namespace ModBot
 
             Database.Initialize();
 
-            Database.newUser(admin);
+            //Database.newUser(admin);
             Database.setUserLevel(admin, 4);
 
             Connect();
@@ -129,46 +221,63 @@ namespace ModBot
                         admin = Api.GetDisplayName(admin);
 
                         Console.WriteLine("Joined the channel.\r\n\r\nSending lame entrance line...\r\n");
-                        int r = new Random().Next(0, 3);
-                        if(r == 0)
-                        {
-                            sendRaw("PRIVMSG " + channel + " :/me ModBot has entered the building.");
-                        }
-                        else if(r == 1)
-                        {
-                            sendRaw("PRIVMSG " + channel + " :/me No fear, ModBot is here!");
-                        }
-                        else if(r == 2)
-                        {
-                            sendRaw("PRIVMSG " + channel + " :/me ModBot with style.");
-                        }
-                        else
-                        {
-                            sendRaw("PRIVMSG " + channel + " :/me Fear not, here's the (Mod)Bot.");
-                        }
+
+                        List<string> lLines = new List<string>();
+                        lLines.Add("ModBot has entered the building.");
+                        lLines.Add("No fear, ModBot is here!");
+                        lLines.Add("ModBot with style.");
+                        lLines.Add("Fear not, here's the (Mod)Bot.");
+                        sendMessage(lLines[new Random().Next(0, lLines.Count)], "", false);
 
                         RegisterCommands();
 
                         StartThreads();
 
-                        MainForm.Show();
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
+                            {
+                                btn.Enabled = true;
+                            }
+
+                            MainForm.ChannelWindowButton.Text = admin;
+                            while (MainForm.CreateGraphics().MeasureString(admin, MainForm.ChannelWindowButton.Font).Width > MainForm.ChannelWindowButton.Width - 16)
+                            {
+                                MainForm.ChannelWindowButton.Font = new Font(MainForm.ChannelWindowButton.Font.Name, MainForm.ChannelWindowButton.Font.Size - 1, FontStyle.Bold);
+                            }
+
+                            MainForm.DonationsWindowButton.Enabled = !(donationkey == "");
+
+                            MainForm.DisconnectButton.Enabled = true;
+
+                            MainForm.GetSettings();
+                        });
                     }
                     else
                     {
-                        Console.WriteLine("Username and/or password (oauth token) are incorrect!");
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Username and/or password (oauth token) are incorrect!");
+                            MainForm.ConnectButton.Enabled = false;
+                            MainForm.DisconnectButton.Enabled = false;
+                        });
                     }
 
-                    break;
+                    return;
                 }
                 catch (SocketException)
                 {
                 }
                 catch (Exception e)
                 {
-                    StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                    errorLog.WriteLine("*************Error Message (via Connect()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                    errorLog.Close();
+                    Api.LogError("*************Error Message (via Connect()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                 }
+
+                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                {
+                    MainForm.ConnectButton.Enabled = true;
+                    MainForm.DisconnectButton.Enabled = false;
+                });
 
                 if (attempt < 5)
                 {
@@ -178,14 +287,111 @@ namespace ModBot
                 else
                 {
                     Console.WriteLine("Failed to connect to Twitch.TV chat servers...");
-                    MainForm.Hide();
+                    //MainForm.Hide();
+                    List<Thread> Ts = new List<Thread>();
                     foreach (Thread t in Threads)
                     {
                         t.Abort();
+                        Ts.Add(t);
                     }
-                    Thread.Sleep(TimeSpan.FromDays(365));
+                    Threads.Clear();
+                    foreach (Thread t in Api.dCheckingDisplayName.Values)
+                    {
+                        t.Abort();
+                        Ts.Add(t);
+                    }
+                    Api.dCheckingDisplayName.Clear();
+                    foreach (Thread t in Ts)
+                    {
+                        while (t.IsAlive) Thread.Sleep(10);
+                    }
+                    //Thread.Sleep(TimeSpan.FromDays(365));
                 }
             }
+        }
+
+        public static void Disconnect()
+        {
+            Program.FocusConsole();
+
+            Console.WriteLine("\r\nDisconnecting...\r\n");
+
+            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                MainForm.CurrencyWindowButton.Text = "Currency";
+                MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, 10F, FontStyle.Bold);
+                MainForm.ChannelWindowButton.Text = "Channel";
+                MainForm.ChannelWindowButton.Font = new Font(MainForm.ChannelWindowButton.Font.Name, 10F, FontStyle.Bold);
+                MainForm.ChannelStatusLabel.Text = "DISCONNECTED";
+                MainForm.ChannelStatusLabel.ForeColor = Color.Red;
+
+                foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
+                {
+                    if (btn != MainForm.SettingsWindowButton && btn != MainForm.AboutWindowButton)
+                    {
+                        btn.Enabled = false;
+                    }
+                }
+                MainForm.SettingsWindowButton.Enabled = true;
+
+                foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
+                {
+                    ctrl.Enabled = true;
+                }
+                MainForm.DisconnectButton.Enabled = false;
+                MainForm.ConnectButton.Enabled = false;
+            });
+
+            if (Threads.Count > 0)
+            {
+                Console.WriteLine("Stopping threads...");
+                List<Thread> Ts = new List<Thread>();
+                foreach (Thread t in Threads)
+                {
+                    t.Abort();
+                    Ts.Add(t);
+                }
+                Threads.Clear();
+                foreach (Thread t in Api.dCheckingDisplayName.Values)
+                {
+                    t.Abort();
+                    Ts.Add(t);
+                }
+                Api.dCheckingDisplayName.Clear();
+                /*foreach (Thread t in Ts)
+                {
+                    Console.Write(t.Name + " thread... ");
+                    while (t.IsAlive) Thread.Sleep(10);
+                    Console.Write("DONE\r\n");
+                }*/
+                Console.WriteLine("Threads stopped.\r\n");
+                //Console.WriteLine("Threads stopped.\r\nClearing threads list...");
+                //Threads.Clear();
+                //Console.WriteLine("Threads list clear.\r\n");
+            }
+
+            if (Database.DB != null)
+            {
+                Console.WriteLine("Closing database...");
+                Database.DB.Close();
+                Database.DB.Dispose();
+                Database.DB = null;
+                Console.WriteLine("Database closed.\r\n");
+            }
+
+            if (irc != null && irc.Connected)
+            {
+                Console.WriteLine("Closing connection...");
+                irc.Close();
+                Console.WriteLine("Connection closed.\r\n");
+            }
+
+            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                MainForm.ConnectButton.Enabled = true;
+            });
+
+            Console.WriteLine("Disconnected.\r\n");
         }
 
         private static void StartThreads()
@@ -193,13 +399,29 @@ namespace ModBot
             if (Threads.Count > 0)
             {
                 Console.WriteLine("Stopping previously created threads...");
+                List<Thread> Ts = new List<Thread>();
                 foreach (Thread t in Threads)
                 {
                     t.Abort();
+                    Ts.Add(t);
                 }
-                Console.WriteLine("Previously created threads stopped.\r\nClearing threads list...");
                 Threads.Clear();
-                Console.WriteLine("Threads list clear.");
+                foreach (Thread t in Api.dCheckingDisplayName.Values)
+                {
+                    t.Abort();
+                    Ts.Add(t);
+                }
+                Api.dCheckingDisplayName.Clear();
+                /*foreach (Thread t in Ts)
+                {
+                    Console.Write(t.Name + " thread... ");
+                    while (t.IsAlive) Thread.Sleep(10);
+                    Console.Write("DONE\r\n");
+                }*/
+                Console.WriteLine("Previously created threads stopped.\r\n");
+                //Console.WriteLine("Previously created threads stopped.\r\nClearing threads list...");
+                //Threads.Clear();
+                //Console.WriteLine("Threads list clear.");
             }
 
             Console.WriteLine("Creating and starting threads and timers...");
@@ -223,6 +445,7 @@ namespace ModBot
                 }
             });
             Threads.Add(thread);
+            thread.Name = "Time watched";
             thread.Start();
 
             Console.Write("DONE\r\nUser list thread... ");
@@ -236,6 +459,7 @@ namespace ModBot
                 }
             });
             Threads.Add(thread);
+            thread.Name = "User list";
             thread.Start();
 
             Console.Write("DONE\r\nStream status thread... ");
@@ -264,16 +488,29 @@ namespace ModBot
                         }
                         catch (SocketException)
                         {
-                            Console.WriteLine("Unable to connect to twitch API to check stream status.");
+                            Console.WriteLine("Unable to connect to Twitch API to check stream status.");
                         }
                         catch (IOException)
                         {
                         }
                         catch (Exception e)
                         {
-                            StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                            errorLog.WriteLine("*************Error Message (via checkStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                            errorLog.Close();
+                            if (e.Message.Contains("(404) Not Found."))
+                            {
+                                new Thread(() =>
+                                {
+                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                    {
+                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
+                                        Disconnect();
+                                        MainForm.ConnectButton.Enabled = false;
+                                    });
+                                }).Start();
+                            }
+                            else
+                            {
+                                Api.LogError("*************Error Message (via checkStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            }
                         }
                     }
                     g_bIsStreaming = bIsStreaming;
@@ -284,6 +521,7 @@ namespace ModBot
                 }
             });
             Threads.Add(thread);
+            thread.Name = "Stream status";
             thread.Start();
 
             Console.Write("DONE\r\nCurrency handout thread... ");
@@ -298,7 +536,7 @@ namespace ModBot
                     {
                         if (Api.GetUnixTimeNow() - g_iLastHandout >= interval * 60 && g_bIsStreaming)
                         {
-                            Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currency);
+                            Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currencyName);
                             handoutCurrency();
                         }
                     }
@@ -310,6 +548,7 @@ namespace ModBot
                 }
             });
             Threads.Add(thread);
+            thread.Name = "Currency handout";
             thread.Start();
 
             Console.Write("DONE\r\nConnection ping thread... ");
@@ -324,6 +563,7 @@ namespace ModBot
                 }
             });
             Threads.Add(thread);
+            thread.Name = "Connection ping";
             thread.Start();
 
             Console.Write("DONE\r\nCreating currency check queue timer... ");
@@ -341,6 +581,7 @@ namespace ModBot
                 MainForm.GrabData();
             });
             Threads.Add(thread);
+            thread.Name = "Layout updating";
             thread.Start();
 
             Console.Write("DONE\r\nInput listening thread... ");
@@ -355,7 +596,7 @@ namespace ModBot
                     Console.WriteLine((Running ? "Fix " : "Listening to input ") + "attempt number : " + attempt + "/5");
                     try
                     {
-                        while (irc.Connected)
+                        while (irc.Connected && Threads.Count > 0)
                         {
                             parseMessage(read.ReadLine());
                             if (attempt > 0)
@@ -378,29 +619,28 @@ namespace ModBot
                     }
                     catch (Exception e)
                     {
-                        if (attempt == 0 || attempt == 5 && !Running)
+                        if ((attempt == 0 || attempt == 5 && !Running) && Threads.Count > 0 && !e.Message.Contains("System.Threading.ThreadAbortException"))
                         {
                             if (attempt == 0)
                             {
-                                Console.WriteLine("Uh oh, there was an error! Attempts to keep everything running are being executed, if the attempts fail or if you keep seeing this message, email your Error_log.log file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
+                                Console.WriteLine("Uh oh, there was an error! Attempts to keep everything running are being executed, if the attempts fail or if you keep seeing this message, email your Error_log.txt file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
                             }
                             else
                             {
-                                Console.WriteLine("Failed to listen to input... Please try restarting the bot... If this issue keeps occouring, please email your Error_log.log file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
+                                Console.WriteLine("Failed to listen to input... Please try restarting the bot... If this issue keeps occouring, please email your Error_log.txt file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
                             }
-                            StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                            errorLog.WriteLine("*************Error Message (via Listen()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                            errorLog.Close();
+                            Api.LogError("*************Error Message (via Listen()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                         }
                     }
                     Thread.Sleep(500);
                 }
                 Running = false;
-                MainForm.Hide();
+                //MainForm.Hide();
                 System.Windows.Forms.MessageBox.Show("ModBot has encountered an error, more information available in the console...", "ModBot", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 Console.WriteLine("The attempts were unsuccessful... In order get ModBot back to function please restart it...");
             });
             Threads.Add(thread);
+            thread.Name = "Input listening";
             thread.Start();
 
             Console.Write("DONE\r\nSuccessfully created and started all threads and timers!\r\n\r\n");
@@ -423,12 +663,12 @@ namespace ModBot
                 addUserToList(user);
                 //Console.WriteLine(message);
                 string temp = message.Substring(message.IndexOf(":", 1) + 1);
-                string name = Api.GetDisplayName(user);
                 if (user == "Jtv" && temp.StartsWith("HISTORYEND"))
                 {
                     Console.WriteLine("Everything should be set and ready!\r\nModBot is good to go!\r\n");
                     return;
                 }
+                string name = Api.GetDisplayName(user);
                 Console.WriteLine(name + ": " + temp);
                 //handleMessage(temp);
                 Commands.CheckCommand(user, temp, true);
@@ -522,12 +762,12 @@ namespace ModBot
                             }
                             else
                             {
-                                sMessage = sMessage + "follow the stream, and have " + MainForm.Giveaway_MinCurrency.Value + " " + currency + " ";
+                                sMessage = sMessage + "follow the stream, and have " + MainForm.Giveaway_MinCurrency.Value + " " + currencyName + " ";
                             }
                         }
                         else
                         {
-                            sMessage = sMessage + "and have " + MainForm.Giveaway_MinCurrency.Value + " " + currency + " ";
+                            sMessage = sMessage + "and have " + MainForm.Giveaway_MinCurrency.Value + " " + currencyName + " ";
                         }
                         sMessage = sMessage + "will qualify for the giveaway!";
                         sendMessage(sMessage);
@@ -544,7 +784,7 @@ namespace ModBot
                             else
                             {
                                 TimeSpan t = Database.getTimeWatched(winner);
-                                sendMessage(winner + " has won the giveaway! (" + (Api.IsFollowingChannel(winner) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currency + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.getLastRollWinChance().ToString("0.00") + "%)");
+                                sendMessage(winner + " has won the giveaway! (" + (Api.IsFollowingChannel(winner) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
                             }
                         }
                     }
@@ -562,12 +802,12 @@ namespace ModBot
                         }
                         else
                         {
-                            sMessage = sMessage + ", follow the stream and have " + MainForm.Giveaway_MinCurrency.Value + " " + currency + ", ";
+                            sMessage = sMessage + ", follow the stream and have " + MainForm.Giveaway_MinCurrency.Value + " " + currencyName + ", ";
                         }
                     }
                     else
                     {
-                        sMessage = sMessage + "and have " + MainForm.Giveaway_MinCurrency.Value + " " + currency + ", ";
+                        sMessage = sMessage + "and have " + MainForm.Giveaway_MinCurrency.Value + " " + currencyName + ", ";
                     }
                     sMessage = sMessage + "the winner is selected from a list of viewers that were active in the last " + Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) + " minutes";
                     if (MainForm.Giveaway_MustFollowCheckBox.Checked || MainForm.Giveaway_MinCurrencyCheckBox.Checked) sMessage = sMessage + " and comply the terms";
@@ -585,7 +825,7 @@ namespace ModBot
                 {
                     if (args[0].Equals("top5"))
                     {
-                        if (!MainForm.Misc_LockCurrencyCmdCheckBox.Checked && Api.GetUnixTimeNow() - g_iLastTop5Announce > 600 || Database.getUserLevel(user) >= 1)
+                        if (!MainForm.Currency_LockCmdCheckBox.Checked && Api.GetUnixTimeNow() - g_iLastTop5Announce > 600 || Database.getUserLevel(user) >= 1)
                         {
                             g_iLastTop5Announce = Api.GetUnixTimeNow();
                             Dictionary<string, int> TopPoints = new Dictionary<string, int>();
@@ -596,7 +836,7 @@ namespace ModBot
                                     TopPoints.Add(usr, Database.checkCurrency(usr));
                                 }
                             }
-                            IOrderedEnumerable<KeyValuePair<string, int>> top = TopPoints.OrderByDescending(key => key.Value);
+                            TopPoints = TopPoints.OrderByDescending(key => key.Value).ToDictionary(item => item.Key, item => item.Value);
                             if(TopPoints.Count > 0)
                             {
                                 string output = "";
@@ -607,7 +847,7 @@ namespace ModBot
                                 }
                                 for(int i = 0; i < max; i++)
                                 {
-                                    output += Api.GetDisplayName(top.ElementAt(i).Key) + " (" + Database.getTimeWatched(top.ElementAt(i).Key).ToString(@"d\d\ hh\h\ mm\m") + ") - " + top.ElementAt(i).Value + ", ";
+                                    output += Api.GetDisplayName(TopPoints.ElementAt(i).Key) + " (" + Database.getTimeWatched(TopPoints.ElementAt(i).Key).ToString(@"d\d\ hh\h\ mm\m") + ") - " + TopPoints.ElementAt(i).Value + ", ";
                                 }
                                 sendMessage("The " + max + " users with the most points are: " + output.Substring(0, output.Length - 2) + ".");
                             }
@@ -619,12 +859,12 @@ namespace ModBot
                     }
                     else if (args[0].Equals("lock") && Database.getUserLevel(user) >= 2)
                     {
-                        MainForm.Misc_LockCurrencyCmdCheckBox.Checked = true;
+                        MainForm.Currency_LockCmdCheckBox.Checked = true;
                         sendMessage("The !" + currency + " command is temporarily disabled.", user + " locked the currency command.");
                     }
                     else if (args[0].Equals("unlock") && Database.getUserLevel(user) >= 2)
                     {
-                        MainForm.Misc_LockCurrencyCmdCheckBox.Checked = false;
+                        MainForm.Currency_LockCmdCheckBox.Checked = false;
                         sendMessage("The !" + currency + " command is now available to use.", user + " unlocked the currency command.");
                     }
                     else if (args[0].Equals("clear") && Database.getUserLevel(user) >= 3)
@@ -633,7 +873,7 @@ namespace ModBot
                         {
                             Database.setCurrency(usr, 0);
                         }
-                        sendMessage("Cleared all the " + currency + "!", user + " cleared all the " + currency + "!");
+                        sendMessage("Cleared all the " + currencyName + "!", user + " cleared all the " + currencyName + "!");
                     }
                     else
                     {
@@ -643,7 +883,7 @@ namespace ModBot
                             {
                                 if (Database.userExists(args[0]))
                                 {
-                                    sendMessage("Mod check: " + Api.GetDisplayName(args[0], true) + " (" + Database.getTimeWatched(args[0]).ToString(@"d\d\ hh\h\ mm\m") + ")" + " has " + Database.checkCurrency(args[0]) + " " + currency);
+                                    sendMessage("Mod check: " + Api.GetDisplayName(args[0], true) + " (" + Database.getTimeWatched(args[0]).ToString(@"d\d\ hh\h\ mm\m") + ")" + " has " + Database.checkCurrency(args[0]) + " " + currencyName);
                                 }
                                 else
                                 {
@@ -674,7 +914,7 @@ namespace ModBot
                                 {
                                     Database.addCurrency(usr, amount);
                                 }
-                                sendMessage("Added " + amount + " " + currency + " to everyone.", user + " added " + amount + " " + currency + " to everyone.");
+                                sendMessage("Added " + amount + " " + currencyName + " to everyone.", user + " added " + amount + " " + currencyName + " to everyone.");
                             }
                             else if (args[2].Equals("online"))
                             {
@@ -682,12 +922,12 @@ namespace ModBot
                                 {
                                     Database.addCurrency(usr, amount);
                                 }
-                                sendMessage("Added " + amount + " " + currency + " to online users.", user + " added " + amount + " " + currency + " to online users.");
+                                sendMessage("Added " + amount + " " + currencyName + " to online users.", user + " added " + amount + " " + currencyName + " to online users.");
                             }
                             else
                             {
                                 Database.addCurrency(args[2], amount);
-                                sendMessage("Added " + amount + " " + currency + " to " + Api.GetDisplayName(args[2]), user + " added " + amount + " " + currency + " to " + Api.GetDisplayName(args[2]));
+                                sendMessage("Added " + amount + " " + currencyName + " to " + Api.GetDisplayName(args[2]), user + " added " + amount + " " + currencyName + " to " + Api.GetDisplayName(args[2]));
                             }
                         }
                     }
@@ -702,7 +942,7 @@ namespace ModBot
                                 {
                                     Database.setCurrency(usr, amount);
                                 }
-                                sendMessage("Set everyone's " + currency + " to " + amount + ".", user + " set everyone's " + currency + " to " + amount + ".");
+                                sendMessage("Set everyone's " + currencyName + " to " + amount + ".", user + " set everyone's " + currencyName + " to " + amount + ".");
                             }
                             else if (args[2].Equals("online"))
                             {
@@ -710,12 +950,12 @@ namespace ModBot
                                 {
                                     Database.setCurrency(usr, amount);
                                 }
-                                sendMessage("Set online users's " + currency + " to " + amount + ".", user + " set online users's " + currency + " to " + amount + ".");
+                                sendMessage("Set online users's " + currencyName + " to " + amount + ".", user + " set online users's " + currencyName + " to " + amount + ".");
                             }
                             else
                             {
                                 Database.setCurrency(args[2], amount);
-                                sendMessage("Set " + Api.capName(args[2]) + "'s " + currency + " to " + amount + ".", user + " set " + Api.capName(args[2]) + "'s " + currency + " to " + amount + ".");
+                                sendMessage("Set " + Api.capName(args[2]) + "'s " + currencyName + " to " + amount + ".", user + " set " + Api.capName(args[2]) + "'s " + currencyName + " to " + amount + ".");
                             }
                         }
                     }
@@ -733,7 +973,7 @@ namespace ModBot
                                 {
                                     Database.removeCurrency(usr, amount);
                                 }
-                                sendMessage("Removed " + amount + " " + currency + " from everyone.", user + " removed " + amount + " " + currency + " from everyone.");
+                                sendMessage("Removed " + amount + " " + currencyName + " from everyone.", user + " removed " + amount + " " + currencyName + " from everyone.");
                             }
                             else if (args[2].Equals("online"))
                             {
@@ -741,12 +981,12 @@ namespace ModBot
                                 {
                                     Database.removeCurrency(usr, amount);
                                 }
-                                sendMessage("Removed " + amount + " " + currency + " from online users.", user + " removed " + amount + " " + currency + " from online users.");
+                                sendMessage("Removed " + amount + " " + currencyName + " from online users.", user + " removed " + amount + " " + currencyName + " from online users.");
                             }
                             else
                             {
                                 Database.removeCurrency(args[2], amount);
-                                sendMessage("Removed " + amount + " " + currency + " from " + Api.capName(args[2]), user + " removed " + amount + " " + currency + " from " + Api.capName(args[2]));
+                                sendMessage("Removed " + amount + " " + currencyName + " from " + Api.capName(args[2]), user + " removed " + amount + " " + currencyName + " from " + Api.capName(args[2]));
                             }
 
                         }
@@ -755,12 +995,12 @@ namespace ModBot
             }
             else
             {
-                if (MainForm.Misc_LockCurrencyCmdCheckBox.Checked && Database.getUserLevel(user) == 0 && Api.GetUnixTimeNow() - g_iLastCurrencyLockAnnounce > 600)
+                if (MainForm.Currency_LockCmdCheckBox.Checked && Database.getUserLevel(user) == 0 && Api.GetUnixTimeNow() - g_iLastCurrencyLockAnnounce > 600)
                 {
                     g_iLastCurrencyLockAnnounce = Api.GetUnixTimeNow();
-                    sendMessage("The !" + currency + " command is disabled, you may politely ask a mod to check your " + currency + " for you.");
+                    sendMessage("The !" + currency + " command is disabled, you may politely ask a mod to check your " + currencyName + " for you.");
                 }
-                if (!MainForm.Misc_LockCurrencyCmdCheckBox.Checked || Database.getUserLevel(user) >= 1)
+                if (!MainForm.Currency_LockCmdCheckBox.Checked || Database.getUserLevel(user) >= 1)
                 {
                     addToLookups(user);
                 }
@@ -773,7 +1013,7 @@ namespace ModBot
             {
                 if (args[0].Equals("open") && args.Length >= 4)
                 {
-                    if (!bettingOpen)
+                    if (!Pool.Running)
                     {
                         int maxBet;
                         if (int.TryParse(args[1], out maxBet))
@@ -784,15 +1024,14 @@ namespace ModBot
                                 if (betOptions.Count > 1)
                                 {
                                     Pool.CreatePool(maxBet, betOptions);
-                                    bettingOpen = true;
-                                    sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currency);
+                                    sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currencyName);
                                     string temp = "Betting open for: ";
                                     for (int i = 0; i < betOptions.Count; i++)
                                     {
                                         temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
                                     }
                                     sendMessage(temp);
-                                    sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1, \"!bet 25 option2name\" to bet 25 on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\"");
+                                    sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currencyName + " on option 1, \"!bet 25 option2name\" to bet 25 " + currencyName + " on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\"");
                                 }
                                 else
                                 {
@@ -816,11 +1055,11 @@ namespace ModBot
                 }
                 else if (args[0].Equals("close"))
                 {
-                    if (bettingOpen)
+                    if (Pool.Running)
                     {
-                        if (!poolLocked)
+                        if (!Pool.Locked)
                         {
-                            poolLocked = true;
+                            Pool.Locked = true;
                             sendMessage("Bets locked in. Good luck everyone!");
                         }
                         else
@@ -830,12 +1069,12 @@ namespace ModBot
                     }
                     else
                     {
-                        sendMessage("No pool currently open.");
+                        sendMessage("The betting pool is not running.");
                     }
                 }
                 else if (args[0].Equals("winner") && args.Length >= 2)
                 {
-                    if (bettingOpen && poolLocked)
+                    if (Pool.Running && Pool.Locked)
                     {
                         bool inQuote = false;
                         string option = "";
@@ -873,9 +1112,7 @@ namespace ModBot
                         if (betOptions.Contains(option))
                         {
                             Pool.closePool(option);
-                            bettingOpen = false;
-                            poolLocked = false;
-                            sendMessage("Betting Pool closed! A total of " + Pool.getTotalBets() + " " + currency + " were bet.");
+                            sendMessage("Betting Pool closed! A total of " + Pool.getTotalBets() + " " + currencyName + " were bet.");
                             string output = "Bets for:";
                             for (int i = 0; i < betOptions.Count; i++)
                             {
@@ -922,9 +1159,11 @@ namespace ModBot
                     if (Pool.Running)
                     {
                         Pool.cancel();
-                        bettingOpen = false;
-                        poolLocked = false;
                         sendMessage("Betting Pool canceled. All bets refunded");
+                    }
+                    else
+                    {
+                        sendMessage("The betting pool is not running.");
                     }
                 }
             }
@@ -932,76 +1171,73 @@ namespace ModBot
 
         private static void Command_Bet(string user, string cmd, string[] args)
         {
-            if (bettingOpen)
+            if (args != null && Pool.Running)
             {
-                if (args != null)
+                int betAmount;
+                if (args[0].Equals("help"))
                 {
-                    int betAmount;
-                    if (args[0].Equals("help"))
+                    if (!Pool.Locked)
                     {
-                        if (bettingOpen)
+                        string temp = "Betting open for: ";
+                        for (int i = 0; i < betOptions.Count; i++)
                         {
-                            string temp = "Betting open for: ";
-                            for (int i = 0; i < betOptions.Count; i++)
-                            {
-                                temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
-                            }
-                            sendMessage(temp);
-                            sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currency + " on option 1, \"bet 25 option2name\" to bet 25 on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\".");
+                            temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
+                        }
+                        sendMessage(temp);
+                        sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currencyName + " on option 1, \"bet 25 option2name\" to bet 25 " + currencyName + " on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\".");
+                    }
+                }
+                else if (int.TryParse(args[0], out betAmount) && args.Length >= 2 && !Pool.Locked)
+                {
+                    bool inQuote = false;
+                    string option = "";
+                    for (int i = 1; i < args.Length; i++)
+                    {
+                        if (args[i].StartsWith("\""))
+                        {
+                            inQuote = true;
+                        }
+                        if (!inQuote)
+                        {
+                            option = args[i];
+                        }
+                        if (inQuote)
+                        {
+                            option += args[i] + " ";
+                        }
+                        if (args[i].EndsWith("\""))
+                        {
+                            option = option.Substring(1, option.Length - 3);
+                            inQuote = false;
                         }
                     }
-                    else if (int.TryParse(args[0], out betAmount) && args.Length >= 2 && bettingOpen && !poolLocked)
+                    if (option == args[1])
                     {
-                        bool inQuote = false;
-                        string option = "";
-                        for (int i = 1; i < args.Length; i++)
+                        if (option.StartsWith("#"))
                         {
-                            if (args[i].StartsWith("\""))
+                            int optionnumber = 0;
+                            if (int.TryParse(option.Substring(1), out optionnumber))
                             {
-                                inQuote = true;
-                            }
-                            if (!inQuote)
-                            {
-                                option = args[i];
-                            }
-                            if (inQuote)
-                            {
-                                option += args[i] + " ";
-                            }
-                            if (args[i].EndsWith("\""))
-                            {
-                                option = option.Substring(1, option.Length - 3);
-                                inQuote = false;
-                            }
-                        }
-                        if(option == args[1])
-                        {
-                            if (option.StartsWith("#"))
-                            {
-                                int optionnumber = 0;
-                                if (int.TryParse(option.Substring(1), out optionnumber))
+                                option = Pool.GetOptionFromNumber(optionnumber);
+                                if (option == "")
                                 {
-                                    option = Pool.GetOptionFromNumber(optionnumber);
-                                    if (option == "")
-                                    {
-                                        sendMessage(Api.GetDisplayName(user) + " the option number does not exist");
-                                        return;
-                                    }
+                                    sendMessage(Api.GetDisplayName(user) + " the option number does not exist");
+                                    return;
                                 }
                             }
                         }
-                        if (Pool.placeBet(user, option, betAmount))
-                        {
-                            sendMessage(Api.GetDisplayName(user) + " you have placed a " + betAmount + " " + currency + " bet on \"" + option + "\"");
-                        }
+                    }
+                    if (Pool.placeBet(user, option, betAmount))
+                    {
+                        sendMessage(Api.GetDisplayName(user) + " you have placed a " + betAmount + " " + currencyName + " bet on \"" + option + "\"");
                     }
                 }
-                else
+            }
+            else
+            {
+                if (Pool.isInPool(user))
                 {
-                    if (Pool.isInPool(user))
-                    {
-                        sendMessage(Api.GetDisplayName(user) + ": " + Pool.getBetOn(user) + " (" + Pool.getBetAmount(user) + ")");
-                    }
+                    sendMessage(Api.GetDisplayName(user) + ": " + Pool.getBetOn(user) + " (" + Pool.getBetAmount(user) + ")");
                 }
             }
         }
@@ -1074,86 +1310,80 @@ namespace ModBot
             {
                 if (Database.getUserLevel(user) >= 4)
                 {
-                    if (args[0].Equals("payout") && args.Length >= 2)
+                    if (args.Length >= 2)
                     {
-                        int amount = 0;
-                        if (int.TryParse(args[1], out amount) && amount > 0)
+                        if (args[0].Equals("payout"))
                         {
-                            payout = amount;
-                            sendMessage("New Payout Amount: " + amount);
-                        }
-                        else sendMessage("Can't change payout amount. Must be a valid integer greater than 0");
-                    }
-                    if (args[0].Equals("interval") && args.Length >= 2)
-                    {
-                        int tempInterval = -1;
-                        if (int.TryParse(args[1], out tempInterval) && Array.IndexOf(intervals, tempInterval) > -1)
-                        {
-                            interval = tempInterval;
-                            sendMessage("New Payout Interval: " + tempInterval);
-                        }
-                        else
-                        {
-                            //Console.WriteLine(tempInterval + " " + Array.IndexOf(intervals, tempInterval));
-                            string output = "Can't change payout interval. Accepted values: ";
-                            bool addComma = false;
-                            foreach (int x in intervals)
+                            int amount = 0;
+                            if (int.TryParse(args[1], out amount) && amount >= MainForm.CurrencyHandoutAmount.Minimum && amount <= MainForm.CurrencyHandoutAmount.Maximum)
                             {
-                                if (addComma)
+                                payout = amount;
+                                sendMessage("New payout amount: " + amount);
+                            }
+                            else
+                            {
+                                sendMessage("Can't change payout amount. Must be a valid integer greater than " + (MainForm.CurrencyHandoutAmount.Minimum - 1) + " and less than " + (MainForm.CurrencyHandoutAmount.Maximum + 1));
+                            }
+                        }
+                        else if (args[0].Equals("interval"))
+                        {
+                            int tempInterval = -1;
+                            if (int.TryParse(args[1], out tempInterval) && tempInterval >= MainForm.CurrencyHandoutInterval.Minimum && tempInterval <= MainForm.CurrencyHandoutInterval.Maximum)
+                            {
+                                interval = tempInterval;
+                                sendMessage("New currency payout interval: " + tempInterval);
+                            }
+                            else
+                            {
+                                sendMessage("Payout interval could not be changed. A valid interval must be greater than " + (MainForm.CurrencyHandoutInterval.Minimum - 1) + " and less than " + (MainForm.CurrencyHandoutInterval.Maximum + 1) + " minutes.");
+                            }
+                        }
+                        else if (args[0].Equals("greeting"))
+                        {
+                            //Console.WriteLine(Database.getUserLevel(user) + "test 1");
+                            if (args[1].Equals("on"))
+                            {
+                                greetingOn = true;
+                                sendMessage("Greetings turned on.");
+                            }
+                            if (args[1].Equals("off"))
+                            {
+                                greetingOn = false;
+                                sendMessage("Greetings turned off.");
+                            }
+                            if (args[1].Equals("set") && args.Length >= 3)
+                            {
+                                string sGreeting = "";
+                                for (int i = 2; i < args.Length; i++)
                                 {
-                                    output += ", ";
+                                    sGreeting += args[i] + " ";
                                 }
-                                output += x;
-                                addComma = true;
+                                greeting = sGreeting.Substring(0, sGreeting.Length - 1);
+                                ini.SetValue("Settings", "Channel_Greeting", greeting);
+                                sendMessage("Your new greeting is: " + greeting);
                             }
-                            sendMessage(output + " minutes.");
                         }
-                    }
-                    if (args[0].Equals("greeting") && args.Length >= 2)
-                    {
-                        //Console.WriteLine(Database.getUserLevel(user) + "test 1");
-                        if (args[1].Equals("on"))
+                        else if (args[0].Equals("addsub"))
                         {
-                            greetingOn = true;
-                            sendMessage("Greetings turned on.");
-                        }
-                        if (args[1].Equals("off"))
-                        {
-                            greetingOn = false;
-                            sendMessage("Greetings turned off.");
-                        }
-                        if (args[1].Equals("set") && args.Length >= 3)
-                        {
-                            string sGreeting = "";
-                            for (int i = 2; i < args.Length; i++)
+                            if (Database.addSub(args[1]))
                             {
-                                sGreeting += args[i] + " ";
+                                sendMessage(Api.GetDisplayName(args[1]) + " added as a subscriber.");
                             }
-                            greeting = sGreeting.Substring(0, sGreeting.Length - 1);
-                            ini.SetValue("Settings", "Channel_Greeting", greeting);
-                            sendMessage("Your new greeting is: " + greeting);
+                            else
+                            {
+                                sendMessage(Api.GetDisplayName(args[1]) + " does not exist in the database. Have them type !<currency> then try again.");
+                            }
                         }
-                    }
-                    if (args[0].Equals("addsub") && args.Length >= 2)
-                    {
-                        if (Database.addSub(args[1]))
+                        else if (args[0].Equals("removesub"))
                         {
-                            sendMessage(Api.GetDisplayName(args[1]) + " added as a subscriber.");
-                        }
-                        else
-                        {
-                            sendMessage(Api.GetDisplayName(args[1]) + " does not exist in the database. Have them type !<currency> then try again.");
-                        }
-                    }
-                    if (args[0].Equals("removesub") && args.Length >= 2)
-                    {
-                        if (Database.removeSub(args[1]))
-                        {
-                            sendMessage(Api.GetDisplayName(args[1]) + " removed from subscribers.");
-                        }
-                        else
-                        {
-                            sendMessage(Api.GetDisplayName(args[1]) + " does not exist in the database.");
+                            if (Database.removeSub(args[1]))
+                            {
+                                sendMessage(Api.GetDisplayName(args[1]) + " removed from subscribers.");
+                            }
+                            else
+                            {
+                                sendMessage(Api.GetDisplayName(args[1]) + " does not exist in the database.");
+                            }
                         }
                     }
                 }
@@ -1323,30 +1553,28 @@ namespace ModBot
             //}
         }*/
 
-
-
-        private static void addUserToList(string usr)
+        private static void addUserToList(string user)
         {
-            usr = Api.capName(usr);
+            user = Api.capName(user);
             lock (ActiveUsers)
             {
-                if (!ActiveUsers.ContainsKey(usr))
+                if (!ActiveUsers.ContainsKey(user))
                 {
-                    ActiveUsers.Add(usr, Api.GetUnixTimeNow());
+                    ActiveUsers.Add(user, Api.GetUnixTimeNow());
                 }
                 else
                 {
-                    ActiveUsers[usr] = Api.GetUnixTimeNow();
+                    ActiveUsers[user] = Api.GetUnixTimeNow();
                 }
             }
         }
 
-        public static bool IsUserInList(string usr)
+        public static bool IsUserInList(string user)
         {
-            usr = Api.capName(usr);
+            user = Api.capName(user);
             lock (ActiveUsers)
             {
-                if (ActiveUsers.ContainsKey(usr))
+                if (ActiveUsers.ContainsKey(user))
                 {
                     return true;
                 }
@@ -1354,14 +1582,14 @@ namespace ModBot
             return false;
         }
 
-        private static void removeUserFromList(string usr)
+        private static void removeUserFromList(string user)
         {
-            usr = Api.capName(usr);
+            user = Api.capName(user);
             lock (ActiveUsers)
             {
-                if (ActiveUsers.ContainsKey(usr))
+                if (ActiveUsers.ContainsKey(user))
                 {
-                    ActiveUsers.Remove(usr);
+                    ActiveUsers.Remove(user);
                 }
             }
         }
@@ -1398,29 +1626,30 @@ namespace ModBot
                         }
                         lock (ActiveUsers)
                         {
-                            foreach(string usr in lUsers)
+                            foreach (string user in lUsers)
                             {
-                                if(!ActiveUsers.ContainsKey(usr))
+                                if (!ActiveUsers.ContainsKey(user))
                                 {
-                                    addUserToList(usr);
+                                    addUserToList(user);
                                 }
                             }
                         }
                     }
                     catch (SocketException)
                     {
-                        Console.WriteLine("Unable to connect to twitch API to build the user list.");
+                        Console.WriteLine("Unable to connect to Twitch API to build the user list.");
                     }
                     catch (Exception e)
                     {
-                        StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                        errorLog.WriteLine("*************Error Message (via buildUserList()): " + DateTime.Now + "*********************************\r\nUnable to connect to twitch API to build the user list.\r\n" + e + "\r\n");
-                        errorLog.Close();
+                        Api.LogError("*************Error Message (via buildUserList()): " + DateTime.Now + "*********************************\r\nUnable to connect to Twitch API to build the user list.\r\n" + e + "\r\n");
                     }
                 }
             });
+            Threads.Add(thread);
+            thread.Name = "User updating";
             thread.Start();
             thread.Join();
+            if (Threads.Contains(thread)) Threads.Remove(thread);
         }
 
         private static string getUser(string message)
@@ -1430,10 +1659,8 @@ namespace ModBot
 
         private static void sendRaw(string message)
         {
-            int attempt = 0;
-            while (attempt < 5)
+            for (int attempt = 1; attempt <= 5; attempt++)
             {
-                attempt++;
                 try
                 {
                     write.WriteLine(message);
@@ -1454,14 +1681,17 @@ namespace ModBot
             }
         }
 
-        public static void sendMessage(string message, string log="", bool usemecommand = true)
+        public static void sendMessage(string message, string log="", bool logtoconsole = true, bool usemecommand = true)
         {
             sendRaw("PRIVMSG " + channel + " :" + (usemecommand ? "/me " : "") + message);
             if(log != "")
             {
                 Log(log);
             }
-            Console.WriteLine(nick + ": " + message);
+            if (logtoconsole)
+            {
+                Console.WriteLine(nick + ": " + message);
+            }
         }
 
         private static string checkBtag(string person)
@@ -1482,7 +1712,7 @@ namespace ModBot
             string sSubURL = ini.GetValue("Settings", "Subsribers_URL", "");
             if (sSubURL != "")
             {
-                Thread tThread = new Thread(() =>
+                Thread thread = new Thread(() =>
                 {
                     string json_data = "";
                     using (WebClient w = new WebClient())
@@ -1503,14 +1733,15 @@ namespace ModBot
                         }
                         catch (Exception e)
                         {
-                            StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                            errorLog.WriteLine("*************Error Message (via checkSubList()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                            errorLog.Close();
+                            Api.LogError("*************Error Message (via checkSubList()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                         }
                     }
                 });
-                tThread.Start();
-                tThread.Join();
+                Threads.Add(thread);
+                thread.Name = "Update subscribers";
+                thread.Start();
+                thread.Join();
+                if (Threads.Contains(thread)) Threads.Remove(thread);
             }
             return lSubs;
         }
@@ -1529,9 +1760,7 @@ namespace ModBot
             catch (Exception e)
             {
                 Console.WriteLine("Problem reading sub list. Skipping");
-                StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                errorLog.WriteLine("*************Error Message (via handoutCurrency()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                errorLog.Close();
+                Api.LogError("*************Error Message (via handoutCurrency()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
             }
 
             List<string> lHandoutUsers = ActiveUsers.Keys.ToList();
@@ -1617,21 +1846,19 @@ namespace ModBot
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
-                StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                errorLog.WriteLine("*************Error Message (via buildBetOptions()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                errorLog.Close();
+                Api.LogError("*************Error Message (via buildBetOptions()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
             }
         }
 
-        private static void addToLookups(string usr)
+        private static void addToLookups(string user)
         {
             if (usersToLookup.Count == 0)
             {
                 currencyQueue.Change(4000, Timeout.Infinite);
             }
-            if (!usersToLookup.Contains(usr))
+            if (!usersToLookup.Contains(user))
             {
-                usersToLookup.Add(usr);
+                usersToLookup.Add(user);
             }
         }
 
@@ -1639,7 +1866,7 @@ namespace ModBot
         {
             if (usersToLookup.Count != 0)
             {
-                string output = currency + ":";
+                string output = currencyName + ":";
                 bool addComma = false;
                 foreach (string person in usersToLookup)
                 {
@@ -1651,19 +1878,13 @@ namespace ModBot
                         }
 
                         output += " " + Api.GetDisplayName(person) + " (" + Database.getTimeWatched(person).ToString(@"d\d\ hh\h\ mm\m") + ")" + " - " + Database.checkCurrency(person);
-                        if (bettingOpen)
+                        if (Pool.Running && Pool.isInPool(person))
                         {
-                            if (Pool.isInPool(person))
-                            {
-                                output += " [" + Pool.getBetAmount(person) + "]";
-                            }
+                            output += " [" + Pool.getBetAmount(person) + "]";
                         }
-                        if (auctionOpen)
+                        if (auctionOpen && Auction.highBidder.Equals(person))
                         {
-                            if (Auction.highBidder.Equals(person))
-                            {
-                                output += " {" + Auction.highBid + "}";
-                            }
+                            output += " {" + Auction.highBid + "}";
                         }
                         addComma = true;
                     }
@@ -1693,9 +1914,7 @@ namespace ModBot
             catch (Exception e)
             {
                 //Console.WriteLine(e);
-                StreamWriter errorLog = new StreamWriter("Error_Log.log", true);
-                errorLog.WriteLine("*************Error Message (via Log()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                errorLog.Close();
+                Api.LogError("*************Error Message (via Log()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
             }
         }
     }
