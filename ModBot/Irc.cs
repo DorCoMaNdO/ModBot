@@ -428,7 +428,7 @@ namespace ModBot
 
             bool Running = false;
 
-            Console.Write("Time watched thread... ");
+            Console.Write("Time watched and currency handout thread... ");
 
             Thread thread = new Thread(() =>
             {
@@ -437,15 +437,46 @@ namespace ModBot
                     Thread.Sleep(60000);
                     if (irc.Connected && Running && g_bIsStreaming)
                     {
-                        foreach (string user in ActiveUsers.Keys)
+                        new Thread(() =>
                         {
-                            Database.addTimeWatched(user, 1);
-                        }
+                            List<string> temp = new List<string>();
+                            buildUserList();
+
+                            try
+                            {
+                                temp = checkSubList();
+                                //Console.WriteLine(temp);
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Problem reading sub list. Skipping");
+                                Api.LogError("*************Error Message (via handoutCurrency()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            }
+                            lock (ActiveUsers)
+                            {
+                                foreach (string user in ActiveUsers.Keys)
+                                {
+                                    Database.addTimeWatched(user, 1);
+                                    TimeSpan t = Database.getTimeWatched(user);
+                                    if (t.Days * 24 * 60 + t.Hours * 60 + t.Minutes % interval == 0 && (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
+                                    {
+                                        if (Database.isSubscriber(user) || temp.Contains(user))
+                                        {
+                                            Database.addCurrency(user, payout * 2);
+                                        }
+                                        else
+                                        {
+                                            Database.addCurrency(user, payout);
+                                        }
+                                    }
+                                }
+                            }
+                        }).Start();
                     }
                 }
             });
             Threads.Add(thread);
-            thread.Name = "Time watched";
+            thread.Name = "Time watched and currency handout";
             thread.Start();
 
             Console.Write("DONE\r\nUser list thread... ");
@@ -522,33 +553,6 @@ namespace ModBot
             });
             Threads.Add(thread);
             thread.Name = "Stream status";
-            thread.Start();
-
-            Console.Write("DONE\r\nCurrency handout thread... ");
-
-            //doWork();
-            thread = new Thread(() =>
-            {
-                g_iLastHandout = Api.GetUnixTimeNow();
-                while (true)
-                {
-                    if (Running)
-                    {
-                        if (Api.GetUnixTimeNow() - g_iLastHandout >= interval * 60 && g_bIsStreaming)
-                        {
-                            Console.WriteLine("Handout happening now! Paying everyone " + payout + " " + currencyName);
-                            handoutCurrency();
-                        }
-                    }
-                    Thread.Sleep(1000);
-                    /*if (g_bResourceKeeper)
-                    {
-                        Thread.Sleep(29000);
-                    }*/
-                }
-            });
-            Threads.Add(thread);
-            thread.Name = "Currency handout";
             thread.Start();
 
             Console.Write("DONE\r\nConnection ping thread... ");
@@ -1744,65 +1748,6 @@ namespace ModBot
                 if (Threads.Contains(thread)) Threads.Remove(thread);
             }
             return lSubs;
-        }
-
-        private static void handoutCurrency()
-        {
-            g_iLastHandout = Api.GetUnixTimeNow();
-            List<string> temp = new List<string>();
-            buildUserList();
-
-            try
-            {
-                temp = checkSubList();
-                //Console.WriteLine(temp);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Problem reading sub list. Skipping");
-                Api.LogError("*************Error Message (via handoutCurrency()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-            }
-
-            List<string> lHandoutUsers = ActiveUsers.Keys.ToList();
-            if (MainForm.Currency_HandoutActiveStream.Checked || MainForm.Currency_HandoutActiveTime.Checked)
-            {
-                lHandoutUsers = new List<string>();
-                lock (ActiveUsers)
-                {
-                    foreach (KeyValuePair<string, int> kv in ActiveUsers)
-                    {
-                        if (!lHandoutUsers.Contains(kv.Key))
-                        {
-                            if (MainForm.Currency_HandoutActiveStream.Checked && kv.Value >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - kv.Value <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60)
-                            {
-                                lHandoutUsers.Add(kv.Key);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!lHandoutUsers.Contains(Api.capName(nick)))
-            {
-                lHandoutUsers.Add(Api.capName(nick));
-            }
-            if (!lHandoutUsers.Contains(Api.capName(admin)))
-            {
-                lHandoutUsers.Add(Api.capName(admin));
-            }
-
-            foreach (string person in lHandoutUsers)
-            {
-                if (Database.isSubscriber(person) || temp.Contains(person))
-                {
-                    Database.addCurrency(person, payout * 2);
-                }
-                else
-                {
-                    Database.addCurrency(person, payout);
-                }
-
-            }
         }
 
         private static void buildBetOptions(string[] temp)
