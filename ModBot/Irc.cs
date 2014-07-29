@@ -19,24 +19,24 @@ namespace ModBot
         public static TcpClient irc;
         public static StreamReader read;
         public static StreamWriter write;
-        public static string nick, password, channel, currency, currencyName, admin, donationkey = "";
-        public static int interval, payout = 0;
-        public static bool auctionOpen = false;
+        public static string nick, password, channel, currency, currencyName, admin, donationkey;
+        public static int interval, payout;
+        public static bool auctionOpen;
         public static List<string> IgnoredUsers = new List<string>();
         public static List<string> betOptions = new List<string>();
         public static Timer currencyQueue;
         public static List<string> usersToLookup = new List<string>();
         public static Timer auctionLooper;
         public static string greeting;
-        public static bool greetingOn = false;
-        public static int g_iLastCurrencyLockAnnounce = 0, g_iLastTop5Announce = 0;
+        public static bool greetingOn;
+        public static int g_iLastCurrencyLockAnnounce, g_iLastTop5Announce;
         public static int g_iStreamStartTime = 0;
-        public static bool g_bIsStreaming = false;
-        public static bool g_bResourceKeeper = false;
+        public static bool g_bIsStreaming;
+        public static bool g_bResourceKeeper;
         public static MainWindow MainForm = Program.MainForm;
-        public static int g_iLastHandout = 0;
+        public static int g_iLastHandout;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
-        private static bool CommandsRegistered = false;
+        private static bool CommandsRegistered;
         public static List<Thread> Threads = new List<Thread>();
 
         public static void Initialize()
@@ -126,12 +126,31 @@ namespace ModBot
 
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
-                MainForm.CurrencyWindowButton.Text = currencyName;
-                while (MainForm.CreateGraphics().MeasureString(currencyName, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16)
+                string name = "";
+                foreach (string word in currencyName.Split(' '))
+                {
+                    if (word != "")
+                    {
+                        int length = (name + word).Length;
+                        string suffix = (length < currencyName.Length) ? (currencyName.Substring(length).Split(' ')).Length > 0 ? currencyName.Substring(length).Split(' ')[0] : currencyName.Substring(length) : "";
+                        name += word + ((MainForm.CreateGraphics().MeasureString(word, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16 || MainForm.CreateGraphics().MeasureString(word + " " + suffix, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16) ? "\r\n" : " ");
+                    }
+                }
+                MainForm.CurrencyWindowButton.Text = name;
+                while (MainForm.CreateGraphics().MeasureString(name, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16 || MainForm.CreateGraphics().MeasureString(name, MainForm.CurrencyWindowButton.Font).Height > MainForm.CurrencyWindowButton.Height - 16)
                 {
                     MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, MainForm.CurrencyWindowButton.Font.Size - 1, FontStyle.Bold);
                 }
+                if (MainForm.CurrencyWindowButton.Font.Size < 6)
+                {
+                    MainForm.CurrencyWindowButton.Text = "Currency";
+                    MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, 10F, FontStyle.Bold);
+                }
                 MainForm.ChannelWindowButton.Text = admin;
+
+                MainForm.Currency_HandoutLabel.Text = "Handout " + currencyName + " to :";
+
+                MainForm.Giveaway_MinCurrencyCheckBox.Text = "Must have at least                       " + currencyName;
             });
 
             Console.WriteLine("Configuring settings...");
@@ -519,7 +538,7 @@ namespace ModBot
                         }
                         catch (SocketException)
                         {
-                            Console.WriteLine("Unable to connect to Twitch API to check stream status.");
+                            Console.WriteLine("Unable to connect to Twitch API to check stream status, retrying...");
                         }
                         catch (IOException)
                         {
@@ -537,6 +556,10 @@ namespace ModBot
                                         MainForm.ConnectButton.Enabled = false;
                                     });
                                 }).Start();
+                            }
+                            else if(e.Message.Contains("(503) Server Unavailable"))
+                            {
+                                Console.WriteLine("Unable to connect to Twitch API to check stream status, retrying...");
                             }
                             else
                             {
@@ -675,7 +698,7 @@ namespace ModBot
                 string name = Api.GetDisplayName(user);
                 Console.WriteLine(name + ": " + temp);
                 //handleMessage(temp);
-                Commands.CheckCommand(user, temp, true);
+                Commands.CheckCommand(name, temp, true);
                 if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                 {
                     MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
@@ -750,7 +773,7 @@ namespace ModBot
 
         private static void Command_Giveaway(string user, string cmd, string[] args)
         {
-            if (args != null && args.Length >= 1)
+            if (args.Length >= 1)
             {
                 //ADMIN GIVEAWAY COMMANDS: !giveaway open <TicketCost> <MaxTickets>, !giveaway close, !giveaway draw, !giveaway cancel//
                 if (Database.getUserLevel(user) >= 1)
@@ -819,11 +842,28 @@ namespace ModBot
                     sendMessage(sMessage);
                 }
             }
+            else
+            {
+                if(Giveaway.Started && MainForm.Giveaway_TypeKeyword.Checked)
+                {
+                    if (Giveaway.Open && !Giveaway.HasBoughtTickets(user))
+                    {
+                        if (Giveaway.BuyTickets(user))
+                        {
+                            sendMessage(user + " has joined the giveaway!");
+                        }
+                    }
+                    else
+                    {
+                        sendMessage("/timeout " + user + " 5");
+                    }
+                }
+            }
         }
 
         private static void Command_Currency(string user, string cmd, string[] args)
         {
-            if (args != null)
+            if(args.Length > 0)
             {
                 if (args.Length == 1)
                 {
@@ -1013,7 +1053,7 @@ namespace ModBot
 
         private static void Command_Gamble(string user, string cmd, string[] args)
         {
-            if (args != null && Database.getUserLevel(user) >= 2)
+            if (Database.getUserLevel(user) >= 2)
             {
                 if (args[0].Equals("open") && args.Length >= 4)
                 {
@@ -1175,7 +1215,7 @@ namespace ModBot
 
         private static void Command_Bet(string user, string cmd, string[] args)
         {
-            if (args != null && Pool.Running)
+            if (args.Length > 0 && Pool.Running)
             {
                 int betAmount;
                 if (args[0].Equals("help"))
@@ -1225,7 +1265,7 @@ namespace ModBot
                                 option = Pool.GetOptionFromNumber(optionnumber);
                                 if (option == "")
                                 {
-                                    sendMessage(Api.GetDisplayName(user) + " the option number does not exist");
+                                    sendMessage(user + " the option number does not exist");
                                     return;
                                 }
                             }
@@ -1233,7 +1273,7 @@ namespace ModBot
                     }
                     if (Pool.placeBet(user, option, betAmount))
                     {
-                        sendMessage(Api.GetDisplayName(user) + " you have placed a " + betAmount + " " + currencyName + " bet on \"" + option + "\"");
+                        sendMessage(user + " you have placed a " + betAmount + " " + currencyName + " bet on \"" + option + "\"");
                     }
                 }
             }
@@ -1241,14 +1281,14 @@ namespace ModBot
             {
                 if (Pool.isInPool(user))
                 {
-                    sendMessage(Api.GetDisplayName(user) + ": " + Pool.getBetOn(user) + " (" + Pool.getBetAmount(user) + ")");
+                    sendMessage(user + ": " + Pool.getBetOn(user) + " (" + Pool.getBetAmount(user) + ")");
                 }
             }
         }
 
         private static void Command_Auction(string user, string cmd, string[] args)
         {
-            if (args != null && Database.getUserLevel(user) >= 2)
+            if (args.Length > 0 && Database.getUserLevel(user) >= 2)
             {
                 if (args[0].Equals("open"))
                 {
@@ -1284,7 +1324,7 @@ namespace ModBot
 
         private static void Command_Bid(string user, string cmd, string[] args)
         {
-            if (args != null)
+            if (args.Length > 0)
             {
                 int amount;
                 if (int.TryParse(args[0], out amount))
@@ -1302,15 +1342,15 @@ namespace ModBot
 
         private static void Command_BTag(string user, string cmd, string[] args)
         {
-            if (args != null && args[1].Contains("#"))
+            if (args.Length > 0 && args[0].Contains("#"))
             {
-                Database.setBtag(user, args[1]);
+                Database.setBtag(user, args[0]);
             }
         }
 
         private static void Command_ModBot(string user, string cmd, string[] args)
         {
-            if (args != null)
+            if (args.Length >= 0)
             {
                 if (Database.getUserLevel(user) >= 4)
                 {
@@ -1393,57 +1433,37 @@ namespace ModBot
                 }
                 if (Database.getUserLevel(user) >= 3)
                 {
-                    if (args[0].Equals("addmod") && args.Length >= 2)
+                    if (args.Length >= 2)
                     {
-                        string tNick = Api.GetDisplayName(args[1]);
-                        if (Database.userExists(tNick))
+                        if (args[0].Equals("addmod"))
                         {
-                            if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
-                            {
-                                Database.setUserLevel(tNick, 1);
-                                sendMessage(tNick + " added as a bot moderator.", Api.GetDisplayName(user) + " added " + tNick + "as a bot moderator.");
-                            }
-                            else
-                            {
-                                sendMessage("Cannot change broadcaster access level.");
-                            }
-                        }
-                        else
-                        {
-                            sendMessage(tNick + " does not exist in the database. Have them type !<currency>, then try to add them again.");
-                        }
-                    }
-                    if (args[0].Equals("addsuper") && args.Length >= 2)
-                    {
-                        string tNick = Api.GetDisplayName(args[1]);
-                        if (Database.userExists(tNick))
-                        {
-                            if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
-                            {
-                                Database.setUserLevel(tNick, 2);
-                                sendMessage(tNick + " added as a bot Super Mod.", Api.GetDisplayName(user) + " added " + tNick + "as a super bot moderator.");
-                            }
-                            else
-                            {
-                                sendMessage("Cannot change Broadcaster access level.");
-                            }
-                        }
-                        else
-                        {
-                            sendMessage(tNick + " does not exist in the database. Have them type !<currency>, then try to add them again.");
-                        }
-                    }
-                    if (args[0].Equals("demote") && args.Length >= 2)
-                    {
-                        string tNick = Api.GetDisplayName(args[1]);
-                        if (Database.userExists(tNick))
-                        {
-                            if (Database.getUserLevel(tNick) > 0)
+                            string tNick = Api.GetDisplayName(args[1]);
+                            if (Database.userExists(tNick))
                             {
                                 if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
                                 {
-                                    Database.setUserLevel(tNick, Database.getUserLevel(tNick) - 1);
-                                    sendMessage(tNick + " has been demoted.", Api.GetDisplayName(user) + "demoted " + tNick);
+                                    Database.setUserLevel(tNick, 1);
+                                    sendMessage(tNick + " added as a bot moderator.", user + " added " + tNick + "as a bot moderator.");
+                                }
+                                else
+                                {
+                                    sendMessage("Cannot change broadcaster access level.");
+                                }
+                            }
+                            else
+                            {
+                                sendMessage(tNick + " does not exist in the database. Have them type !<currency>, then try to add them again.");
+                            }
+                        }
+                        if (args[0].Equals("addsuper"))
+                        {
+                            string tNick = Api.GetDisplayName(args[1]);
+                            if (Database.userExists(tNick))
+                            {
+                                if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
+                                {
+                                    Database.setUserLevel(tNick, 2);
+                                    sendMessage(tNick + " added as a bot Super Mod.", user + " added " + tNick + "as a super bot moderator.");
                                 }
                                 else
                                 {
@@ -1452,34 +1472,57 @@ namespace ModBot
                             }
                             else
                             {
-                                sendMessage("User is already Access Level 0. Cannot demote further.");
+                                sendMessage(tNick + " does not exist in the database. Have them type !<currency>, then try to add them again.");
                             }
                         }
-                        else
+                        if (args[0].Equals("demote"))
                         {
-                            sendMessage(tNick + " does not exist in the database. Have them type !<currency>, then try again.");
-                        }
-                    }
-                    if (args[0].Equals("setlevel") && args.Length >= 3)
-                    {
-                        string tNick = Api.GetDisplayName(args[1]);
-                        if (Database.userExists(tNick))
-                        {
-                            if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
+                            string tNick = Api.GetDisplayName(args[1]);
+                            if (Database.userExists(tNick))
                             {
-                                int level;
-                                if (int.TryParse(args[2], out level) && level >= 0 && (level < 4 && Database.getUserLevel(user) >= 4 || level < 3))
+                                if (Database.getUserLevel(tNick) > 0)
                                 {
-                                    Database.setUserLevel(tNick, level);
-                                    sendMessage(tNick + " set to Access Level " + level, Api.GetDisplayName(user) + "set " + tNick + "'s Access Level to " + level);
+                                    if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
+                                    {
+                                        Database.setUserLevel(tNick, Database.getUserLevel(tNick) - 1);
+                                        sendMessage(tNick + " has been demoted.", user + "demoted " + tNick);
+                                    }
+                                    else
+                                    {
+                                        sendMessage("Cannot change Broadcaster access level.");
+                                    }
                                 }
-                                else sendMessage("Level must be greater than or equal to 0, and less than 3 (0>=Level<3)");
+                                else
+                                {
+                                    sendMessage("User is already Access Level 0. Cannot demote further.");
+                                }
                             }
-                            else sendMessage("Cannot change that mod's access level.");
+                            else
+                            {
+                                sendMessage(tNick + " does not exist in the database. Have them type !<currency>, then try again.");
+                            }
                         }
-                        else
+                        if (args[0].Equals("setlevel") && args.Length >= 3)
                         {
-                            sendMessage(tNick + " does not exist in the database. Have them type !currency, then try again.");
+                            string tNick = Api.GetDisplayName(args[1]);
+                            if (Database.userExists(tNick))
+                            {
+                                if (!tNick.Equals(admin, StringComparison.OrdinalIgnoreCase) && (Database.getUserLevel(tNick) < 3 && Database.getUserLevel(user) == 3 || Database.getUserLevel(user) >= 4))
+                                {
+                                    int level;
+                                    if (int.TryParse(args[2], out level) && level >= 0 && (level < 4 && Database.getUserLevel(user) >= 4 || level < 3))
+                                    {
+                                        Database.setUserLevel(tNick, level);
+                                        sendMessage(tNick + " set to Access Level " + level, user + "set " + tNick + "'s Access Level to " + level);
+                                    }
+                                    else sendMessage("Level must be greater than or equal to 0, and less than 3 (0>=Level<3)");
+                                }
+                                else sendMessage("Cannot change that mod's access level.");
+                            }
+                            else
+                            {
+                                sendMessage(tNick + " does not exist in the database. Have them type !currency, then try again.");
+                            }
                         }
                     }
                 }
@@ -1499,14 +1542,14 @@ namespace ModBot
                                     output += args[i] + " ";
                                 }
                                 Commands.addCommand(command, level, output.Substring(0, output.Length - 1));
-                                sendMessage(command + " command added.", Api.GetDisplayName(user) + " added the command " + command);
+                                sendMessage(command + " command added.", user + " added the command " + command);
                             }
                             else
                             {
                                 sendMessage(command + " is already a command.");
                             }
                         }
-                        else 
+                        else
                         {
                             sendMessage("Invalid syntax. Correct syntax is \"!modbot addcommand <access level> <command> <text you want to output>");
                         }
@@ -1517,7 +1560,7 @@ namespace ModBot
                         if (Commands.cmdExists(command))
                         {
                             Commands.removeCommand(command);
-                            sendMessage(command + " command removed.", Api.GetDisplayName(user) + " removed the command " + command);
+                            sendMessage(command + " command removed.", user + " removed the command " + command);
                         }
                         else
                         {

@@ -42,7 +42,6 @@
             this.Giveaway_StopButton = new System.Windows.Forms.Button();
             this.Giveaway_WinnerStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_WinnerLabel = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
             this.Giveaway_ActiveUserTime = new System.Windows.Forms.NumericUpDown();
             this.Giveaway_AnnounceWinnerButton = new System.Windows.Forms.Button();
             this.Giveaway_BanListListBox = new System.Windows.Forms.ListBox();
@@ -52,7 +51,6 @@
             this.Giveaway_AutoBanWinnerCheckBox = new System.Windows.Forms.CheckBox();
             this.Currency_LockCmdCheckBox = new System.Windows.Forms.CheckBox();
             this.Giveaway_CopyWinnerButton = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
             this.Giveaway_WinnerTimerLabel = new System.Windows.Forms.Label();
             this.Giveaway_WinnerTimer = new System.Windows.Forms.Timer(this.components);
             this.Giveaway_WinnerChat = new System.Windows.Forms.RichTextBox();
@@ -60,10 +58,10 @@
             this.SettingsPresents = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.Giveaway_WinTimeLabel = new System.Windows.Forms.Label();
-            this.GiveawaySpacer = new System.Windows.Forms.GroupBox();
-            this.GiveawayLabel = new System.Windows.Forms.Label();
-            this.CurrencyLabel2 = new System.Windows.Forms.Label();
-            this.CurrencySpacer2 = new System.Windows.Forms.GroupBox();
+            this.GiveawayTypeSpacer = new System.Windows.Forms.GroupBox();
+            this.GiveawayTypeLabel = new System.Windows.Forms.Label();
+            this.HandoutLabel = new System.Windows.Forms.Label();
+            this.HandoutSpacer = new System.Windows.Forms.GroupBox();
             this.Currency_HandoutEveryone = new System.Windows.Forms.RadioButton();
             this.Currency_HandoutActiveStream = new System.Windows.Forms.RadioButton();
             this.Currency_HandoutLabel = new System.Windows.Forms.Label();
@@ -72,6 +70,8 @@
             this.SettingsWindowButton = new System.Windows.Forms.CheckBox();
             this.DonationsWindowButton = new System.Windows.Forms.CheckBox();
             this.SettingsWindow = new System.Windows.Forms.Panel();
+            this.label21 = new System.Windows.Forms.Label();
+            this.CurrencyCommandBox = new System.Windows.Forms.TextBox();
             this.SettingsErrorLabel = new System.Windows.Forms.Label();
             this.DisconnectButton = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
@@ -136,8 +136,13 @@
             this.CurrencyWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindow = new System.Windows.Forms.Panel();
-            this.label21 = new System.Windows.Forms.Label();
-            this.CurrencyCommandBox = new System.Windows.Forms.TextBox();
+            this.GiveawayBansLabel = new System.Windows.Forms.Label();
+            this.GiveawayBansSpacer = new System.Windows.Forms.GroupBox();
+            this.GiveawayRulesLabel = new System.Windows.Forms.Label();
+            this.GiveawayRulesSpacer = new System.Windows.Forms.GroupBox();
+            this.Giveaway_TypeTickets = new System.Windows.Forms.RadioButton();
+            this.Giveaway_TypeKeyword = new System.Windows.Forms.RadioButton();
+            this.Giveaway_TypeActive = new System.Windows.Forms.RadioButton();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrency)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_ActiveUserTime)).BeginInit();
             this.SettingsPresents.SuspendLayout();
@@ -171,13 +176,13 @@
             // 
             this.Giveaway_MustFollowCheckBox.AutoSize = true;
             this.Giveaway_MustFollowCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_MustFollowCheckBox.Location = new System.Drawing.Point(4, 139);
+            this.Giveaway_MustFollowCheckBox.Location = new System.Drawing.Point(6, 145);
             this.Giveaway_MustFollowCheckBox.Name = "Giveaway_MustFollowCheckBox";
             this.Giveaway_MustFollowCheckBox.Size = new System.Drawing.Size(109, 17);
             this.Giveaway_MustFollowCheckBox.TabIndex = 14;
             this.Giveaway_MustFollowCheckBox.Text = "Must be a follower";
             this.Giveaway_MustFollowCheckBox.UseVisualStyleBackColor = true;
-            this.Giveaway_MustFollowCheckBox.CheckedChanged += new System.EventHandler(this.Giveaway_MustFollowCheckBox_CheckedChanged);
+            this.Giveaway_MustFollowCheckBox.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // label2
             // 
@@ -225,7 +230,7 @@
             // 
             this.Giveaway_MinCurrencyCheckBox.AutoSize = true;
             this.Giveaway_MinCurrencyCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_MinCurrencyCheckBox.Location = new System.Drawing.Point(4, 156);
+            this.Giveaway_MinCurrencyCheckBox.Location = new System.Drawing.Point(6, 162);
             this.Giveaway_MinCurrencyCheckBox.Name = "Giveaway_MinCurrencyCheckBox";
             this.Giveaway_MinCurrencyCheckBox.Size = new System.Drawing.Size(239, 17);
             this.Giveaway_MinCurrencyCheckBox.TabIndex = 20;
@@ -236,7 +241,7 @@
             // Giveaway_MinCurrency
             // 
             this.Giveaway_MinCurrency.Enabled = false;
-            this.Giveaway_MinCurrency.Location = new System.Drawing.Point(111, 156);
+            this.Giveaway_MinCurrency.Location = new System.Drawing.Point(113, 162);
             this.Giveaway_MinCurrency.Maximum = new decimal(new int[] {
             1000000,
             0,
@@ -255,15 +260,15 @@
             0,
             0,
             0});
-            this.Giveaway_MinCurrency.ValueChanged += new System.EventHandler(this.Giveaway_MinCurrency_ValueChanged);
+            this.Giveaway_MinCurrency.ValueChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // Giveaway_StartButton
             // 
             this.Giveaway_StartButton.BackColor = System.Drawing.Color.White;
             this.Giveaway_StartButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_StartButton.Location = new System.Drawing.Point(257, 230);
+            this.Giveaway_StartButton.Location = new System.Drawing.Point(6, 533);
             this.Giveaway_StartButton.Name = "Giveaway_StartButton";
-            this.Giveaway_StartButton.Size = new System.Drawing.Size(133, 23);
+            this.Giveaway_StartButton.Size = new System.Drawing.Size(196, 23);
             this.Giveaway_StartButton.TabIndex = 22;
             this.Giveaway_StartButton.Text = "Start";
             this.Giveaway_StartButton.UseVisualStyleBackColor = false;
@@ -274,9 +279,9 @@
             this.Giveaway_RerollButton.BackColor = System.Drawing.Color.White;
             this.Giveaway_RerollButton.Enabled = false;
             this.Giveaway_RerollButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_RerollButton.Location = new System.Drawing.Point(396, 230);
+            this.Giveaway_RerollButton.Location = new System.Drawing.Point(208, 533);
             this.Giveaway_RerollButton.Name = "Giveaway_RerollButton";
-            this.Giveaway_RerollButton.Size = new System.Drawing.Size(133, 23);
+            this.Giveaway_RerollButton.Size = new System.Drawing.Size(196, 23);
             this.Giveaway_RerollButton.TabIndex = 23;
             this.Giveaway_RerollButton.Text = "Roll";
             this.Giveaway_RerollButton.UseVisualStyleBackColor = false;
@@ -287,9 +292,9 @@
             this.Giveaway_StopButton.BackColor = System.Drawing.Color.White;
             this.Giveaway_StopButton.Enabled = false;
             this.Giveaway_StopButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_StopButton.Location = new System.Drawing.Point(673, 230);
+            this.Giveaway_StopButton.Location = new System.Drawing.Point(612, 533);
             this.Giveaway_StopButton.Name = "Giveaway_StopButton";
-            this.Giveaway_StopButton.Size = new System.Drawing.Size(132, 23);
+            this.Giveaway_StopButton.Size = new System.Drawing.Size(196, 23);
             this.Giveaway_StopButton.TabIndex = 24;
             this.Giveaway_StopButton.Text = "Stop";
             this.Giveaway_StopButton.UseVisualStyleBackColor = false;
@@ -298,9 +303,9 @@
             // Giveaway_WinnerStatusLabel
             // 
             this.Giveaway_WinnerStatusLabel.Font = new System.Drawing.Font("Segoe Print", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Giveaway_WinnerStatusLabel.Location = new System.Drawing.Point(257, 156);
+            this.Giveaway_WinnerStatusLabel.Location = new System.Drawing.Point(6, 459);
             this.Giveaway_WinnerStatusLabel.Name = "Giveaway_WinnerStatusLabel";
-            this.Giveaway_WinnerStatusLabel.Size = new System.Drawing.Size(548, 21);
+            this.Giveaway_WinnerStatusLabel.Size = new System.Drawing.Size(802, 21);
             this.Giveaway_WinnerStatusLabel.TabIndex = 25;
             this.Giveaway_WinnerStatusLabel.Text = "Winner :";
             this.Giveaway_WinnerStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -309,25 +314,16 @@
             // 
             this.Giveaway_WinnerLabel.Font = new System.Drawing.Font("Segoe Print", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Giveaway_WinnerLabel.ForeColor = System.Drawing.Color.Blue;
-            this.Giveaway_WinnerLabel.Location = new System.Drawing.Point(257, 167);
+            this.Giveaway_WinnerLabel.Location = new System.Drawing.Point(6, 470);
             this.Giveaway_WinnerLabel.Name = "Giveaway_WinnerLabel";
-            this.Giveaway_WinnerLabel.Size = new System.Drawing.Size(548, 43);
+            this.Giveaway_WinnerLabel.Size = new System.Drawing.Size(802, 43);
             this.Giveaway_WinnerLabel.TabIndex = 26;
             this.Giveaway_WinnerLabel.Text = "CoMaNdO ;)";
             this.Giveaway_WinnerLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(1, 47);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(206, 13);
-            this.label5.TabIndex = 27;
-            this.label5.Text = "Last active less than               minutes ago";
-            // 
             // Giveaway_ActiveUserTime
             // 
-            this.Giveaway_ActiveUserTime.Location = new System.Drawing.Point(104, 45);
+            this.Giveaway_ActiveUserTime.Location = new System.Drawing.Point(124, 46);
             this.Giveaway_ActiveUserTime.Maximum = new decimal(new int[] {
             30,
             0,
@@ -346,16 +342,16 @@
             0,
             0,
             0});
-            this.Giveaway_ActiveUserTime.ValueChanged += new System.EventHandler(this.Giveaway_ActiveUserTime_ValueChanged);
+            this.Giveaway_ActiveUserTime.ValueChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // Giveaway_AnnounceWinnerButton
             // 
             this.Giveaway_AnnounceWinnerButton.BackColor = System.Drawing.Color.White;
             this.Giveaway_AnnounceWinnerButton.Enabled = false;
             this.Giveaway_AnnounceWinnerButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_AnnounceWinnerButton.Location = new System.Drawing.Point(535, 230);
+            this.Giveaway_AnnounceWinnerButton.Location = new System.Drawing.Point(410, 533);
             this.Giveaway_AnnounceWinnerButton.Name = "Giveaway_AnnounceWinnerButton";
-            this.Giveaway_AnnounceWinnerButton.Size = new System.Drawing.Size(132, 23);
+            this.Giveaway_AnnounceWinnerButton.Size = new System.Drawing.Size(196, 23);
             this.Giveaway_AnnounceWinnerButton.TabIndex = 29;
             this.Giveaway_AnnounceWinnerButton.Text = "Announce";
             this.Giveaway_AnnounceWinnerButton.UseVisualStyleBackColor = false;
@@ -365,7 +361,7 @@
             // 
             this.Giveaway_BanListListBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.Giveaway_BanListListBox.FormattingEnabled = true;
-            this.Giveaway_BanListListBox.Location = new System.Drawing.Point(11, 363);
+            this.Giveaway_BanListListBox.Location = new System.Drawing.Point(324, 46);
             this.Giveaway_BanListListBox.Name = "Giveaway_BanListListBox";
             this.Giveaway_BanListListBox.Size = new System.Drawing.Size(200, 93);
             this.Giveaway_BanListListBox.TabIndex = 30;
@@ -376,7 +372,7 @@
             this.Giveaway_BanButton.BackColor = System.Drawing.Color.White;
             this.Giveaway_BanButton.Enabled = false;
             this.Giveaway_BanButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_BanButton.Location = new System.Drawing.Point(11, 487);
+            this.Giveaway_BanButton.Location = new System.Drawing.Point(324, 170);
             this.Giveaway_BanButton.Name = "Giveaway_BanButton";
             this.Giveaway_BanButton.Size = new System.Drawing.Size(97, 23);
             this.Giveaway_BanButton.TabIndex = 31;
@@ -389,7 +385,7 @@
             this.Giveaway_UnbanButton.BackColor = System.Drawing.Color.White;
             this.Giveaway_UnbanButton.Enabled = false;
             this.Giveaway_UnbanButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_UnbanButton.Location = new System.Drawing.Point(114, 487);
+            this.Giveaway_UnbanButton.Location = new System.Drawing.Point(427, 170);
             this.Giveaway_UnbanButton.Name = "Giveaway_UnbanButton";
             this.Giveaway_UnbanButton.Size = new System.Drawing.Size(97, 23);
             this.Giveaway_UnbanButton.TabIndex = 32;
@@ -400,7 +396,7 @@
             // Giveaway_AddBanTextBox
             // 
             this.Giveaway_AddBanTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.Giveaway_AddBanTextBox.Location = new System.Drawing.Point(11, 461);
+            this.Giveaway_AddBanTextBox.Location = new System.Drawing.Point(324, 144);
             this.Giveaway_AddBanTextBox.Name = "Giveaway_AddBanTextBox";
             this.Giveaway_AddBanTextBox.Size = new System.Drawing.Size(200, 20);
             this.Giveaway_AddBanTextBox.TabIndex = 33;
@@ -410,13 +406,13 @@
             // 
             this.Giveaway_AutoBanWinnerCheckBox.AutoSize = true;
             this.Giveaway_AutoBanWinnerCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_AutoBanWinnerCheckBox.Location = new System.Drawing.Point(4, 173);
+            this.Giveaway_AutoBanWinnerCheckBox.Location = new System.Drawing.Point(6, 179);
             this.Giveaway_AutoBanWinnerCheckBox.Name = "Giveaway_AutoBanWinnerCheckBox";
             this.Giveaway_AutoBanWinnerCheckBox.Size = new System.Drawing.Size(140, 17);
             this.Giveaway_AutoBanWinnerCheckBox.TabIndex = 34;
             this.Giveaway_AutoBanWinnerCheckBox.Text = "Automatically ban winner";
             this.Giveaway_AutoBanWinnerCheckBox.UseVisualStyleBackColor = true;
-            this.Giveaway_AutoBanWinnerCheckBox.CheckedChanged += new System.EventHandler(this.Giveaway_AutoBanWinnerCheckBox_CheckedChanged);
+            this.Giveaway_AutoBanWinnerCheckBox.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // Currency_LockCmdCheckBox
             // 
@@ -435,30 +431,20 @@
             this.Giveaway_CopyWinnerButton.BackColor = System.Drawing.Color.White;
             this.Giveaway_CopyWinnerButton.Enabled = false;
             this.Giveaway_CopyWinnerButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_CopyWinnerButton.Location = new System.Drawing.Point(257, 204);
+            this.Giveaway_CopyWinnerButton.Location = new System.Drawing.Point(6, 507);
             this.Giveaway_CopyWinnerButton.Name = "Giveaway_CopyWinnerButton";
-            this.Giveaway_CopyWinnerButton.Size = new System.Drawing.Size(548, 23);
+            this.Giveaway_CopyWinnerButton.Size = new System.Drawing.Size(802, 23);
             this.Giveaway_CopyWinnerButton.TabIndex = 36;
             this.Giveaway_CopyWinnerButton.Text = "Copy to clipboard";
             this.Giveaway_CopyWinnerButton.UseVisualStyleBackColor = false;
             this.Giveaway_CopyWinnerButton.Click += new System.EventHandler(this.Giveaway_CopyWinnerButton_Click);
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(7, 342);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(91, 19);
-            this.label4.TabIndex = 37;
-            this.label4.Text = "Giveaway ban :";
             // 
             // Giveaway_WinnerTimerLabel
             // 
             this.Giveaway_WinnerTimerLabel.AutoSize = true;
             this.Giveaway_WinnerTimerLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Giveaway_WinnerTimerLabel.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.Giveaway_WinnerTimerLabel.Location = new System.Drawing.Point(253, 23);
+            this.Giveaway_WinnerTimerLabel.Location = new System.Drawing.Point(2, 326);
             this.Giveaway_WinnerTimerLabel.Name = "Giveaway_WinnerTimerLabel";
             this.Giveaway_WinnerTimerLabel.Size = new System.Drawing.Size(36, 19);
             this.Giveaway_WinnerTimerLabel.TabIndex = 40;
@@ -472,19 +458,19 @@
             // Giveaway_WinnerChat
             // 
             this.Giveaway_WinnerChat.BackColor = System.Drawing.Color.White;
-            this.Giveaway_WinnerChat.Location = new System.Drawing.Point(257, 40);
+            this.Giveaway_WinnerChat.Location = new System.Drawing.Point(6, 343);
             this.Giveaway_WinnerChat.Name = "Giveaway_WinnerChat";
             this.Giveaway_WinnerChat.ReadOnly = true;
-            this.Giveaway_WinnerChat.Size = new System.Drawing.Size(548, 119);
+            this.Giveaway_WinnerChat.Size = new System.Drawing.Size(802, 119);
             this.Giveaway_WinnerChat.TabIndex = 41;
             this.Giveaway_WinnerChat.Text = "";
             // 
             // label6
             // 
             this.label6.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(254, 21);
+            this.label6.Location = new System.Drawing.Point(6, 324);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(551, 23);
+            this.label6.Size = new System.Drawing.Size(802, 23);
             this.label6.TabIndex = 42;
             this.label6.Text = "Winner chat";
             this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -514,51 +500,51 @@
             this.Giveaway_WinTimeLabel.AutoSize = true;
             this.Giveaway_WinTimeLabel.Font = new System.Drawing.Font("Segoe Print", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Giveaway_WinTimeLabel.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.Giveaway_WinTimeLabel.Location = new System.Drawing.Point(253, 177);
+            this.Giveaway_WinTimeLabel.Location = new System.Drawing.Point(2, 480);
             this.Giveaway_WinTimeLabel.Name = "Giveaway_WinTimeLabel";
             this.Giveaway_WinTimeLabel.Size = new System.Drawing.Size(44, 24);
             this.Giveaway_WinTimeLabel.TabIndex = 44;
             this.Giveaway_WinTimeLabel.Text = "0:00";
             // 
-            // GiveawaySpacer
+            // GiveawayTypeSpacer
             // 
-            this.GiveawaySpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
-            this.GiveawaySpacer.Location = new System.Drawing.Point(-1, 25);
-            this.GiveawaySpacer.Name = "GiveawaySpacer";
-            this.GiveawaySpacer.Size = new System.Drawing.Size(244, 11);
-            this.GiveawaySpacer.TabIndex = 47;
-            this.GiveawaySpacer.TabStop = false;
+            this.GiveawayTypeSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
+            this.GiveawayTypeSpacer.Location = new System.Drawing.Point(-1, 25);
+            this.GiveawayTypeSpacer.Name = "GiveawayTypeSpacer";
+            this.GiveawayTypeSpacer.Size = new System.Drawing.Size(320, 11);
+            this.GiveawayTypeSpacer.TabIndex = 47;
+            this.GiveawayTypeSpacer.TabStop = false;
             // 
-            // GiveawayLabel
+            // GiveawayTypeLabel
             // 
-            this.GiveawayLabel.AutoSize = true;
-            this.GiveawayLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.GiveawayLabel.Location = new System.Drawing.Point(58, 25);
-            this.GiveawayLabel.Name = "GiveawayLabel";
-            this.GiveawayLabel.Size = new System.Drawing.Size(89, 19);
-            this.GiveawayLabel.TabIndex = 13;
-            this.GiveawayLabel.Text = "Giveaway type";
-            this.GiveawayLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.GiveawayTypeLabel.AutoSize = true;
+            this.GiveawayTypeLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GiveawayTypeLabel.Location = new System.Drawing.Point(58, 25);
+            this.GiveawayTypeLabel.Name = "GiveawayTypeLabel";
+            this.GiveawayTypeLabel.Size = new System.Drawing.Size(89, 19);
+            this.GiveawayTypeLabel.TabIndex = 13;
+            this.GiveawayTypeLabel.Text = "Giveaway type";
+            this.GiveawayTypeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // CurrencyLabel2
+            // HandoutLabel
             // 
-            this.CurrencyLabel2.AutoSize = true;
-            this.CurrencyLabel2.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.CurrencyLabel2.Location = new System.Drawing.Point(246, 0);
-            this.CurrencyLabel2.Name = "CurrencyLabel2";
-            this.CurrencyLabel2.Size = new System.Drawing.Size(61, 19);
-            this.CurrencyLabel2.TabIndex = 48;
-            this.CurrencyLabel2.Text = "Currency";
-            this.CurrencyLabel2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.HandoutLabel.AutoSize = true;
+            this.HandoutLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.HandoutLabel.Location = new System.Drawing.Point(246, 0);
+            this.HandoutLabel.Name = "HandoutLabel";
+            this.HandoutLabel.Size = new System.Drawing.Size(56, 19);
+            this.HandoutLabel.TabIndex = 48;
+            this.HandoutLabel.Text = "Handout";
+            this.HandoutLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // CurrencySpacer2
+            // HandoutSpacer
             // 
-            this.CurrencySpacer2.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
-            this.CurrencySpacer2.Location = new System.Drawing.Point(-1, 0);
-            this.CurrencySpacer2.Name = "CurrencySpacer2";
-            this.CurrencySpacer2.Size = new System.Drawing.Size(816, 11);
-            this.CurrencySpacer2.TabIndex = 49;
-            this.CurrencySpacer2.TabStop = false;
+            this.HandoutSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
+            this.HandoutSpacer.Location = new System.Drawing.Point(-1, 0);
+            this.HandoutSpacer.Name = "HandoutSpacer";
+            this.HandoutSpacer.Size = new System.Drawing.Size(816, 11);
+            this.HandoutSpacer.TabIndex = 49;
+            this.HandoutSpacer.TabStop = false;
             // 
             // Currency_HandoutEveryone
             // 
@@ -572,7 +558,7 @@
             this.Currency_HandoutEveryone.TabStop = true;
             this.Currency_HandoutEveryone.Text = "Everyone in the stream";
             this.Currency_HandoutEveryone.UseVisualStyleBackColor = true;
-            this.Currency_HandoutEveryone.CheckedChanged += new System.EventHandler(this.Currency_HandoutEveryone_CheckedChanged);
+            this.Currency_HandoutEveryone.CheckedChanged += new System.EventHandler(this.Currency_HandoutType_Changed);
             // 
             // Currency_HandoutActiveStream
             // 
@@ -584,7 +570,7 @@
             this.Currency_HandoutActiveStream.TabIndex = 52;
             this.Currency_HandoutActiveStream.Text = "Anyone in the stream who joined / said something during the stream";
             this.Currency_HandoutActiveStream.UseVisualStyleBackColor = true;
-            this.Currency_HandoutActiveStream.CheckedChanged += new System.EventHandler(this.Currency_HandoutActiveStream_CheckedChanged);
+            this.Currency_HandoutActiveStream.CheckedChanged += new System.EventHandler(this.Currency_HandoutType_Changed);
             // 
             // Currency_HandoutLabel
             // 
@@ -607,7 +593,7 @@
             this.Currency_HandoutActiveTime.Text = "Anyone in the stream who joined / said something in the last                 minu" +
     "tes";
             this.Currency_HandoutActiveTime.UseVisualStyleBackColor = true;
-            this.Currency_HandoutActiveTime.CheckedChanged += new System.EventHandler(this.Currency_HandoutActiveTime_CheckedChanged);
+            this.Currency_HandoutActiveTime.CheckedChanged += new System.EventHandler(this.Currency_HandoutType_Changed);
             // 
             // Currency_HandoutLastActive
             // 
@@ -710,6 +696,24 @@
             this.SettingsWindow.Size = new System.Drawing.Size(814, 562);
             this.SettingsWindow.TabIndex = 58;
             this.SettingsWindow.Visible = this.SettingsWindowButton.Checked;
+            // 
+            // label21
+            // 
+            this.label21.AutoSize = true;
+            this.label21.Location = new System.Drawing.Point(3, 269);
+            this.label21.Name = "label21";
+            this.label21.Size = new System.Drawing.Size(164, 13);
+            this.label21.TabIndex = 85;
+            this.label21.Text = "Currency Command (starts with !):";
+            // 
+            // CurrencyCommandBox
+            // 
+            this.CurrencyCommandBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.CurrencyCommandBox.Location = new System.Drawing.Point(6, 285);
+            this.CurrencyCommandBox.Name = "CurrencyCommandBox";
+            this.CurrencyCommandBox.Size = new System.Drawing.Size(801, 20);
+            this.CurrencyCommandBox.TabIndex = 86;
+            this.CurrencyCommandBox.Text = "ModCoins";
             // 
             // SettingsErrorLabel
             // 
@@ -1389,8 +1393,8 @@
             // CurrencyWindow
             // 
             this.CurrencyWindow.BackColor = System.Drawing.Color.White;
-            this.CurrencyWindow.Controls.Add(this.CurrencyLabel2);
-            this.CurrencyWindow.Controls.Add(this.CurrencySpacer2);
+            this.CurrencyWindow.Controls.Add(this.HandoutLabel);
+            this.CurrencyWindow.Controls.Add(this.HandoutSpacer);
             this.CurrencyWindow.Controls.Add(this.Currency_HandoutLastActive);
             this.CurrencyWindow.Controls.Add(this.Currency_HandoutActiveTime);
             this.CurrencyWindow.Controls.Add(this.Currency_HandoutActiveStream);
@@ -1443,6 +1447,12 @@
             // GiveawayWindow
             // 
             this.GiveawayWindow.BackColor = System.Drawing.Color.White;
+            this.GiveawayWindow.Controls.Add(this.GiveawayBansLabel);
+            this.GiveawayWindow.Controls.Add(this.GiveawayBansSpacer);
+            this.GiveawayWindow.Controls.Add(this.GiveawayRulesLabel);
+            this.GiveawayWindow.Controls.Add(this.GiveawayRulesSpacer);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_TypeTickets);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_TypeKeyword);
             this.GiveawayWindow.Controls.Add(this.Giveaway_MinCurrency);
             this.GiveawayWindow.Controls.Add(this.SettingsPresents);
             this.GiveawayWindow.Controls.Add(this.Giveaway_WinTimeLabel);
@@ -1450,7 +1460,6 @@
             this.GiveawayWindow.Controls.Add(this.Giveaway_MustFollowCheckBox);
             this.GiveawayWindow.Controls.Add(this.Giveaway_WinnerChat);
             this.GiveawayWindow.Controls.Add(this.Giveaway_WinnerTimerLabel);
-            this.GiveawayWindow.Controls.Add(this.label4);
             this.GiveawayWindow.Controls.Add(this.Giveaway_StartButton);
             this.GiveawayWindow.Controls.Add(this.Giveaway_CopyWinnerButton);
             this.GiveawayWindow.Controls.Add(this.Giveaway_RerollButton);
@@ -1461,35 +1470,97 @@
             this.GiveawayWindow.Controls.Add(this.Giveaway_BanButton);
             this.GiveawayWindow.Controls.Add(this.Giveaway_AnnounceWinnerButton);
             this.GiveawayWindow.Controls.Add(this.Giveaway_BanListListBox);
-            this.GiveawayWindow.Controls.Add(this.label5);
             this.GiveawayWindow.Controls.Add(this.label6);
             this.GiveawayWindow.Controls.Add(this.Giveaway_WinnerStatusLabel);
             this.GiveawayWindow.Controls.Add(this.Giveaway_WinnerLabel);
-            this.GiveawayWindow.Controls.Add(this.GiveawayLabel);
-            this.GiveawayWindow.Controls.Add(this.GiveawaySpacer);
+            this.GiveawayWindow.Controls.Add(this.GiveawayTypeLabel);
+            this.GiveawayWindow.Controls.Add(this.GiveawayTypeSpacer);
             this.GiveawayWindow.Controls.Add(this.Giveaway_MinCurrencyCheckBox);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_TypeActive);
             this.GiveawayWindow.Location = new System.Drawing.Point(108, 30);
             this.GiveawayWindow.Name = "GiveawayWindow";
             this.GiveawayWindow.Size = new System.Drawing.Size(814, 562);
             this.GiveawayWindow.TabIndex = 63;
             // 
-            // label21
+            // GiveawayBansLabel
             // 
-            this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(3, 269);
-            this.label21.Name = "label21";
-            this.label21.Size = new System.Drawing.Size(164, 13);
-            this.label21.TabIndex = 85;
-            this.label21.Text = "Currency Command (starts with !):";
+            this.GiveawayBansLabel.AutoSize = true;
+            this.GiveawayBansLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GiveawayBansLabel.Location = new System.Drawing.Point(381, 25);
+            this.GiveawayBansLabel.Name = "GiveawayBansLabel";
+            this.GiveawayBansLabel.Size = new System.Drawing.Size(89, 19);
+            this.GiveawayBansLabel.TabIndex = 53;
+            this.GiveawayBansLabel.Text = "Giveaway bans";
+            this.GiveawayBansLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // CurrencyCommandBox
+            // GiveawayBansSpacer
             // 
-            this.CurrencyCommandBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.CurrencyCommandBox.Location = new System.Drawing.Point(6, 285);
-            this.CurrencyCommandBox.Name = "CurrencyCommandBox";
-            this.CurrencyCommandBox.Size = new System.Drawing.Size(801, 20);
-            this.CurrencyCommandBox.TabIndex = 86;
-            this.CurrencyCommandBox.Text = "ModCoins";
+            this.GiveawayBansSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
+            this.GiveawayBansSpacer.Location = new System.Drawing.Point(318, 25);
+            this.GiveawayBansSpacer.Name = "GiveawayBansSpacer";
+            this.GiveawayBansSpacer.Size = new System.Drawing.Size(497, 11);
+            this.GiveawayBansSpacer.TabIndex = 54;
+            this.GiveawayBansSpacer.TabStop = false;
+            // 
+            // GiveawayRulesLabel
+            // 
+            this.GiveawayRulesLabel.AutoSize = true;
+            this.GiveawayRulesLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GiveawayRulesLabel.Location = new System.Drawing.Point(58, 124);
+            this.GiveawayRulesLabel.Name = "GiveawayRulesLabel";
+            this.GiveawayRulesLabel.Size = new System.Drawing.Size(92, 19);
+            this.GiveawayRulesLabel.TabIndex = 51;
+            this.GiveawayRulesLabel.Text = "Giveaway rules";
+            this.GiveawayRulesLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // GiveawayRulesSpacer
+            // 
+            this.GiveawayRulesSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
+            this.GiveawayRulesSpacer.Location = new System.Drawing.Point(-1, 124);
+            this.GiveawayRulesSpacer.Name = "GiveawayRulesSpacer";
+            this.GiveawayRulesSpacer.Size = new System.Drawing.Size(320, 11);
+            this.GiveawayRulesSpacer.TabIndex = 52;
+            this.GiveawayRulesSpacer.TabStop = false;
+            // 
+            // Giveaway_TypeTickets
+            // 
+            this.Giveaway_TypeTickets.AutoSize = true;
+            this.Giveaway_TypeTickets.Enabled = false;
+            this.Giveaway_TypeTickets.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_TypeTickets.Location = new System.Drawing.Point(6, 76);
+            this.Giveaway_TypeTickets.Name = "Giveaway_TypeTickets";
+            this.Giveaway_TypeTickets.Size = new System.Drawing.Size(59, 17);
+            this.Giveaway_TypeTickets.TabIndex = 50;
+            this.Giveaway_TypeTickets.Text = "Tickets";
+            this.Giveaway_TypeTickets.UseVisualStyleBackColor = true;
+            this.Giveaway_TypeTickets.CheckedChanged += new System.EventHandler(this.Giveaway_TypeTickets_CheckedChanged);
+            // 
+            // Giveaway_TypeKeyword
+            // 
+            this.Giveaway_TypeKeyword.AutoSize = true;
+            this.Giveaway_TypeKeyword.Enabled = false;
+            this.Giveaway_TypeKeyword.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_TypeKeyword.Location = new System.Drawing.Point(6, 61);
+            this.Giveaway_TypeKeyword.Name = "Giveaway_TypeKeyword";
+            this.Giveaway_TypeKeyword.Size = new System.Drawing.Size(65, 17);
+            this.Giveaway_TypeKeyword.TabIndex = 49;
+            this.Giveaway_TypeKeyword.Text = "Keyword";
+            this.Giveaway_TypeKeyword.UseVisualStyleBackColor = true;
+            this.Giveaway_TypeKeyword.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
+            // 
+            // Giveaway_TypeActive
+            // 
+            this.Giveaway_TypeActive.AutoSize = true;
+            this.Giveaway_TypeActive.Checked = true;
+            this.Giveaway_TypeActive.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_TypeActive.Location = new System.Drawing.Point(6, 46);
+            this.Giveaway_TypeActive.Name = "Giveaway_TypeActive";
+            this.Giveaway_TypeActive.Size = new System.Drawing.Size(223, 17);
+            this.Giveaway_TypeActive.TabIndex = 48;
+            this.Giveaway_TypeActive.TabStop = true;
+            this.Giveaway_TypeActive.Text = "Last active less than               minutes ago";
+            this.Giveaway_TypeActive.UseVisualStyleBackColor = true;
+            this.Giveaway_TypeActive.CheckedChanged += new System.EventHandler(this.Giveaway_TypeActive_CheckedChanged);
             // 
             // MainWindow
             // 
@@ -1502,25 +1573,25 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
+            this.Controls.Add(this.GiveawayWindow);
+            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
             this.Controls.Add(this.CurrencyWindow);
-            this.Controls.Add(this.GiveawayWindow);
-            this.Controls.Add(this.panel2);
-            this.Controls.Add(this.AboutWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.Controls.SetChildIndex(this.AboutWindow, 0);
-            this.Controls.SetChildIndex(this.panel2, 0);
-            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.CurrencyWindow, 0);
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
+            this.Controls.SetChildIndex(this.AboutWindow, 0);
+            this.Controls.SetChildIndex(this.panel2, 0);
+            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -1568,7 +1639,6 @@
         public System.Windows.Forms.Button Giveaway_StopButton;
         public System.Windows.Forms.Label Giveaway_WinnerStatusLabel;
         public System.Windows.Forms.Label Giveaway_WinnerLabel;
-        private System.Windows.Forms.Label label5;
         public System.Windows.Forms.NumericUpDown Giveaway_ActiveUserTime;
         public System.Windows.Forms.Button Giveaway_AnnounceWinnerButton;
         public System.Windows.Forms.ListBox Giveaway_BanListListBox;
@@ -1578,7 +1648,6 @@
         public System.Windows.Forms.CheckBox Giveaway_AutoBanWinnerCheckBox;
         public System.Windows.Forms.CheckBox Currency_LockCmdCheckBox;
         public System.Windows.Forms.Button Giveaway_CopyWinnerButton;
-        private System.Windows.Forms.Label label4;
         public System.Windows.Forms.Label Giveaway_WinnerTimerLabel;
         public System.Windows.Forms.Timer Giveaway_WinnerTimer;
         public System.Windows.Forms.RichTextBox Giveaway_WinnerChat;
@@ -1586,13 +1655,13 @@
         private System.Windows.Forms.TabControl SettingsPresents;
         private System.Windows.Forms.TabPage tabPage1;
         public System.Windows.Forms.Label Giveaway_WinTimeLabel;
-        private System.Windows.Forms.GroupBox GiveawaySpacer;
-        private System.Windows.Forms.Label GiveawayLabel;
-        private System.Windows.Forms.Label CurrencyLabel2;
-        private System.Windows.Forms.GroupBox CurrencySpacer2;
+        private System.Windows.Forms.GroupBox GiveawayTypeSpacer;
+        private System.Windows.Forms.Label GiveawayTypeLabel;
+        private System.Windows.Forms.Label HandoutLabel;
+        private System.Windows.Forms.GroupBox HandoutSpacer;
         public System.Windows.Forms.RadioButton Currency_HandoutEveryone;
         public System.Windows.Forms.RadioButton Currency_HandoutActiveStream;
-        private System.Windows.Forms.Label Currency_HandoutLabel;
+        public System.Windows.Forms.Label Currency_HandoutLabel;
         public System.Windows.Forms.RadioButton Currency_HandoutActiveTime;
         public System.Windows.Forms.NumericUpDown Currency_HandoutLastActive;
         public System.Windows.Forms.CheckBox SettingsWindowButton;
@@ -1661,8 +1730,15 @@
         private System.Windows.Forms.Panel CurrencyWindow;
         public System.Windows.Forms.CheckBox CurrencyWindowButton;
         public System.Windows.Forms.CheckBox GiveawayWindowButton;
-        private System.Windows.Forms.Panel GiveawayWindow;
+        public System.Windows.Forms.Panel GiveawayWindow;
         private System.Windows.Forms.Label label21;
         private System.Windows.Forms.TextBox CurrencyCommandBox;
+        public System.Windows.Forms.RadioButton Giveaway_TypeActive;
+        public System.Windows.Forms.RadioButton Giveaway_TypeKeyword;
+        public System.Windows.Forms.RadioButton Giveaway_TypeTickets;
+        private System.Windows.Forms.Label GiveawayRulesLabel;
+        private System.Windows.Forms.GroupBox GiveawayRulesSpacer;
+        private System.Windows.Forms.Label GiveawayBansLabel;
+        private System.Windows.Forms.GroupBox GiveawayBansSpacer;
     }
 }

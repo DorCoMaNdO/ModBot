@@ -287,7 +287,7 @@ namespace ModBot
                 {
                     while (r.Read())
                     {
-                        if (r["user"].ToString().Equals(user, StringComparison.OrdinalIgnoreCase))
+                        if (r["user"].ToString().Equals(user))
                         {
                             return true;
                         }

@@ -28,17 +28,19 @@ namespace ModBot
             InitializeComponent();
             Text = "ModBot v" + (VersionLabel.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString()).Replace("." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
 
-            ConnectionLabel.Location = new Point(ConnectionSpacer.Location.X + ConnectionSpacer.Size.Width / 2 - ConnectionLabel.Size.Width / 2, ConnectionSpacer.Location.Y);
-            CurrencyLabel.Location = new Point(CurrencySpacer.Location.X + CurrencySpacer.Size.Width / 2 - CurrencyLabel.Size.Width / 2, CurrencySpacer.Location.Y);
-            SubscribersLabel.Location = new Point(SubscribersSpacer.Location.X + SubscribersSpacer.Size.Width / 2 - SubscribersLabel.Size.Width / 2, SubscribersSpacer.Location.Y);
-            DonationsLabel.Location = new Point(DonationsSpacer.Location.X + DonationsSpacer.Size.Width / 2 - DonationsLabel.Size.Width / 2, DonationsSpacer.Location.Y);
+            CenterSpacer(ConnectionLabel, ConnectionSpacer);
+            CenterSpacer(CurrencyLabel, CurrencySpacer);
+            CenterSpacer(SubscribersLabel, SubscribersSpacer);
+            CenterSpacer(DonationsLabel, DonationsSpacer);
+            CenterSpacer(HandoutLabel, HandoutSpacer);
+            CenterSpacer(GiveawayTypeLabel, GiveawayTypeSpacer);
+            CenterSpacer(GiveawayRulesLabel, GiveawayRulesSpacer, false, true);
+            CenterSpacer(GiveawayBansLabel, GiveawayBansSpacer);
 
-            CurrencyLabel2.Location = new Point(CurrencySpacer2.Location.X + CurrencySpacer2.Size.Width / 2 - CurrencyLabel2.Size.Width / 2, CurrencySpacer2.Location.Y);
-            GiveawayLabel.Location = new Point(GiveawaySpacer.Location.X + GiveawaySpacer.Size.Width / 2 - GiveawayLabel.Size.Width / 2, GiveawaySpacer.Location.Y);
             Panel panel = new Panel();
-            panel.Size = new Size(1, 2);
-            panel.Location = new Point(GiveawaySpacer.Location.X + GiveawaySpacer.Size.Width - 1, GiveawaySpacer.Location.Y + 9);
-            GiveawayWindow.Controls.Add(panel);
+            panel.Size = new Size(1, 1);
+            panel.Location = new Point(GiveawayTypeSpacer.Location.X + GiveawayTypeSpacer.Size.Width - 1, GiveawayTypeSpacer.Location.Y + 9);
+            GiveawayTypeSpacer.Parent.Controls.Add(panel);
             panel.BringToFront();
 
             Windows.Add(SettingsWindowButton, SettingsWindow);
@@ -84,7 +86,7 @@ namespace ModBot
                 interval = 5;
             }
             ini.SetValue("Settings", "Currency_Interval", (CurrencyHandoutInterval.Value = interval).ToString());
-            int payout = Convert.ToInt32(ini.GetValue("Settings", "Currency_Payout", "5"));
+            int payout = Convert.ToInt32(ini.GetValue("Settings", "Currency_Payout", "1"));
             if (payout > CurrencyHandoutAmount.Maximum || payout < CurrencyHandoutAmount.Minimum)
             {
                 payout = 1;
@@ -98,6 +100,25 @@ namespace ModBot
             ini.SetValue("Settings", "Donations_UpdateRecent", (UpdateRecentDonorsCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateRecent", "0") == "1")) ? "1" : "0");
             ini.SetValue("Settings", "Donations_Recent_Limit", (RecentDonorsLimit.Value = Convert.ToInt32(ini.GetValue("Settings", "Donations_Recent_Limit", "5"))).ToString());
             ini.SetValue("Settings", "Donations_UpdateLast", (UpdateLastDonorCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateLast", "0") == "1")) ? "1" : "0");
+
+            ini.SetValue("Settings", "Currency_LockCmd", ini.GetValue("Settings", "Currency_LockCmd", "0"));
+
+            string sCurrencyHandout = ini.GetValue("Settings", "Currency_Handout", "0");
+            ini.SetValue("Settings", "Currency_Handout", sCurrencyHandout);
+            if (sCurrencyHandout.Equals("0"))
+            {
+                Currency_HandoutEveryone.Checked = true;
+            }
+            else if (sCurrencyHandout.Equals("1"))
+            {
+                Currency_HandoutActiveStream.Checked = true;
+            }
+            else if (sCurrencyHandout.Equals("2"))
+            {
+                Currency_HandoutActiveTime.Checked = true;
+            }
+            ini.SetValue("Settings", "Currency_HandoutTime", (Currency_HandoutLastActive.Value = Convert.ToInt32(ini.GetValue("Settings", "Currency_HandoutTime", "5"))).ToString());
+
             //string[] lines = File.ReadAllLines("modbot.txt");
             //Dictionary<string, string> dict = lines.Select(l => l.Split('=')).ToDictionary(a => a[0], a => a[1]);
             //iniUtil ini = new iniUtil(@"C:\program files (x86)\myapp\myapp.ini");
@@ -175,6 +196,27 @@ namespace ModBot
             thread.Start();
         }
 
+        private void CenterSpacer(Label label, GroupBox spacer, bool hideleft = false, bool hideright = false)
+        {
+            label.Location = new Point(spacer.Location.X + spacer.Size.Width / 2 - label.Size.Width / 2, spacer.Location.Y);
+            if (hideleft)
+            {
+                Panel panel = new Panel();
+                panel.Size = new Size(1, 2);
+                panel.Location = new Point(spacer.Location.X, spacer.Location.Y + 9);
+                spacer.Parent.Controls.Add(panel);
+                panel.BringToFront();
+            }
+            if (hideright)
+            {
+                Panel panel = new Panel();
+                panel.Size = new Size(1, 2);
+                panel.Location = new Point(spacer.Location.X + spacer.Size.Width - 1, spacer.Location.Y + 9);
+                spacer.Parent.Controls.Add(panel);
+                panel.BringToFront();
+            }
+        }
+
         public void GetSettings()
         {
             /*if (!File.Exists("ModBot.ini"))
@@ -188,9 +230,9 @@ namespace ModBot
                 //Console.WriteLine("Getting Settings");
                 bIgnoreUpdates = true;
                 Dictionary<Control, bool> dState = new Dictionary<Control, bool>();
-                foreach (Control ctrl in Controls)
+                foreach (Control ctrl in GiveawayWindow.Controls)
                 {
-                    if (!BaseControls.Contains(ctrl) && !dState.ContainsKey(ctrl))
+                    if (!dState.ContainsKey(ctrl))
                     {
                         dState.Add(ctrl, ctrl.Enabled);
                         ctrl.Enabled = false;
@@ -215,6 +257,9 @@ namespace ModBot
                         if (!section.Equals("Settings"))
                         {
                             Dictionary<string, string> dSectionSettings = new Dictionary<string, string>();
+                            string sGiveawayType = ini.GetValue(section, "Giveaway_Type", "0");
+                            ini.SetValue(section, "Giveaway_Type", sGiveawayType);
+                            dSectionSettings.Add("Giveaway_Type", sGiveawayType);
                             string sMinCurrencyChecked = ini.GetValue(section, "Giveaway_MinCurrencyChecked", "0");
                             ini.SetValue(section, "Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
                             dSectionSettings.Add("Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
@@ -262,32 +307,11 @@ namespace ModBot
 
                 foreach (Control ctrl in dState.Keys)
                 {
-                    if (Controls.Contains(ctrl))
+                    if (GiveawayWindow.Controls.Contains(ctrl))
                     {
                         ctrl.Enabled = dState[ctrl];
                     }
                 }
-
-                string sLockCurrencyCmd = ini.GetValue("Settings", "Currency_LockCmd", "0");
-                ini.SetValue("Settings", "Currency_LockCmd", sLockCurrencyCmd);
-
-                string sCurrencyHandout = ini.GetValue("Settings", "Currency_Handout", "0");
-                ini.SetValue("Settings", "Currency_Handout", sCurrencyHandout);
-                if (sCurrencyHandout.Equals("0"))
-                {
-                    Currency_HandoutEveryone.Checked = true;
-                }
-                else if (sCurrencyHandout.Equals("1"))
-                {
-                    Currency_HandoutActiveStream.Checked = true;
-                }
-                else if (sCurrencyHandout.Equals("2"))
-                {
-                    Currency_HandoutActiveTime.Checked = true;
-                }
-                string sCurrencyHandoutTime = ini.GetValue("Settings", "Currency_HandoutTime", "5");
-                ini.SetValue("Settings", "Currency_HandoutTime", sCurrencyHandoutTime);
-                Currency_HandoutLastActive.Value = Convert.ToInt32(sCurrencyHandoutTime);
 
                 string sSelectedPresent = ini.GetValue("Settings", "SelectedPresent", "Default");
                 if (sSelectedPresent != "")
@@ -315,13 +339,19 @@ namespace ModBot
                         {
                             if (KeyValue.Key != "")
                             {
-                                if (KeyValue.Key.Equals("Giveaway_MinCurrencyChecked"))
+                                if (KeyValue.Key.Equals("Giveaway_Type"))
                                 {
-                                    Giveaway_MinCurrencyCheckBox.Checked = KeyValue.Value.Equals("1");
+                                    Giveaway_TypeActive.Checked = (KeyValue.Value == "0");
+                                    Giveaway_TypeKeyword.Checked = (KeyValue.Value == "1");
+                                    Giveaway_TypeTickets.Checked = (KeyValue.Value == "2");
+                                }
+                                else if (KeyValue.Key.Equals("Giveaway_MinCurrencyChecked"))
+                                {
+                                    Giveaway_MinCurrencyCheckBox.Checked = (KeyValue.Value == "1");
                                 }
                                 else if (KeyValue.Key.Equals("Giveaway_MustFollow"))
                                 {
-                                    Giveaway_MustFollowCheckBox.Checked = KeyValue.Value.Equals("1");
+                                    Giveaway_MustFollowCheckBox.Checked = (KeyValue.Value == "1");
                                 }
                                 else if (KeyValue.Key.Equals("Giveaway_MinCurrency"))
                                 {
@@ -333,7 +363,7 @@ namespace ModBot
                                 }
                                 else if (KeyValue.Key.Equals("Giveaway_AutoBanWinner"))
                                 {
-                                    Giveaway_AutoBanWinnerCheckBox.Checked = KeyValue.Value.Equals("1");
+                                    Giveaway_AutoBanWinnerCheckBox.Checked = (KeyValue.Value == "1");
                                 }
                                 else if (KeyValue.Key.Equals("Giveaway_BanList"))
                                 {
@@ -548,10 +578,6 @@ namespace ModBot
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        Currency_HandoutLabel.Text = "Handout " + Irc.currencyName + " to :";
-
-                        Giveaway_MinCurrencyCheckBox.Text = "Must have at least                       " + Irc.currencyName;
-
                         ChannelStatusLabel.Text = "DISCONNECTED";
                         ChannelStatusLabel.ForeColor = Color.Red;
                         if (iStatus == 2)
@@ -683,7 +709,7 @@ namespace ModBot
             System.Windows.Forms.Clipboard.SetText(Giveaway_WinnerLabel.Text);
         }
 
-        private void Giveaway_MustFollowCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void Giveaway_Settings_Changed(object sender, EventArgs e)
         {
             SaveSettings();
         }
@@ -692,21 +718,6 @@ namespace ModBot
         {
             SaveSettings();
             Irc.g_iLastCurrencyLockAnnounce = 0;
-        }
-
-        private void Giveaway_MinCurrency_ValueChanged(object sender, EventArgs e)
-        {
-            SaveSettings();
-        }
-
-        private void Giveaway_ActiveUserTime_ValueChanged(object sender, EventArgs e)
-        {
-            SaveSettings();
-        }
-
-        private void Giveaway_AutoBanWinnerCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            SaveSettings();
         }
 
         public void SaveSettings(int SettingsPresent=-2)
@@ -723,21 +734,36 @@ namespace ModBot
                 ini.SetValue("Settings", "Currency_LockCmd", Currency_LockCmdCheckBox.Checked ? "1" : "0");
                 if (SettingsPresent > -1)
                 {
-                    if (dSettings.ContainsKey(SettingsPresents.TabPages[SettingsPresent].Text))
+                    string Present = SettingsPresents.TabPages[SettingsPresent].Text;
+                    if (dSettings.ContainsKey(Present))
                     {
-                        //ini.SetValue("Settings", "SelectedPresent", SettingsPresents.TabPages[SettingsPresent].Text);
-                        ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_MustFollow", Giveaway_MustFollowCheckBox.Checked ? "1" : "0");
-                        ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_MinCurrencyChecked", Giveaway_MinCurrencyCheckBox.Checked ? "1" : "0");
-                        ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_MinCurrency", Giveaway_MinCurrency.Value.ToString());
-                        ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_ActiveUserTime", Giveaway_ActiveUserTime.Value.ToString());
-                        ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_AutoBanWinner", Giveaway_AutoBanWinnerCheckBox.Checked ? "1" : "0");
+                        //ini.SetValue("Settings", "SelectedPresent", Present);
+                        if (Giveaway_TypeActive.Checked)
+                        {
+                            ini.SetValue(Present, "Giveaway_Type", "0");
+                        }
+                        else if (Giveaway_TypeKeyword.Checked)
+                        {
+                            ini.SetValue(Present, "Giveaway_Type", "1");
+                        }
+                        else if (Giveaway_TypeTickets.Checked)
+                        {
+                            ini.SetValue(Present, "Giveaway_Type", "2");
+                        }
+                        Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
+
+                        ini.SetValue(Present, "Giveaway_MustFollow", Giveaway_MustFollowCheckBox.Checked ? "1" : "0");
+                        ini.SetValue(Present, "Giveaway_MinCurrencyChecked", Giveaway_MinCurrencyCheckBox.Checked ? "1" : "0");
+                        ini.SetValue(Present, "Giveaway_MinCurrency", Giveaway_MinCurrency.Value.ToString());
+                        ini.SetValue(Present, "Giveaway_ActiveUserTime", Giveaway_ActiveUserTime.Value.ToString());
+                        ini.SetValue(Present, "Giveaway_AutoBanWinner", Giveaway_AutoBanWinnerCheckBox.Checked ? "1" : "0");
                         string items = "";
                         foreach (object item in Giveaway_BanListListBox.Items)
                         {
                             items = items + item.ToString() + ";";
                             //Console.WriteLine("Ban : " + item.ToString());
                         }
-                        ini.SetValue(SettingsPresents.TabPages[SettingsPresent].Text, "Giveaway_BanList", items);
+                        ini.SetValue(Present, "Giveaway_BanList", items);
                     }
                 }
                 GetSettings();
@@ -876,19 +902,20 @@ namespace ModBot
             }
         }
 
-        private void Currency_HandoutEveryone_CheckedChanged(object sender, EventArgs e)
+        private void Currency_HandoutType_Changed(object sender, EventArgs e)
         {
-            ini.SetValue("Settings", "Currency_Handout", "0");
-        }
-
-        private void Currency_HandoutActiveStream_CheckedChanged(object sender, EventArgs e)
-        {
-            ini.SetValue("Settings", "Currency_Handout", "1");
-        }
-
-        private void Currency_HandoutActiveTime_CheckedChanged(object sender, EventArgs e)
-        {
-            ini.SetValue("Settings", "Currency_Handout", "2");
+            if (Currency_HandoutEveryone.Checked)
+            {
+                ini.SetValue("Settings", "Currency_Handout", "0");
+            }
+            else if (Currency_HandoutActiveStream.Checked)
+            {
+                ini.SetValue("Settings", "Currency_Handout", "1");
+            }
+            else if (Currency_HandoutActiveTime.Checked)
+            {
+                ini.SetValue("Settings", "Currency_Handout", "2");
+            }
             Currency_HandoutLastActive.Enabled = Currency_HandoutActiveTime.Checked;
         }
 
@@ -1073,6 +1100,19 @@ namespace ModBot
                 }
                 return true;
             }) == new Func<bool>(() => { return true; }));*/
+        }
+
+        private void Giveaway_TypeActive_CheckedChanged(object sender, EventArgs e)
+        {
+            Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
+            SaveSettings();
+        }
+
+        private void Giveaway_TypeTickets_CheckedChanged(object sender, EventArgs e)
+        {
+            Giveaway_MinCurrencyCheckBox.Enabled = Giveaway_MinCurrency.Enabled = !Giveaway_TypeTickets.Checked;
+            if (Giveaway_MinCurrencyCheckBox.Checked && Giveaway_TypeTickets.Checked) Giveaway_MinCurrencyCheckBox.Checked = false;
+            SaveSettings();
         }
     }
 }

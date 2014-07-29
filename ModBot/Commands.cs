@@ -47,7 +47,7 @@ namespace ModBot
 
             public void Call(string message)
             {
-                string[] args = message.Contains(" ") ? message.Substring(message.IndexOf(" ") + 1).Split(' ') : null;
+                string[] args = message.Contains(" ") ? message.Substring(message.IndexOf(" ") + 1).Split(' ') : new string[0];
                 if (Executed != null)
                 {
                     new System.Threading.Thread(() =>
@@ -59,7 +59,7 @@ namespace ModBot
 
             public void Call(string user, string message)
             {
-                string[] args = message.Contains(" ") ? message.Substring(message.IndexOf(" ") + 1).Split(' ') : null;
+                string[] args = message.Contains(" ") ? message.Substring(message.IndexOf(" ") + 1).Split(' ') : new string[0];
                 if (Executed != null)
                 {
                     new System.Threading.Thread(() =>
@@ -206,7 +206,7 @@ namespace ModBot
                         }
                         else
                         {
-                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", Api.GetDisplayName(user)));
+                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", user));
                         }
                     }
                 }
