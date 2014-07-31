@@ -29,7 +29,7 @@ namespace ModBot
         public static Timer auctionLooper;
         public static string greeting;
         public static bool greetingOn;
-        public static int g_iLastCurrencyLockAnnounce, g_iLastTop5Announce;
+        public static int g_iLastCurrencyDisabledAnnounce, g_iLastTop5Announce;
         public static int g_iStreamStartTime = 0;
         public static bool g_bIsStreaming;
         public static bool g_bResourceKeeper;
@@ -71,13 +71,6 @@ namespace ModBot
                             Console.WriteLine("Channel existence confirmed.\r\n");
                             bConfirmed = true;
                             return;
-                        }
-                        catch (SocketException)
-                        {
-                            Console.WriteLine("Unable to connect to Twitch API to confirm channel, retrying...");
-                        }
-                        catch (IOException)
-                        {
                         }
                         catch (Exception e)
                         {
@@ -226,7 +219,7 @@ namespace ModBot
                     write = new StreamWriter(irc.GetStream());
 
                     write.AutoFlush = true;
-                    
+
                     Console.WriteLine("Input/output configured.\r\n\r\nJoining the channel...");
 
                     sendRaw("PASS " + password);
@@ -284,8 +277,9 @@ namespace ModBot
 
                     return;
                 }
-                catch (SocketException)
+                catch (SocketException e)
                 {
+                    Api.LogError("*************Error Message (via Connect()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                 }
                 catch (Exception e)
                 {
@@ -536,13 +530,6 @@ namespace ModBot
                                 bIsStreaming = true;
                             }
                         }
-                        catch (SocketException)
-                        {
-                            Console.WriteLine("Unable to connect to Twitch API to check stream status, retrying...");
-                        }
-                        catch (IOException)
-                        {
-                        }
                         catch (Exception e)
                         {
                             if (e.Message.Contains("(404) Not Found."))
@@ -640,9 +627,6 @@ namespace ModBot
                                 Running = true;
                             }
                         }
-                    }
-                    catch (IOException)
-                    {
                     }
                     catch (Exception e)
                     {
@@ -869,7 +853,7 @@ namespace ModBot
                 {
                     if (args[0].Equals("top5"))
                     {
-                        if (!MainForm.Currency_LockCmdCheckBox.Checked && Api.GetUnixTimeNow() - g_iLastTop5Announce > 600 || Database.getUserLevel(user) >= 1)
+                        if (!MainForm.Currency_DisableCommandCheckBox.Checked && Api.GetUnixTimeNow() - g_iLastTop5Announce > 600 || Database.getUserLevel(user) >= 1)
                         {
                             g_iLastTop5Announce = Api.GetUnixTimeNow();
                             Dictionary<string, int> TopPoints = new Dictionary<string, int>();
@@ -901,15 +885,15 @@ namespace ModBot
                             }
                         }
                     }
-                    else if (args[0].Equals("lock") && Database.getUserLevel(user) >= 2)
+                    else if ((args[0].Equals("lock") || args[0].Equals("disable")) && Database.getUserLevel(user) >= 2)
                     {
-                        MainForm.Currency_LockCmdCheckBox.Checked = true;
-                        sendMessage("The !" + currency + " command is temporarily disabled.", user + " locked the currency command.");
+                        MainForm.Currency_DisableCommandCheckBox.Checked = true;
+                        sendMessage("The !" + currency + " command is now disabled.", user + " disabled the currency command.");
                     }
-                    else if (args[0].Equals("unlock") && Database.getUserLevel(user) >= 2)
+                    else if ((args[0].Equals("unlock") || args[0].Equals("enable")) && Database.getUserLevel(user) >= 2)
                     {
-                        MainForm.Currency_LockCmdCheckBox.Checked = false;
-                        sendMessage("The !" + currency + " command is now available to use.", user + " unlocked the currency command.");
+                        MainForm.Currency_DisableCommandCheckBox.Checked = false;
+                        sendMessage("The !" + currency + " command is now available to use.", user + " enabled the currency command.");
                     }
                     else if (args[0].Equals("clear") && Database.getUserLevel(user) >= 3)
                     {
@@ -1039,12 +1023,12 @@ namespace ModBot
             }
             else
             {
-                if (MainForm.Currency_LockCmdCheckBox.Checked && Database.getUserLevel(user) == 0 && Api.GetUnixTimeNow() - g_iLastCurrencyLockAnnounce > 600)
+                if (MainForm.Currency_DisableCommandCheckBox.Checked && Database.getUserLevel(user) == 0 && Api.GetUnixTimeNow() - g_iLastCurrencyDisabledAnnounce > 600)
                 {
-                    g_iLastCurrencyLockAnnounce = Api.GetUnixTimeNow();
+                    g_iLastCurrencyDisabledAnnounce = Api.GetUnixTimeNow();
                     sendMessage("The !" + currency + " command is disabled, you may politely ask a mod to check your " + currencyName + " for you.");
                 }
-                if (!MainForm.Currency_LockCmdCheckBox.Checked || Database.getUserLevel(user) >= 1)
+                if (!MainForm.Currency_DisableCommandCheckBox.Checked || Database.getUserLevel(user) >= 1)
                 {
                     addToLookups(user);
                 }
@@ -1682,10 +1666,6 @@ namespace ModBot
                             }
                         }
                     }
-                    catch (SocketException)
-                    {
-                        Console.WriteLine("Unable to connect to Twitch API to build the user list.");
-                    }
                     catch (Exception e)
                     {
                         Api.LogError("*************Error Message (via buildUserList()): " + DateTime.Now + "*********************************\r\nUnable to connect to Twitch API to build the user list.\r\n" + e + "\r\n");
@@ -1773,10 +1753,6 @@ namespace ModBot
                             {
                                 lSubs.Add(Api.capName(x["title"]["$t"].ToString()));
                             }
-                        }
-                        catch (SocketException)
-                        {
-                            Console.WriteLine("Unable to read from Google Drive. Skipping.");
                         }
                         catch (Exception e)
                         {

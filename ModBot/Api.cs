@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Sockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading;
@@ -65,10 +64,7 @@ namespace ModBot
                                 json_data = w.DownloadString("https://api.twitch.tv/kraken/users/" + user);
                                 Database.setDisplayName(user, JObject.Parse(json_data)["display_name"].ToString());
                             }
-                            catch (SocketException)
-                            {
-                            }
-                            catch (Exception)
+                            catch
                             {
                             }
                         }
@@ -144,10 +140,7 @@ namespace ModBot
                                 bFollowing = true;
                             }
                         }
-                        catch (SocketException)
-                        {
-                        }
-                        catch (Exception)
+                        catch
                         {
                         }
                     }
@@ -198,12 +191,9 @@ namespace ModBot
                             Transactions.Add(new Transaction(transaction, date, amount, name, notes));
                         }
                     }
-                    catch (SocketException)
-                    {
-                        Console.WriteLine("Unable to connect to Stream Donations to check the transactions.");
-                    }
                     catch (Exception e)
                     {
+                        Console.WriteLine("Unable to connect to Stream Donations to check the transactions.");
                         LogError("*************Error Message (via UpdateTransactions()): " + DateTime.Now + "*********************************\r\nUnable to connect to Stream Dontaions to check the transactions.\r\n" + e + "\r\n");
                     }
                 }

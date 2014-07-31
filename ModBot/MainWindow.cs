@@ -22,6 +22,7 @@ namespace ModBot
         public Dictionary<CheckBox, Panel> Windows = new Dictionary<CheckBox, Panel>();
         public Panel CurrentWindow = null;
         private List<Thread> Threads = new List<Thread>();
+        private string AuthenticationScopes;
 
         public MainWindow()
         {
@@ -40,7 +41,30 @@ namespace ModBot
             Panel panel = new Panel();
             panel.Size = new Size(1, 1);
             panel.Location = new Point(GiveawayTypeSpacer.Location.X + GiveawayTypeSpacer.Size.Width - 1, GiveawayTypeSpacer.Location.Y + 9);
-            GiveawayTypeSpacer.Parent.Controls.Add(panel);
+            GiveawayWindow.Controls.Add(panel);
+            panel.BringToFront();
+
+            panel = new Panel();
+            panel.Size = new Size(GenerateTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateTokenButton.Location.X, GenerateTokenButton.Location.Y);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.Size = new Size(GenerateTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateTokenButton.Location.X, GenerateTokenButton.Location.Y + GenerateTokenButton.Size.Height - 1);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.BackColor = Color.Black;
+            panel.Size = new Size(GenerateTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateTokenButton.Location.X, GenerateTokenButton.Location.Y + 1);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.BackColor = Color.Black;
+            panel.Size = new Size(GenerateTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateTokenButton.Location.X, GenerateTokenButton.Location.Y + GenerateTokenButton.Size.Height - 2);
+            SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
 
             Windows.Add(SettingsWindowButton, SettingsWindow);
@@ -101,7 +125,7 @@ namespace ModBot
             ini.SetValue("Settings", "Donations_Recent_Limit", (RecentDonorsLimit.Value = Convert.ToInt32(ini.GetValue("Settings", "Donations_Recent_Limit", "5"))).ToString());
             ini.SetValue("Settings", "Donations_UpdateLast", (UpdateLastDonorCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateLast", "0") == "1")) ? "1" : "0");
 
-            ini.SetValue("Settings", "Currency_LockCmd", ini.GetValue("Settings", "Currency_LockCmd", "0"));
+            ini.SetValue("Settings", "Currency_DisableCommand", ini.GetValue("Settings", "Currency_DisableCommand", "0"));
 
             string sCurrencyHandout = ini.GetValue("Settings", "Currency_Handout", "0");
             ini.SetValue("Settings", "Currency_Handout", sCurrencyHandout);
@@ -564,10 +588,6 @@ namespace ModBot
                         if (!stream["status"].ToString().Equals("")) sTitle = stream["status"].ToString();
                         if (!stream["game"].ToString().Equals("")) sGame = stream["game"].ToString();
                     }
-                    catch (System.Net.Sockets.SocketException)
-                    {
-                        Console.WriteLine("Unable to connect to Twitch API to check stream data.");
-                    }
                     catch (Exception e)
                     {
                         Api.LogError("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************\r\nUnable to connect to Twitch API to check stream data.\r\n" + e + "\r\n");
@@ -714,10 +734,10 @@ namespace ModBot
             SaveSettings();
         }
 
-        private void Currency_LockCmdCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void Currency_DisableCommandCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             SaveSettings();
-            Irc.g_iLastCurrencyLockAnnounce = 0;
+            Irc.g_iLastCurrencyDisabledAnnounce = 0;
         }
 
         public void SaveSettings(int SettingsPresent=-2)
@@ -731,7 +751,7 @@ namespace ModBot
             }
             if (!bIgnoreUpdates)
             {
-                ini.SetValue("Settings", "Currency_LockCmd", Currency_LockCmdCheckBox.Checked ? "1" : "0");
+                ini.SetValue("Settings", "Currency_DisableCommand", Currency_DisableCommandCheckBox.Checked ? "1" : "0");
                 if (SettingsPresent > -1)
                 {
                     string Present = SettingsPresents.TabPages[SettingsPresent].Text;
@@ -961,6 +981,7 @@ namespace ModBot
                 if(Windows[CB] == CurrentWindow)
                 {
                     CB.Checked = true;
+                    Windows[CB].BringToFront();
                 }
             }
         }
@@ -1113,6 +1134,78 @@ namespace ModBot
             Giveaway_MinCurrencyCheckBox.Enabled = Giveaway_MinCurrency.Enabled = !Giveaway_TypeTickets.Checked;
             if (Giveaway_MinCurrencyCheckBox.Checked && Giveaway_TypeTickets.Checked) Giveaway_MinCurrencyCheckBox.Checked = false;
             SaveSettings();
+        }
+
+        private void GenerateTokenButton_Click(object sender, EventArgs e)
+        {
+            foreach (Control ctrl in SettingsWindow.Controls)
+            {
+                if (ctrl.GetType() != typeof(System.Windows.Forms.Label))
+                {
+                    ctrl.Enabled = false;
+                }
+            }
+            SettingsWindowButton.Enabled = false;
+            AboutWindowButton.Enabled = false;
+            AuthenticationScopes = "chat_login";
+            AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
+        }
+
+        private void AuthenticationBrowser_Navigated(object sender, WebBrowserNavigatedEventArgs e)
+        {
+            if (e.Url.ToString().StartsWith("https://api.twitch.tv/kraken/oauth2/"))
+            {
+                AuthenticationBrowser.BringToFront();
+                if (AuthenticationScopes == "chat_login")
+                {
+                    AuthenticationLabel.Text = "Connect to the bot's account";
+                }
+                AuthenticationLabel.BringToFront();
+            }
+            else if (e.Url.Fragment.Contains("access_token"))
+            {
+                if (AuthenticationScopes == "chat_login")
+                {
+                    BotPasswordBox.Text = "oauth:" + e.Url.Fragment.Substring(14).Split('&')[0];
+                }
+                AuthenticationScopes = "";
+                foreach (Control ctrl in SettingsWindow.Controls)
+                {
+                    ctrl.Enabled = true;
+                }
+                DisconnectButton.Enabled = false;
+                SettingsWindow.BringToFront();
+                SettingsWindowButton.Enabled = true;
+                AboutWindowButton.Enabled = true;
+                AuthenticationBrowser.Url = new Uri("http://www.twitch.tv/logout");
+            }
+            else if (e.Url.ToString() == "http://www.twitch.tv/" || e.Url.ToString().StartsWith("http://www.twitch.tv/?error="))
+            {
+                if (e.Url.ToString().StartsWith("http://www.twitch.tv/?error="))
+                {
+                    AuthenticationScopes = "";
+                    SettingsWindow.BringToFront();
+                    SettingsWindowButton.Enabled = true;
+                    AboutWindowButton.Enabled = true;
+                    GenerateTokenButton.Enabled = true;
+                }
+
+                if (AuthenticationScopes == "")
+                {
+                    AuthenticationBrowser.Url = null;
+                }
+                else
+                {
+                    AuthenticationLabel.SendToBack();
+                    AuthenticationBrowser.Dispose(); // A weird workaround I had to use as for some reason it wouldn't let me use the same Web Browser to get the token if a login was required before generating the token.
+                    AuthenticationBrowser = new WebBrowser();
+                    AuthenticationBrowser.ScriptErrorsSuppressed = true;
+                    AuthenticationBrowser.Location = new Point(108, 30);
+                    AuthenticationBrowser.Size = new Size(814, 562);
+                    AuthenticationBrowser.Navigated += new WebBrowserNavigatedEventHandler(this.AuthenticationBrowser_Navigated);
+                    AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
+                }
+            }
         }
     }
 }

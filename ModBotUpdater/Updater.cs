@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
@@ -124,11 +123,7 @@ namespace ModBotUpdater
                         });
                         client.DownloadFileAsync(new Uri("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + LatestVersionLabel.Text + "/ModBot.exe"), @"Updater\ModBot.exe");
                     }
-                    catch (SocketException)
-                    {
-                        StateLabel.Text = "Error while attempting to update!";
-                    }
-                    catch (Exception)
+                    catch
                     {
                         StateLabel.Text = "Error while attempting to update!";
                     }
@@ -252,10 +247,7 @@ namespace ModBotUpdater
                             w.OpenRead("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + sLatestVersion + "/ModBot.exe");
                             dFileSize = Convert.ToDouble(w.ResponseHeaders["Content-Length"]);
                         }
-                        catch (SocketException)
-                        {
-                        }
-                        catch (Exception)
+                        catch
                         {
                         }
                     }
@@ -405,10 +397,7 @@ namespace ModBotUpdater
                             w.Proxy = null;
                             sData = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot-Changelog.txt");
                         }
-                        catch (SocketException)
-                        {
-                        }
-                        catch (Exception)
+                        catch
                         {
                         }
                     }

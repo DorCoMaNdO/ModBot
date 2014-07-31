@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -130,10 +129,7 @@ namespace ModBot
                                 }
                             }
                         }
-                        catch (SocketException)
-                        {
-                        }
-                        catch (Exception)
+                        catch
                         {
                         }
                     }

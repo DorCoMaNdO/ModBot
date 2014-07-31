@@ -49,7 +49,7 @@
             this.Giveaway_UnbanButton = new System.Windows.Forms.Button();
             this.Giveaway_AddBanTextBox = new System.Windows.Forms.TextBox();
             this.Giveaway_AutoBanWinnerCheckBox = new System.Windows.Forms.CheckBox();
-            this.Currency_LockCmdCheckBox = new System.Windows.Forms.CheckBox();
+            this.Currency_DisableCommandCheckBox = new System.Windows.Forms.CheckBox();
             this.Giveaway_CopyWinnerButton = new System.Windows.Forms.Button();
             this.Giveaway_WinnerTimerLabel = new System.Windows.Forms.Label();
             this.Giveaway_WinnerTimer = new System.Windows.Forms.Timer(this.components);
@@ -70,6 +70,7 @@
             this.SettingsWindowButton = new System.Windows.Forms.CheckBox();
             this.DonationsWindowButton = new System.Windows.Forms.CheckBox();
             this.SettingsWindow = new System.Windows.Forms.Panel();
+            this.GenerateTokenButton = new System.Windows.Forms.Button();
             this.label21 = new System.Windows.Forms.Label();
             this.CurrencyCommandBox = new System.Windows.Forms.TextBox();
             this.SettingsErrorLabel = new System.Windows.Forms.Label();
@@ -130,6 +131,7 @@
             this.label19 = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.AuthenticationBrowser = new System.Windows.Forms.WebBrowser();
             this.ChannelWindowButton = new System.Windows.Forms.CheckBox();
             this.ChannelWindow = new System.Windows.Forms.Panel();
             this.CurrencyWindow = new System.Windows.Forms.Panel();
@@ -143,6 +145,7 @@
             this.Giveaway_TypeTickets = new System.Windows.Forms.RadioButton();
             this.Giveaway_TypeKeyword = new System.Windows.Forms.RadioButton();
             this.Giveaway_TypeActive = new System.Windows.Forms.RadioButton();
+            this.AuthenticationLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrency)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_ActiveUserTime)).BeginInit();
             this.SettingsPresents.SuspendLayout();
@@ -414,17 +417,17 @@
             this.Giveaway_AutoBanWinnerCheckBox.UseVisualStyleBackColor = true;
             this.Giveaway_AutoBanWinnerCheckBox.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
-            // Currency_LockCmdCheckBox
+            // Currency_DisableCommandCheckBox
             // 
-            this.Currency_LockCmdCheckBox.AutoSize = true;
-            this.Currency_LockCmdCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Currency_LockCmdCheckBox.Location = new System.Drawing.Point(6, 84);
-            this.Currency_LockCmdCheckBox.Name = "Currency_LockCmdCheckBox";
-            this.Currency_LockCmdCheckBox.Size = new System.Drawing.Size(140, 17);
-            this.Currency_LockCmdCheckBox.TabIndex = 35;
-            this.Currency_LockCmdCheckBox.Text = "Lock currency command";
-            this.Currency_LockCmdCheckBox.UseVisualStyleBackColor = true;
-            this.Currency_LockCmdCheckBox.CheckedChanged += new System.EventHandler(this.Currency_LockCmdCheckBox_CheckedChanged);
+            this.Currency_DisableCommandCheckBox.AutoSize = true;
+            this.Currency_DisableCommandCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Currency_DisableCommandCheckBox.Location = new System.Drawing.Point(6, 84);
+            this.Currency_DisableCommandCheckBox.Name = "Currency_DisableCommandCheckBox";
+            this.Currency_DisableCommandCheckBox.Size = new System.Drawing.Size(151, 17);
+            this.Currency_DisableCommandCheckBox.TabIndex = 35;
+            this.Currency_DisableCommandCheckBox.Text = "Disable currency command";
+            this.Currency_DisableCommandCheckBox.UseVisualStyleBackColor = true;
+            this.Currency_DisableCommandCheckBox.CheckedChanged += new System.EventHandler(this.Currency_DisableCommandCheckBox_CheckedChanged);
             // 
             // Giveaway_CopyWinnerButton
             // 
@@ -661,6 +664,7 @@
             // SettingsWindow
             // 
             this.SettingsWindow.BackColor = System.Drawing.Color.White;
+            this.SettingsWindow.Controls.Add(this.GenerateTokenButton);
             this.SettingsWindow.Controls.Add(this.label21);
             this.SettingsWindow.Controls.Add(this.CurrencyCommandBox);
             this.SettingsWindow.Controls.Add(this.SettingsErrorLabel);
@@ -696,6 +700,19 @@
             this.SettingsWindow.Size = new System.Drawing.Size(814, 562);
             this.SettingsWindow.TabIndex = 58;
             this.SettingsWindow.Visible = this.SettingsWindowButton.Checked;
+            // 
+            // GenerateTokenButton
+            // 
+            this.GenerateTokenButton.BackColor = System.Drawing.Color.White;
+            this.GenerateTokenButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.GenerateTokenButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GenerateTokenButton.Location = new System.Drawing.Point(629, 72);
+            this.GenerateTokenButton.Name = "GenerateTokenButton";
+            this.GenerateTokenButton.Size = new System.Drawing.Size(178, 22);
+            this.GenerateTokenButton.TabIndex = 87;
+            this.GenerateTokenButton.Text = "Generate";
+            this.GenerateTokenButton.UseVisualStyleBackColor = false;
+            this.GenerateTokenButton.Click += new System.EventHandler(this.GenerateTokenButton_Click);
             // 
             // label21
             // 
@@ -906,9 +923,9 @@
             this.label12.AutoSize = true;
             this.label12.Location = new System.Drawing.Point(3, 57);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(75, 13);
+            this.label12.Size = new System.Drawing.Size(105, 13);
             this.label12.TabIndex = 65;
-            this.label12.Text = "Bot Password:";
+            this.label12.Text = "Bot\'s Access Token:";
             // 
             // label11
             // 
@@ -981,7 +998,7 @@
             this.BotPasswordBox.Location = new System.Drawing.Point(6, 73);
             this.BotPasswordBox.Name = "BotPasswordBox";
             this.BotPasswordBox.PasswordChar = '*';
-            this.BotPasswordBox.Size = new System.Drawing.Size(801, 20);
+            this.BotPasswordBox.Size = new System.Drawing.Size(617, 20);
             this.BotPasswordBox.TabIndex = 66;
             this.BotPasswordBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
             // 
@@ -1358,6 +1375,18 @@
             this.panel2.Size = new System.Drawing.Size(814, 562);
             this.panel2.TabIndex = 62;
             // 
+            // AuthenticationBrowser
+            // 
+            this.AuthenticationBrowser.Location = new System.Drawing.Point(108, 30);
+            this.AuthenticationBrowser.MinimumSize = new System.Drawing.Size(20, 20);
+            this.AuthenticationBrowser.Name = "AuthenticationBrowser";
+            this.AuthenticationBrowser.ScriptErrorsSuppressed = true;
+            this.AuthenticationBrowser.ScrollBarsEnabled = false;
+            this.AuthenticationBrowser.Size = new System.Drawing.Size(814, 562);
+            this.AuthenticationBrowser.TabIndex = 0;
+            this.AuthenticationBrowser.WebBrowserShortcutsEnabled = false;
+            this.AuthenticationBrowser.Navigated += new System.Windows.Forms.WebBrowserNavigatedEventHandler(this.AuthenticationBrowser_Navigated);
+            // 
             // ChannelWindowButton
             // 
             this.ChannelWindowButton.Appearance = System.Windows.Forms.Appearance.Button;
@@ -1400,7 +1429,7 @@
             this.CurrencyWindow.Controls.Add(this.Currency_HandoutActiveStream);
             this.CurrencyWindow.Controls.Add(this.Currency_HandoutEveryone);
             this.CurrencyWindow.Controls.Add(this.Currency_HandoutLabel);
-            this.CurrencyWindow.Controls.Add(this.Currency_LockCmdCheckBox);
+            this.CurrencyWindow.Controls.Add(this.Currency_DisableCommandCheckBox);
             this.CurrencyWindow.Location = new System.Drawing.Point(108, 30);
             this.CurrencyWindow.Name = "CurrencyWindow";
             this.CurrencyWindow.Size = new System.Drawing.Size(814, 562);
@@ -1525,7 +1554,6 @@
             // Giveaway_TypeTickets
             // 
             this.Giveaway_TypeTickets.AutoSize = true;
-            this.Giveaway_TypeTickets.Enabled = false;
             this.Giveaway_TypeTickets.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Giveaway_TypeTickets.Location = new System.Drawing.Point(6, 76);
             this.Giveaway_TypeTickets.Name = "Giveaway_TypeTickets";
@@ -1538,7 +1566,6 @@
             // Giveaway_TypeKeyword
             // 
             this.Giveaway_TypeKeyword.AutoSize = true;
-            this.Giveaway_TypeKeyword.Enabled = false;
             this.Giveaway_TypeKeyword.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Giveaway_TypeKeyword.Location = new System.Drawing.Point(6, 61);
             this.Giveaway_TypeKeyword.Name = "Giveaway_TypeKeyword";
@@ -1562,6 +1589,16 @@
             this.Giveaway_TypeActive.UseVisualStyleBackColor = true;
             this.Giveaway_TypeActive.CheckedChanged += new System.EventHandler(this.Giveaway_TypeActive_CheckedChanged);
             // 
+            // AuthenticationLabel
+            // 
+            this.AuthenticationLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.AuthenticationLabel.Location = new System.Drawing.Point(108, 30);
+            this.AuthenticationLabel.Name = "AuthenticationLabel";
+            this.AuthenticationLabel.Size = new System.Drawing.Size(814, 31);
+            this.AuthenticationLabel.TabIndex = 66;
+            this.AuthenticationLabel.Text = "Connect to the bot\'s account";
+            this.AuthenticationLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1573,25 +1610,29 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.GiveawayWindow);
-            this.Controls.Add(this.panel2);
-            this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
             this.Controls.Add(this.CurrencyWindow);
+            this.Controls.Add(this.GiveawayWindow);
+            this.Controls.Add(this.AuthenticationBrowser);
+            this.Controls.Add(this.AuthenticationLabel);
+            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.AboutWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.Controls.SetChildIndex(this.AboutWindow, 0);
+            this.Controls.SetChildIndex(this.panel2, 0);
+            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
+            this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
+            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.CurrencyWindow, 0);
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
-            this.Controls.SetChildIndex(this.AboutWindow, 0);
-            this.Controls.SetChildIndex(this.panel2, 0);
-            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -1646,7 +1687,7 @@
         public System.Windows.Forms.Button Giveaway_UnbanButton;
         public System.Windows.Forms.TextBox Giveaway_AddBanTextBox;
         public System.Windows.Forms.CheckBox Giveaway_AutoBanWinnerCheckBox;
-        public System.Windows.Forms.CheckBox Currency_LockCmdCheckBox;
+        public System.Windows.Forms.CheckBox Currency_DisableCommandCheckBox;
         public System.Windows.Forms.Button Giveaway_CopyWinnerButton;
         public System.Windows.Forms.Label Giveaway_WinnerTimerLabel;
         public System.Windows.Forms.Timer Giveaway_WinnerTimer;
@@ -1740,5 +1781,8 @@
         private System.Windows.Forms.GroupBox GiveawayRulesSpacer;
         private System.Windows.Forms.Label GiveawayBansLabel;
         private System.Windows.Forms.GroupBox GiveawayBansSpacer;
+        public System.Windows.Forms.Button GenerateTokenButton;
+        private System.Windows.Forms.WebBrowser AuthenticationBrowser;
+        private System.Windows.Forms.Label AuthenticationLabel;
     }
 }
