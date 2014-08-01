@@ -15,7 +15,6 @@ namespace ModBot
         {
             public string Cmd { get; private set; }
             private event CommandExecutedHandler Executed;
-            private List<CommandExecutedHandler> Handlers = new List<CommandExecutedHandler>();
 
             public Command(string Command, CommandExecutedHandler Handler)
             {
@@ -30,17 +29,12 @@ namespace ModBot
                     {
                         if (cmd.Cmd == Command)
                         {
-                            if (!Handlers.Contains(Handler))
-                            {
-                                cmd.Executed += Handler;
-                                Handlers.Add(Handler);
-                            }
+                            cmd.Executed += Handler;
                             return;
                         }
                     }
                     this.Cmd = Command;
                     Executed += Handler;
-                    Handlers.Add(Handler);
                     lCommands.Add(this);
                 }
             }
@@ -72,16 +66,11 @@ namespace ModBot
             public void Remove()
             {
                 Executed = null;
-                Handlers = new List<CommandExecutedHandler>();
             }
 
             public void Remove(CommandExecutedHandler Handler)
             {
-                if (Handlers.Contains(Handler))
-                {
-                    Executed -= Handler;
-                    Handlers.Remove(Handler);
-                }
+                Executed -= Handler;
             }
         }
 

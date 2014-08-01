@@ -92,6 +92,7 @@
   <ItemGroup>
     <Compile Include="Auction.cs" />
     <Compile Include="Api.cs" />
+    <Compile Include="CommandDemo.cs" />
     <Compile Include="CustomForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -107,6 +108,7 @@
     <Compile Include="MainWindow.Designer.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>
+    <Compile Include="Modifications.cs" />
     <Compile Include="Pool.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="Irc.cs" />

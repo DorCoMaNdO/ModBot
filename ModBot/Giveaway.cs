@@ -100,7 +100,7 @@ namespace ModBot
         public static bool BuyTickets(string user, int tickets=1)
         {
             user = Api.capName(user);
-            if (Started && (MainForm.Giveaway_TypeKeyword.Checked || MainForm.Giveaway_TypeTickets.Checked) && Open && tickets <= MaxTickets && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollowingChannel(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked))
+            if (Started && (MainForm.Giveaway_TypeKeyword.Checked || MainForm.Giveaway_TypeTickets.Checked) && Open && tickets <= MaxTickets && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked))
             {
                 int paid = 0;
                 if (Users.ContainsKey(user))
@@ -172,7 +172,7 @@ namespace ModBot
                                     {
                                         if (CurrentTime - user.Value <= ActiveTime && Database.checkCurrency(user.Key) >= GetMinCurrency())
                                         {
-                                            if (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollowingChannel(user.Key) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
+                                            if (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user.Key) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
                                             {
                                                 ValidUsers.Add(user.Key);
                                             }
@@ -190,7 +190,7 @@ namespace ModBot
                                     List<string> Delete = new List<string>();
                                     foreach (string user in Users.Keys)
                                     {
-                                        if (Irc.ActiveUsers.ContainsKey(user) && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollowingChannel(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked))
+                                        if (Irc.ActiveUsers.ContainsKey(user) && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked))
                                         {
                                             for (int i = 0; i < Users[user]; i++)
                                             {
@@ -237,7 +237,7 @@ namespace ModBot
                             {
                                 //string WinnerLabel = "Winner : ";
                                 string WinnerLabel = "";
-                                if (Api.IsFollowingChannel(sWinner)) WinnerLabel += "Following | ";
+                                if (Api.IsFollower(sWinner)) WinnerLabel += "Following | ";
                                 WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currencyName + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + Chance.ToString("0.00") + "%";
                                 MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel;
                                 MainForm.Giveaway_WinnerLabel.Text = sWinner;

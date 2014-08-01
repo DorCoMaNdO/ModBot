@@ -45,25 +45,25 @@ namespace ModBot
             panel.BringToFront();
 
             panel = new Panel();
-            panel.Size = new Size(GenerateTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateTokenButton.Location.X, GenerateTokenButton.Location.Y);
+            panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
             panel = new Panel();
-            panel.Size = new Size(GenerateTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateTokenButton.Location.X, GenerateTokenButton.Location.Y + GenerateTokenButton.Size.Height - 1);
-            SettingsWindow.Controls.Add(panel);
-            panel.BringToFront();
-            panel = new Panel();
-            panel.BackColor = Color.Black;
-            panel.Size = new Size(GenerateTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateTokenButton.Location.X, GenerateTokenButton.Location.Y + 1);
+            panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y + GenerateBotTokenButton.Size.Height - 1);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
             panel = new Panel();
             panel.BackColor = Color.Black;
-            panel.Size = new Size(GenerateTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateTokenButton.Location.X, GenerateTokenButton.Location.Y + GenerateTokenButton.Size.Height - 2);
+            panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y + 1);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.BackColor = Color.Black;
+            panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y + GenerateBotTokenButton.Size.Height - 2);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
 
@@ -160,6 +160,8 @@ namespace ModBot
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
+            Modifications.Load();
+
             //Settings loading
             /*Dictionary<Control, bool> dState = new Dictionary<Control, bool>();
             Thread tLoad = new Thread(() =>
@@ -677,7 +679,7 @@ namespace ModBot
         private void Giveaway_AnnounceWinnerButton_Click(object sender, EventArgs e)
         {
             TimeSpan t = Database.getTimeWatched(Giveaway_WinnerLabel.Text);
-            Irc.sendMessage(Giveaway_WinnerLabel.Text + " has won the giveaway! (" + (Api.IsFollowingChannel(Giveaway_WinnerLabel.Text) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+            Irc.sendMessage(Giveaway_WinnerLabel.Text + " has won the giveaway! (" + (Api.IsFollower(Giveaway_WinnerLabel.Text) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
         }
 
         private void Giveaway_BanButton_Click(object sender, EventArgs e)
@@ -1136,7 +1138,7 @@ namespace ModBot
             SaveSettings();
         }
 
-        private void GenerateTokenButton_Click(object sender, EventArgs e)
+        private void GenerateToken_Request(object sender, EventArgs e)
         {
             foreach (Control ctrl in SettingsWindow.Controls)
             {
@@ -1147,7 +1149,14 @@ namespace ModBot
             }
             SettingsWindowButton.Enabled = false;
             AboutWindowButton.Enabled = false;
-            AuthenticationScopes = "chat_login";
+            if ((Button)sender == GenerateBotTokenButton)
+            {
+                AuthenticationScopes = "chat_login";
+            }
+            else
+            {
+                AuthenticationScopes = "channel_editor channel_commercial channel_check_subscription chat_login";
+            }
             AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
         }
 
@@ -1160,6 +1169,10 @@ namespace ModBot
                 {
                     AuthenticationLabel.Text = "Connect to the bot's account";
                 }
+                else
+                {
+                    AuthenticationLabel.Text = "Connect to your account (channel)";
+                }
                 AuthenticationLabel.BringToFront();
             }
             else if (e.Url.Fragment.Contains("access_token"))
@@ -1168,6 +1181,7 @@ namespace ModBot
                 {
                     BotPasswordBox.Text = "oauth:" + e.Url.Fragment.Substring(14).Split('&')[0];
                 }
+
                 AuthenticationScopes = "";
                 foreach (Control ctrl in SettingsWindow.Controls)
                 {
@@ -1184,10 +1198,15 @@ namespace ModBot
                 if (e.Url.ToString().StartsWith("http://www.twitch.tv/?error="))
                 {
                     AuthenticationScopes = "";
+                    foreach (Control ctrl in SettingsWindow.Controls)
+                    {
+                        ctrl.Enabled = true;
+                    }
+                    DisconnectButton.Enabled = false;
                     SettingsWindow.BringToFront();
                     SettingsWindowButton.Enabled = true;
                     AboutWindowButton.Enabled = true;
-                    GenerateTokenButton.Enabled = true;
+                    GenerateBotTokenButton.Enabled = true;
                 }
 
                 if (AuthenticationScopes == "")

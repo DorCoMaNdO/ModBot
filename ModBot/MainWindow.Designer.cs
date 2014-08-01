@@ -70,7 +70,7 @@
             this.SettingsWindowButton = new System.Windows.Forms.CheckBox();
             this.DonationsWindowButton = new System.Windows.Forms.CheckBox();
             this.SettingsWindow = new System.Windows.Forms.Panel();
-            this.GenerateTokenButton = new System.Windows.Forms.Button();
+            this.GenerateBotTokenButton = new System.Windows.Forms.Button();
             this.label21 = new System.Windows.Forms.Label();
             this.CurrencyCommandBox = new System.Windows.Forms.TextBox();
             this.SettingsErrorLabel = new System.Windows.Forms.Label();
@@ -664,7 +664,7 @@
             // SettingsWindow
             // 
             this.SettingsWindow.BackColor = System.Drawing.Color.White;
-            this.SettingsWindow.Controls.Add(this.GenerateTokenButton);
+            this.SettingsWindow.Controls.Add(this.GenerateBotTokenButton);
             this.SettingsWindow.Controls.Add(this.label21);
             this.SettingsWindow.Controls.Add(this.CurrencyCommandBox);
             this.SettingsWindow.Controls.Add(this.SettingsErrorLabel);
@@ -701,18 +701,18 @@
             this.SettingsWindow.TabIndex = 58;
             this.SettingsWindow.Visible = this.SettingsWindowButton.Checked;
             // 
-            // GenerateTokenButton
+            // GenerateBotTokenButton
             // 
-            this.GenerateTokenButton.BackColor = System.Drawing.Color.White;
-            this.GenerateTokenButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.GenerateTokenButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.GenerateTokenButton.Location = new System.Drawing.Point(629, 72);
-            this.GenerateTokenButton.Name = "GenerateTokenButton";
-            this.GenerateTokenButton.Size = new System.Drawing.Size(178, 22);
-            this.GenerateTokenButton.TabIndex = 87;
-            this.GenerateTokenButton.Text = "Generate";
-            this.GenerateTokenButton.UseVisualStyleBackColor = false;
-            this.GenerateTokenButton.Click += new System.EventHandler(this.GenerateTokenButton_Click);
+            this.GenerateBotTokenButton.BackColor = System.Drawing.Color.White;
+            this.GenerateBotTokenButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.GenerateBotTokenButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GenerateBotTokenButton.Location = new System.Drawing.Point(629, 72);
+            this.GenerateBotTokenButton.Name = "GenerateBotTokenButton";
+            this.GenerateBotTokenButton.Size = new System.Drawing.Size(178, 22);
+            this.GenerateBotTokenButton.TabIndex = 87;
+            this.GenerateBotTokenButton.Text = "Generate";
+            this.GenerateBotTokenButton.UseVisualStyleBackColor = false;
+            this.GenerateBotTokenButton.Click += new System.EventHandler(this.GenerateToken_Request);
             // 
             // label21
             // 
@@ -1554,6 +1554,7 @@
             // Giveaway_TypeTickets
             // 
             this.Giveaway_TypeTickets.AutoSize = true;
+            this.Giveaway_TypeTickets.Enabled = false;
             this.Giveaway_TypeTickets.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Giveaway_TypeTickets.Location = new System.Drawing.Point(6, 76);
             this.Giveaway_TypeTickets.Name = "Giveaway_TypeTickets";
@@ -1566,6 +1567,7 @@
             // Giveaway_TypeKeyword
             // 
             this.Giveaway_TypeKeyword.AutoSize = true;
+            this.Giveaway_TypeKeyword.Enabled = false;
             this.Giveaway_TypeKeyword.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Giveaway_TypeKeyword.Location = new System.Drawing.Point(6, 61);
             this.Giveaway_TypeKeyword.Name = "Giveaway_TypeKeyword";
@@ -1610,29 +1612,29 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.SettingsWindow);
-            this.Controls.Add(this.DonationsWindow);
-            this.Controls.Add(this.ChannelWindow);
-            this.Controls.Add(this.CurrencyWindow);
             this.Controls.Add(this.GiveawayWindow);
             this.Controls.Add(this.AuthenticationBrowser);
             this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.AboutWindow);
+            this.Controls.Add(this.SettingsWindow);
+            this.Controls.Add(this.DonationsWindow);
+            this.Controls.Add(this.ChannelWindow);
+            this.Controls.Add(this.CurrencyWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
+            this.Controls.SetChildIndex(this.ChannelWindow, 0);
+            this.Controls.SetChildIndex(this.DonationsWindow, 0);
+            this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
             this.Controls.SetChildIndex(this.GiveawayWindow, 0);
-            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
-            this.Controls.SetChildIndex(this.ChannelWindow, 0);
-            this.Controls.SetChildIndex(this.DonationsWindow, 0);
-            this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -1722,7 +1724,7 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label1;
         public System.Windows.Forms.Button ConnectButton;
-        private System.Windows.Forms.TextBox BotPasswordBox;
+        public System.Windows.Forms.TextBox BotPasswordBox;
         private System.Windows.Forms.TextBox BotNameBox;
         private System.Windows.Forms.TextBox ChannelBox;
         private System.Windows.Forms.TextBox CurrencyNameBox;
@@ -1781,7 +1783,7 @@
         private System.Windows.Forms.GroupBox GiveawayRulesSpacer;
         private System.Windows.Forms.Label GiveawayBansLabel;
         private System.Windows.Forms.GroupBox GiveawayBansSpacer;
-        public System.Windows.Forms.Button GenerateTokenButton;
+        public System.Windows.Forms.Button GenerateBotTokenButton;
         private System.Windows.Forms.WebBrowser AuthenticationBrowser;
         private System.Windows.Forms.Label AuthenticationLabel;
     }

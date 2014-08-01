@@ -13,13 +13,30 @@ using System.Drawing;
 
 namespace ModBot
 {
+    public delegate void OnInitialize(InitializationStep step);
+
+    public enum InitializationStep
+    {
+        ValidateBotToken,
+        ValidateChannelToken,
+        ConfirmChannel,
+        ConnectionAborted,
+        ConfigureSettings,
+        DatabaseSetup,
+        Connect,
+        ConnectionSuccessful,
+        ConnectionFailed,
+        CommandRegistration,
+        ThreadsCreation
+    }
+
     public static class Irc
     {
         private static iniUtil ini = Program.ini;
         public static TcpClient irc;
         public static StreamReader read;
         public static StreamWriter write;
-        public static string nick, password, channel, currency, currencyName, admin, donationkey;
+        public static string nick, password, channel, currency, currencyName, admin, donationkey, channeltoken;
         public static int interval, payout;
         public static bool auctionOpen;
         public static List<string> IgnoredUsers = new List<string>();
@@ -39,6 +56,8 @@ namespace ModBot
         private static bool CommandsRegistered;
         public static List<Thread> Threads = new List<Thread>();
 
+        public static event OnInitialize OnInitialize = ((InitializationStep step) => { });
+
         public static void Initialize()
         {
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
@@ -54,39 +73,48 @@ namespace ModBot
 
             Program.FocusConsole();
 
-            Console.WriteLine("Confirming channel's existence in Twitch...");
+            Console.WriteLine("Validating bot's access token...");
 
-            bool bConfirmed = false;
+            OnInitialize(InitializationStep.ValidateBotToken);
+
+            bool bAbort = true;
             Thread thread = new Thread(() =>
             {
                 for (int attempts = 0; attempts < 5; attempts++)
                 {
-                    Console.WriteLine("Channel's existence confirming attempt : " + (attempts + 1) + "/5");
+                    Console.WriteLine("Bot's access token validation attempt : " + (attempts + 1) + "/5");
                     using (WebClient w = new WebClient())
                     {
                         try
                         {
                             w.Proxy = null;
-                            w.DownloadString("https://api.twitch.tv/kraken/channels/" + channel.Substring(1));
-                            Console.WriteLine("Channel existence confirmed.\r\n");
-                            bConfirmed = true;
-                            return;
-                        }
-                        catch (Exception e)
-                        {
-                            if (e.Message.Contains("(404) Not Found."))
+                            string json_data = w.DownloadString("https://api.twitch.tv/kraken?oauth_token=" + password.Replace("oauth:", ""));
+                            JObject json = JObject.Parse(json_data);
+                            if (json["token"]["valid"].ToString() == "True" && json["token"]["user_name"].ToString() == nick)
                             {
-                                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                foreach (JToken x in json["token"]["authorization"]["scopes"])
                                 {
-                                    Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
-                                });
-                                System.Threading.Thread.Sleep(10);
-                                break;
+                                    if (x.ToString() == "chat_login")
+                                    {
+                                        Console.WriteLine("Bot's access token has been validated.\r\n");
+                                        bAbort = false;
+                                        return;
+                                    }
+                                }
                             }
                             else
                             {
-                                Api.LogError("*************Error Message (via confirmStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                {
+                                    Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported bot's auth token invalid.");
+                                });
+                                Thread.Sleep(10);
+                                break;
                             }
+                        }
+                        catch (Exception e)
+                        {
+                            Api.LogError("*************Error Message (via validateBotToken()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                         }
                     }
 
@@ -94,10 +122,12 @@ namespace ModBot
                     {
                         Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
                     }
-                    System.Threading.Thread.Sleep(100);
+                    Thread.Sleep(100);
                 }
 
                 Console.WriteLine("Aborting connection.\r\n");
+
+                OnInitialize(InitializationStep.ConnectionAborted);
 
                 MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                 {
@@ -110,12 +140,153 @@ namespace ModBot
                 });
             });
             Threads.Add(thread);
-            thread.Name = "Channel confirming";
+            thread.Name = "Bot's access token validation";
             thread.Start();
             thread.Join();
             if (Threads.Contains(thread)) Threads.Remove(thread);
 
-            if (!bConfirmed) return;
+            if (!bAbort)
+            {
+                Console.WriteLine("Validating channel's access token...");
+
+                OnInitialize(InitializationStep.ValidateChannelToken);
+
+                thread = new Thread(() =>
+                {
+                    for (int attempts = 0; attempts < 5; attempts++)
+                    {
+                        Console.WriteLine("Channel's access token validation attempt : " + (attempts + 1) + "/5");
+                        using (WebClient w = new WebClient())
+                        {
+                            try
+                            {
+                                w.Proxy = null;
+                                string json_data = w.DownloadString("https://api.twitch.tv/kraken?oauth_token=" + channeltoken);
+                                JObject json = JObject.Parse(json_data);
+                                if (json["token"]["valid"].ToString() == "True" && json["token"]["user_name"].ToString() == channel.Substring(1))
+                                {
+                                    int scopes = 0;
+                                    foreach (JToken x in json["token"]["authorization"]["scopes"])
+                                    {
+                                        if (x.ToString() == "channel_editor" || x.ToString() == "channel_commercial" || x.ToString() == "channel_check_subscription" || x.ToString() == "chat_login")
+                                        {
+                                            scopes++;
+                                        }
+                                    }
+
+                                    if (scopes == 4)
+                                    {
+                                        Console.WriteLine("Channel's access token has been validated.\r\n");
+                                        bAbort = false;
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("The channel's access token is missing access and will not be used, some functions will be disabled..\r\n");
+                                    }
+                                }
+                                else
+                                {
+                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                    {
+                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel's auth token invalid, some functions will be disabled.\r\n");
+                                    });
+                                    Thread.Sleep(10);
+                                    break;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Api.LogError("*************Error Message (via validateBotToken()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            }
+                        }
+
+                        if (attempts == 4)
+                        {
+                            Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
+                        }
+                        Thread.Sleep(100);
+                    }
+
+                    // Disable token-related functions here.
+                    channeltoken = "";
+                });
+                Threads.Add(thread);
+                thread.Name = "Channel's access token validation";
+                thread.Start();
+                thread.Join();
+                if (Threads.Contains(thread)) Threads.Remove(thread);
+
+                Console.WriteLine("Confirming channel's existence in Twitch...");
+
+                OnInitialize(InitializationStep.ConfirmChannel);
+
+                thread = new Thread(() =>
+                {
+                    for (int attempts = 0; attempts < 5; attempts++)
+                    {
+                        Console.WriteLine("Channel's existence confirming attempt : " + (attempts + 1) + "/5");
+                        using (WebClient w = new WebClient())
+                        {
+                            try
+                            {
+                                w.Proxy = null;
+                                w.DownloadString("https://api.twitch.tv/kraken/channels/" + channel.Substring(1));
+                                Console.WriteLine("Channel existence confirmed.\r\n");
+                                bAbort = false;
+                                return;
+                            }
+                            catch (Exception e)
+                            {
+                                if (e.Message.Contains("(404) Not Found."))
+                                {
+                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                    {
+                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
+                                    });
+                                    System.Threading.Thread.Sleep(10);
+                                    break;
+                                }
+                                else
+                                {
+                                    Api.LogError("*************Error Message (via confirmStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                                }
+                            }
+                        }
+
+                        if (attempts == 4)
+                        {
+                            Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
+                        }
+                        Thread.Sleep(100);
+                    }
+
+                    Console.WriteLine("Aborting connection.\r\n");
+
+                    OnInitialize(InitializationStep.ConnectionAborted);
+
+                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
+                        {
+                            ctrl.Enabled = true;
+                        }
+                        MainForm.DisconnectButton.Enabled = false;
+                        MainForm.ConnectButton.Enabled = false;
+                    });
+                });
+                Threads.Add(thread);
+                thread.Name = "Channel confirming";
+                thread.Start();
+                thread.Join();
+                if (Threads.Contains(thread)) Threads.Remove(thread);
+            }
+
+            if (bAbort) return;
+
+            Console.WriteLine("Configuring settings...");
+
+            OnInitialize(InitializationStep.ConfigureSettings);
 
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
@@ -146,8 +317,6 @@ namespace ModBot
                 MainForm.Giveaway_MinCurrencyCheckBox.Text = "Must have at least                       " + currencyName;
             });
 
-            Console.WriteLine("Configuring settings...");
-
             ini.SetValue("Settings", "ResourceKeeper", (g_bResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
 
             /*if (donationkey == "")
@@ -165,6 +334,8 @@ namespace ModBot
 
             Console.WriteLine("Settings configured.\r\n");
 
+            if (Database.DB == null) OnInitialize(InitializationStep.DatabaseSetup);
+
             Database.Initialize();
 
             //Database.newUser(admin);
@@ -178,6 +349,9 @@ namespace ModBot
             if (!CommandsRegistered)
             {
                 Console.WriteLine("Registering commands...");
+
+                OnInitialize(InitializationStep.CommandRegistration);
+
                 Commands.Add("!raffle", Command_Giveaway);
                 Commands.Add("!giveaway", Command_Giveaway);
                 Commands.Add("!" + currency, Command_Currency);
@@ -188,6 +362,7 @@ namespace ModBot
                 Commands.Add("!btag", Command_BTag);
                 Commands.Add("!battletag", Command_BTag);
                 Commands.Add("!modbot", Command_ModBot);
+
                 Console.WriteLine("Commands registered.\r\n");
                 CommandsRegistered = true;
             }
@@ -196,6 +371,8 @@ namespace ModBot
         private static void Connect()
         {
             Console.WriteLine("Initializing connection...");
+
+            OnInitialize(InitializationStep.Connect);
 
             for (int attempt = 1; attempt <= 5; attempt++)
             {
@@ -229,6 +406,8 @@ namespace ModBot
 
                     if (!read.ReadLine().Contains("Login unsuccessful"))
                     {
+                        OnInitialize(InitializationStep.ConnectionSuccessful);
+
                         nick = Api.GetDisplayName(nick);
                         admin = Api.GetDisplayName(admin);
 
@@ -267,6 +446,8 @@ namespace ModBot
                     }
                     else
                     {
+                        OnInitialize(InitializationStep.ConnectionFailed);
+
                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Username and/or password (oauth token) are incorrect!");
@@ -300,6 +481,9 @@ namespace ModBot
                 else
                 {
                     Console.WriteLine("Failed to connect to Twitch.TV chat servers...");
+
+                    OnInitialize(InitializationStep.ConnectionFailed);
+
                     //MainForm.Hide();
                     List<Thread> Ts = new List<Thread>();
                     foreach (Thread t in Threads)
@@ -439,6 +623,8 @@ namespace ModBot
 
             Console.WriteLine("Creating and starting threads and timers...");
 
+            OnInitialize(InitializationStep.ThreadsCreation);
+
             bool Running = false;
 
             Console.Write("Time watched and currency handout thread... ");
@@ -452,19 +638,8 @@ namespace ModBot
                     {
                         new Thread(() =>
                         {
-                            List<string> temp = new List<string>();
+                            List<string> spreadsheetSubs = Api.checkSpreadsheetSubs();
                             buildUserList();
-
-                            try
-                            {
-                                temp = checkSubList();
-                                //Console.WriteLine(temp);
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine("Problem reading sub list. Skipping");
-                                Api.LogError("*************Error Message (via handoutCurrency()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                            }
                             lock (ActiveUsers)
                             {
                                 foreach (string user in ActiveUsers.Keys)
@@ -473,7 +648,7 @@ namespace ModBot
                                     TimeSpan t = Database.getTimeWatched(user);
                                     if (t.Days * 24 * 60 + t.Hours * 60 + t.Minutes % interval == 0 && (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
                                     {
-                                        if (Database.isSubscriber(user) || temp.Contains(user))
+                                        if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Api.IsSubscriber(user))
                                         {
                                             Database.addCurrency(user, payout * 2);
                                         }
@@ -544,12 +719,13 @@ namespace ModBot
                                     });
                                 }).Start();
                             }
-                            else if(e.Message.Contains("(503) Server Unavailable"))
+                            else if (e.Message.Contains("(503) Server Unavailable"))
                             {
                                 Console.WriteLine("Unable to connect to Twitch API to check stream status, retrying...");
                             }
                             else
                             {
+                                Console.WriteLine("Unable to connect to Twitch API to check stream status, retrying...");
                                 Api.LogError("*************Error Message (via checkStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                             }
                         }
@@ -795,7 +971,7 @@ namespace ModBot
                             else
                             {
                                 TimeSpan t = Database.getTimeWatched(winner);
-                                sendMessage(winner + " has won the giveaway! (" + (Api.IsFollowingChannel(winner) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+                                sendMessage(winner + " has won the giveaway! (" + (Api.IsFollower(winner) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
                             }
                         }
                     }
@@ -828,7 +1004,7 @@ namespace ModBot
             }
             else
             {
-                if(Giveaway.Started && MainForm.Giveaway_TypeKeyword.Checked)
+                if (Giveaway.Started && MainForm.Giveaway_TypeKeyword.Checked)
                 {
                     if (Giveaway.Open && !Giveaway.HasBoughtTickets(user))
                     {
@@ -847,7 +1023,7 @@ namespace ModBot
 
         private static void Command_Currency(string user, string cmd, string[] args)
         {
-            if(args.Length > 0)
+            if (args.Length > 0)
             {
                 if (args.Length == 1)
                 {
@@ -865,7 +1041,7 @@ namespace ModBot
                                 }
                             }
                             TopPoints = TopPoints.OrderByDescending(key => key.Value).ToDictionary(item => item.Key, item => item.Value);
-                            if(TopPoints.Count > 0)
+                            if (TopPoints.Count > 0)
                             {
                                 string output = "";
                                 int max = 5;
@@ -873,7 +1049,7 @@ namespace ModBot
                                 {
                                     max = TopPoints.Count;
                                 }
-                                for(int i = 0; i < max; i++)
+                                for (int i = 0; i < max; i++)
                                 {
                                     output += Api.GetDisplayName(TopPoints.ElementAt(i).Key) + " (" + Database.getTimeWatched(TopPoints.ElementAt(i).Key).ToString(@"d\d\ hh\h\ mm\m") + ") - " + TopPoints.ElementAt(i).Value + ", ";
                                 }
@@ -1708,10 +1884,10 @@ namespace ModBot
             }
         }
 
-        public static void sendMessage(string message, string log="", bool logtoconsole = true, bool usemecommand = true)
+        public static void sendMessage(string message, string log = "", bool logtoconsole = true, bool usemecommand = true)
         {
             sendRaw("PRIVMSG " + channel + " :" + (usemecommand ? "/me " : "") + message);
-            if(log != "")
+            if (log != "")
             {
                 Log(log);
             }
@@ -1733,42 +1909,6 @@ namespace ModBot
             else return person + " (" + btag + ") ";
         }
 
-        private static List<string> checkSubList()
-        {
-            List<string> lSubs = new List<string>();
-            string sSubURL = ini.GetValue("Settings", "Subsribers_URL", "");
-            if (sSubURL != "")
-            {
-                Thread thread = new Thread(() =>
-                {
-                    string json_data = "";
-                    using (WebClient w = new WebClient())
-                    {
-                        try
-                        {
-                            w.Proxy = null;
-                            json_data = w.DownloadString(sSubURL);
-                            JObject list = JObject.Parse(json_data);
-                            foreach (var x in list["feed"]["entry"])
-                            {
-                                lSubs.Add(Api.capName(x["title"]["$t"].ToString()));
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Api.LogError("*************Error Message (via checkSubList()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                        }
-                    }
-                });
-                Threads.Add(thread);
-                thread.Name = "Update subscribers";
-                thread.Start();
-                thread.Join();
-                if (Threads.Contains(thread)) Threads.Remove(thread);
-            }
-            return lSubs;
-        }
-
         private static void buildBetOptions(string[] temp)
         {
             try
@@ -1780,7 +1920,7 @@ namespace ModBot
                     string option = "";
                     for (int i = 2; i < temp.Length; i++)
                     {
-                        if(temp[i].StartsWith("\""))
+                        if (temp[i].StartsWith("\""))
                         {
                             inQuote = true;
                         }
