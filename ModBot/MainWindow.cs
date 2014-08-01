@@ -46,7 +46,7 @@ namespace ModBot
                 while (true)
                 {
                     Thread.Sleep(60000);
-                    if(Irc.irc.Connected)
+                    if (Irc.irc != null && Irc.irc.Connected)
                     {
                         using (WebClient w = new WebClient())
                         {
