@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using System.Windows.Forms;
 using System.Globalization;
 using System.Threading;
+using System.Reflection;
 
 namespace ModBot
 {
@@ -27,7 +28,52 @@ namespace ModBot
         public MainWindow()
         {
             InitializeComponent();
-            Text = "ModBot v" + (VersionLabel.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString()).Replace("." + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.Revision.ToString(), "");
+            Text = "ModBot v" + (VersionLabel.Text = "Version: " + Assembly.GetExecutingAssembly().GetName().Version.ToString()).Substring(9);
+
+            string Hash;
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                using (FileStream stream = File.OpenRead(AppDomain.CurrentDomain.FriendlyName))
+                {
+                    Hash = BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLower();
+                }
+            }
+
+            HashLabel.Text = "Hash: " + Hash;
+
+            Thread thread = new Thread(() =>
+            {
+                while (true)
+                {
+                    Thread.Sleep(60000);
+                    if(Irc.irc.Connected)
+                    {
+                        using (WebClient w = new WebClient())
+                        {
+                            try
+                            {
+                                w.Proxy = null;
+                                int iViewers = Irc.ActiveUsers.Count;
+                                foreach (string user in Irc.IgnoredUsers)
+                                {
+                                    if (Irc.ActiveUsers.ContainsKey(user))
+                                    {
+                                        iViewers--;
+                                    }
+                                }
+                                // Thanks to Illarvan for giving me some space on his host!
+                                string data = w.DownloadString("http://ddoguild.co.uk/modbot/streams/?channel=" + Irc.channel.Substring(1) + "&bot=" + Irc.nick + "&hash=" + Hash + "&version=" + Assembly.GetExecutingAssembly().GetName().Version + "&viewers=" + iViewers + "&date=" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(Assembly.GetExecutingAssembly().GetName().Version.Build).AddSeconds(Assembly.GetExecutingAssembly().GetName().Version.Revision * 2).ToString("M/dd/yyyy hh:mm:ss tt") + "&status=" + (Irc.g_bIsStreaming ? "2" : "1"));
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                }
+            });
+            thread.Name = "Status reporting";
+            thread.Start();
+            Threads.Add(thread);
 
             CenterSpacer(ConnectionLabel, ConnectionSpacer);
             CenterSpacer(CurrencyLabel, CurrencySpacer);

@@ -508,4 +508,3 @@ namespace ModBot
         }
     }
 }
-//Commands

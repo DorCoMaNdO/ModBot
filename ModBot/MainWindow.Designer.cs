@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyleMultiline = new System.Windows.Forms.DataGridViewCellStyle();
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollowCheckBox = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -121,6 +122,7 @@
             this.UpdateLastDonorCheckBox = new System.Windows.Forms.CheckBox();
             this.AboutWindowButton = new System.Windows.Forms.CheckBox();
             this.AboutWindow = new System.Windows.Forms.Panel();
+            this.HashLabel = new System.Windows.Forms.Label();
             this.SupportLinkLabel = new System.Windows.Forms.LinkLabel();
             this.EmailLinkLabel = new System.Windows.Forms.LinkLabel();
             this.label17 = new System.Windows.Forms.Label();
@@ -128,7 +130,6 @@
             this.label18 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.VersionLabel = new System.Windows.Forms.Label();
-            this.label19 = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
             this.AuthenticationBrowser = new System.Windows.Forms.WebBrowser();
@@ -1096,8 +1097,8 @@
             // 
             this.Donations_List.AllowUserToAddRows = false;
             this.Donations_List.AllowUserToDeleteRows = false;
-            this.Donations_List.AllowUserToResizeColumns = false;
-            this.Donations_List.AllowUserToResizeRows = false;
+            this.Donations_List.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            this.Donations_List.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
             this.Donations_List.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.Donations_List.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Date,
@@ -1127,7 +1128,7 @@
             this.Date.Name = "Date";
             this.Date.ReadOnly = true;
             this.Date.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.Date.Width = 110;
+            this.Date.Width = 112;
             // 
             // Donor
             // 
@@ -1155,6 +1156,8 @@
             // 
             // Notes
             // 
+            dataGridViewCellStyleMultiline.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyleMultiline;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1263,6 +1266,7 @@
             // AboutWindow
             // 
             this.AboutWindow.BackColor = System.Drawing.Color.White;
+            this.AboutWindow.Controls.Add(this.HashLabel);
             this.AboutWindow.Controls.Add(this.SupportLinkLabel);
             this.AboutWindow.Controls.Add(this.EmailLinkLabel);
             this.AboutWindow.Controls.Add(this.label17);
@@ -1270,12 +1274,20 @@
             this.AboutWindow.Controls.Add(this.label18);
             this.AboutWindow.Controls.Add(this.pictureBox1);
             this.AboutWindow.Controls.Add(this.VersionLabel);
-            this.AboutWindow.Controls.Add(this.label19);
             this.AboutWindow.Controls.Add(this.label20);
             this.AboutWindow.Location = new System.Drawing.Point(108, 30);
             this.AboutWindow.Name = "AboutWindow";
             this.AboutWindow.Size = new System.Drawing.Size(814, 562);
             this.AboutWindow.TabIndex = 61;
+            // 
+            // HashLabel
+            // 
+            this.HashLabel.AutoSize = true;
+            this.HashLabel.Location = new System.Drawing.Point(3, 269);
+            this.HashLabel.Name = "HashLabel";
+            this.HashLabel.Size = new System.Drawing.Size(38, 13);
+            this.HashLabel.TabIndex = 24;
+            this.HashLabel.Text = "Hash: ";
             // 
             // SupportLinkLabel
             // 
@@ -1342,20 +1354,11 @@
             // VersionLabel
             // 
             this.VersionLabel.AutoSize = true;
-            this.VersionLabel.Location = new System.Drawing.Point(45, 135);
+            this.VersionLabel.Location = new System.Drawing.Point(3, 135);
             this.VersionLabel.Name = "VersionLabel";
-            this.VersionLabel.Size = new System.Drawing.Size(36, 13);
-            this.VersionLabel.TabIndex = 17;
-            this.VersionLabel.Text = "x.x.x.x";
-            // 
-            // label19
-            // 
-            this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(3, 135);
-            this.label19.Name = "label19";
-            this.label19.Size = new System.Drawing.Size(45, 13);
-            this.label19.TabIndex = 16;
-            this.label19.Text = "Version:";
+            this.VersionLabel.Size = new System.Drawing.Size(45, 13);
+            this.VersionLabel.TabIndex = 16;
+            this.VersionLabel.Text = "Version:";
             // 
             // label20
             // 
@@ -1567,7 +1570,6 @@
             // Giveaway_TypeKeyword
             // 
             this.Giveaway_TypeKeyword.AutoSize = true;
-            this.Giveaway_TypeKeyword.Enabled = false;
             this.Giveaway_TypeKeyword.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Giveaway_TypeKeyword.Location = new System.Drawing.Point(6, 61);
             this.Giveaway_TypeKeyword.Name = "Giveaway_TypeKeyword";
@@ -1614,8 +1616,8 @@
             this.Controls.Add(this.SettingsWindowButton);
             this.Controls.Add(this.GiveawayWindow);
             this.Controls.Add(this.AuthenticationBrowser);
-            this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.panel2);
+            this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
@@ -1631,8 +1633,8 @@
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.AboutWindow, 0);
-            this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
+            this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
             this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
@@ -1742,15 +1744,6 @@
         public System.Windows.Forms.CheckBox UpdateTopDonorsCheckBox;
         private System.Windows.Forms.Label label15;
         public System.Windows.Forms.DataGridView Donations_List;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Date;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Donor;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Amount;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Notes;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeRecent;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeLatest;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTop;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTopDonor;
         public System.Windows.Forms.NumericUpDown TopDonorsLimit;
         public System.Windows.Forms.CheckBox UpdateRecentDonorsCheckBox;
         private System.Windows.Forms.Label label16;
@@ -1765,7 +1758,6 @@
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Label VersionLabel;
-        private System.Windows.Forms.Label label19;
         private System.Windows.Forms.Label label20;
         public System.Windows.Forms.Label SettingsErrorLabel;
         public System.Windows.Forms.CheckBox ChannelWindowButton;
@@ -1786,5 +1778,15 @@
         public System.Windows.Forms.Button GenerateBotTokenButton;
         private System.Windows.Forms.WebBrowser AuthenticationBrowser;
         private System.Windows.Forms.Label AuthenticationLabel;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Date;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Donor;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Amount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Notes;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeRecent;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeLatest;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTop;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTopDonor;
+        private System.Windows.Forms.Label HashLabel;
     }
 }

@@ -148,7 +148,7 @@ namespace ModBot
             return bFollower;
         }
 
-        /*public static bool IsSubscriber(string user)
+        public static bool IsSubscriber(string user)
         {
             user = user.ToLower();
             bool bSubscriber = false;
@@ -172,7 +172,7 @@ namespace ModBot
             thread.Start();
             thread.Join();
             return bSubscriber;
-        }*/
+        }
 
         public static List<string> checkSpreadsheetSubs()
         {
@@ -231,33 +231,23 @@ namespace ModBot
                         {
                             Transactions.Add(new Transaction(transaction["4"].ToString(), transaction["2"].ToString(), transaction["3"].ToString(), transaction["0"].ToString(), transaction["1"].ToString()));
                         }
-                        /*while (data.Contains("\"DT_RowId\""))
+                        /*int count = 100;
+                        while (Transactions.Count < count)
                         {
-                            string date = "Donated at some point", name = "Unknown", amount = "0.00", notes = "", transaction = "";
-                            data = data.Substring(data.IndexOf("\"0\":") + 4);
-                            if (!data.StartsWith("null"))
+                            string json_data = w.DownloadString("https://streamtip.com/api/tips?client_id=" + Irc.donation_clientid + "&access_token=" + Irc.donation_token + "&limit=100&offset=" + Transactions.Count);
+                            if (json_data == "{\"status\":401,\"message\":\"Unauthorized\"}")
                             {
-                                name = data.Substring(1, data.IndexOf("\",") - 1);
-                            }
-                            data = data.Substring(data.IndexOf(",\"1\":") + 4);
-                            if (!data.StartsWith("null"))
-                            {
-                                notes = data.Substring(2, data.IndexOf("\",") - 2).Replace("&lt;", "<").Replace("&gt;", ">");
-                            }
-                            data = data.Substring(data.IndexOf(",\"2\":") + 4);
-                            if (!data.StartsWith("null"))
-                            {
-                                date = data.Substring(2, data.IndexOf("\",") - 2);
-                            }
-                            data = data.Substring(data.IndexOf(",\"3\":") + 4);
-                            if (!data.StartsWith("null"))
-                            {
-                                amount = data.Substring(2, data.IndexOf("\",") - 2);
+                                Console.WriteLine("Stream Tip key is incorrect. Donations checks disabled.");
+                                Irc.donationkey = "";
+                                return Transactions;
                             }
 
-                            data = data.Substring(data.IndexOf("\"DT_RowId\":\"") + 12);
-                            transaction = data.Substring(0, data.IndexOf("\""));
-                            Transactions.Add(new Transaction(transaction, date, amount, name, notes));
+                            JObject json = JObject.Parse(json_data);
+                            count = (int)json["_count"];
+                            foreach (JToken transaction in json["tips"])
+                            {
+                                Transactions.Add(new Transaction(transaction["transactionId"].ToString(), DateTime.Parse(transaction["date"].ToString(), null, System.Globalization.DateTimeStyles.RoundtripKind).ToString(), transaction["amount"].ToString(), transaction["username"].ToString(), transaction["note"].ToString()));
+                            }
                         }*/
                     }
                     catch (Exception e)

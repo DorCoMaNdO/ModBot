@@ -137,19 +137,22 @@ namespace ModBot
         public static string getWinner()
         {
             string sWinner = "";
-            if (!Started) startGiveaway();
-            MainForm.Giveaway_RerollButton.Enabled = false;
-            MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
-            MainForm.Giveaway_CopyWinnerButton.Enabled = false;
-            MainForm.Giveaway_WinnerStatusLabel.Text = "";
-            MainForm.Giveaway_WinnerLabel.Text = "Rolling...";
-            MainForm.Giveaway_WinnerLabel.ForeColor = Color.Red;
-            MainForm.Giveaway_RerollButton.Text = "Reroll";
-            MainForm.Giveaway_WinnerTimerLabel.Text = "0:00";
-            MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.Black;
-            MainForm.Giveaway_WinTimeLabel.Text = "0:00";
-            MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
-            MainForm.Giveaway_WinnerChat.Clear();
+            MainForm.BeginInvoke((MethodInvoker)delegate
+            {
+                if (!Started) startGiveaway();
+                MainForm.Giveaway_RerollButton.Enabled = false;
+                MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
+                MainForm.Giveaway_CopyWinnerButton.Enabled = false;
+                MainForm.Giveaway_WinnerStatusLabel.Text = "";
+                MainForm.Giveaway_WinnerLabel.Text = "Rolling...";
+                MainForm.Giveaway_WinnerLabel.ForeColor = Color.Red;
+                MainForm.Giveaway_RerollButton.Text = "Reroll";
+                MainForm.Giveaway_WinnerTimerLabel.Text = "0:00";
+                MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.Black;
+                MainForm.Giveaway_WinTimeLabel.Text = "0:00";
+                MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
+                MainForm.Giveaway_WinnerChat.Clear();
+            });
             LastRoll = 0;
 
             Thread thread = new Thread(() =>

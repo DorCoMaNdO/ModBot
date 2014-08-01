@@ -60,6 +60,8 @@ namespace ModBot
 
         public static void Initialize()
         {
+            MainForm = Program.MainForm;
+
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)

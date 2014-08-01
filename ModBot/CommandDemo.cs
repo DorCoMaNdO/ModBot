@@ -7,15 +7,10 @@ namespace ModBot
 {
     public static class CommandDemo
     {
-        /*private class Dummy // We need a dummy class that we can call without editing the bot's code.
+        /*static CommandDemo()
         {
-            public Dummy()
-            {
-                Irc.OnInitialize += OnRegistering; // We use the dummy class to register our event.
-                Console.WriteLine("Test1");
-            }
-        }
-        private static Dummy dummy = new Dummy();*/
+            Console.WriteLine("Test");
+        }*/
 
         public static void OnRegistering(InitializationStep step) // This handler has been registered in the Modifications class. It's being called after the main window has loaded.
         {
