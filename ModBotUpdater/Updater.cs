@@ -242,7 +242,6 @@ namespace ModBotUpdater
                     {
                         try
                         {
-                            w.Proxy = null;
                             sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
                             w.OpenRead("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + sLatestVersion + "/ModBot.exe");
                             dFileSize = Convert.ToDouble(w.ResponseHeaders["Content-Length"]);
@@ -394,7 +393,6 @@ namespace ModBotUpdater
                     {
                         try
                         {
-                            w.Proxy = null;
                             sData = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot-Changelog.txt");
                         }
                         catch

@@ -24,6 +24,7 @@ namespace ModBot
         public Panel CurrentWindow = null;
         private List<Thread> Threads = new List<Thread>();
         private string AuthenticationScopes;
+        private bool TitleGameModified;
 
         public MainWindow()
         {
@@ -53,7 +54,6 @@ namespace ModBot
                         {
                             try
                             {
-                                w.Proxy = null;
                                 int iViewers = Irc.ActiveUsers.Count;
                                 foreach (string user in Irc.IgnoredUsers)
                                 {
@@ -91,6 +91,7 @@ namespace ModBot
             GiveawayWindow.Controls.Add(panel);
             panel.BringToFront();
 
+            // Todo : Create a method
             panel = new Panel();
             panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
             panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y);
@@ -111,6 +112,29 @@ namespace ModBot
             panel.BackColor = Color.Black;
             panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
             panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y + GenerateBotTokenButton.Size.Height - 2);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+
+            panel = new Panel();
+            panel.Size = new Size(GenerateChannelTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateChannelTokenButton.Location.X, GenerateChannelTokenButton.Location.Y);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.Size = new Size(GenerateChannelTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateChannelTokenButton.Location.X, GenerateChannelTokenButton.Location.Y + GenerateChannelTokenButton.Size.Height - 1);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.BackColor = Color.Black;
+            panel.Size = new Size(GenerateChannelTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateChannelTokenButton.Location.X, GenerateChannelTokenButton.Location.Y + 1);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.BackColor = Color.Black;
+            panel.Size = new Size(GenerateChannelTokenButton.Size.Width, 1);
+            panel.Location = new Point(GenerateChannelTokenButton.Location.X, GenerateChannelTokenButton.Location.Y + GenerateChannelTokenButton.Size.Height - 2);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
 
@@ -149,6 +173,7 @@ namespace ModBot
             ini.SetValue("Settings", "BOT_Name", BotNameBox.Text = ini.GetValue("Settings", "BOT_Name", "ModBot"));
             ini.SetValue("Settings", "BOT_Password", BotPasswordBox.Text = ini.GetValue("Settings", "BOT_Password", ""));
             ini.SetValue("Settings", "Channel_Name", ChannelBox.Text = ini.GetValue("Settings", "Channel_Name", "ModChannel"));
+            ini.SetValue("Settings", "Channel_Token", ChannelTokenBox.Text = ini.GetValue("Settings", "Channel_Token", ""));
             ini.SetValue("Settings", "Currency_Name", CurrencyNameBox.Text = ini.GetValue("Settings", "Currency_Name", "Mod Coins"));
             ini.SetValue("Settings", "Currency_Command", CurrencyCommandBox.Text = ini.GetValue("Settings", "Currency_Command", "ModCoins"));
             int interval = Convert.ToInt32(ini.GetValue("Settings", "Currency_Interval", "5"));
@@ -164,7 +189,8 @@ namespace ModBot
             }
             ini.SetValue("Settings", "Currency_Payout", (CurrencyHandoutAmount.Value = payout).ToString());
             ini.SetValue("Settings", "Subsribers_URL", SubLinkBox.Text = ini.GetValue("Settings", "Subsribers_URL", ""));
-            ini.SetValue("Settings", "Donations_Key", DonationsKeyBox.Text = ini.GetValue("Settings", "Donations_Key", ""));
+            ini.SetValue("Settings", "Donations_ClientID", DonationsClientIdBox.Text = ini.GetValue("Settings", "Donations_ClientID", ""));
+            ini.SetValue("Settings", "Donations_Token", DonationsTokenBox.Text = ini.GetValue("Settings", "Donations_Token", ""));
 
             ini.SetValue("Settings", "Donations_UpdateTop", (UpdateTopDonorsCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateTop", "0") == "1")) ? "1" : "0");
             ini.SetValue("Settings", "Donations_Top_Limit", (TopDonorsLimit.Value = Convert.ToInt32(ini.GetValue("Settings", "Donations_Top_Limit", "20"))).ToString());
@@ -613,7 +639,6 @@ namespace ModBot
                     }
                 }
 
-                string sTitle = "Unavailable...", sGame = "Unavailable...";
                 int iStatus = 0;
                 if (Irc.irc.Connected)
                 {
@@ -626,74 +651,59 @@ namespace ModBot
                         iStatus = 1;
                     }
                 }
-                using (WebClient w = new WebClient())
-                {
-                    string json_data = "";
-                    try
-                    {
-                        w.Proxy = null;
-                        json_data = w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1));
-                        JObject stream = JObject.Parse(json_data);
-                        if (!stream["status"].ToString().Equals("")) sTitle = stream["status"].ToString();
-                        if (!stream["game"].ToString().Equals("")) sGame = stream["game"].ToString();
-                    }
-                    catch (Exception e)
-                    {
-                        Api.LogError("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************\r\nUnable to connect to Twitch API to check stream data.\r\n" + e + "\r\n");
-                    }
-                }
 
-                if (IsHandleCreated)
+                if (!TitleGameModified)
                 {
-                    BeginInvoke((MethodInvoker)delegate
+                    using (WebClient w = new WebClient())
                     {
-                        ChannelStatusLabel.Text = "DISCONNECTED";
-                        ChannelStatusLabel.ForeColor = Color.Red;
-                        if (iStatus == 2)
+                        string json_data = "";
+                        try
                         {
-                            ChannelStatusLabel.Text = "ON AIR";
-                            ChannelStatusLabel.ForeColor = Color.Green;
-                            int iViewers = Irc.ActiveUsers.Count;
-                            foreach (string user in Irc.IgnoredUsers)
+                            json_data = w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1));
+                            JObject stream = JObject.Parse(json_data);
+                            BeginInvoke((MethodInvoker)delegate
                             {
-                                if (Irc.ActiveUsers.ContainsKey(user))
+                                if (!TitleGameModified)
                                 {
-                                    iViewers--;
+                                    ChannelTitleBox.Text = stream["status"].ToString();
+                                    ChannelGameBox.Text = stream["game"].ToString();
                                 }
-                            }
-                            ChannelStatusLabel.Text += " (" + iViewers + ")";
+                            });
                         }
-                        else if (iStatus == 1)
+                        catch (Exception e)
                         {
-                            ChannelStatusLabel.Text = "OFF AIR";
-                            ChannelStatusLabel.ForeColor = Color.Blue;
+                            Api.LogError("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************\r\nUnable to connect to Twitch API to check stream data.\r\n" + e + "\r\n");
                         }
-                        ChannelTitleTextBox.Text = sTitle;
-                        ChannelGameTextBox.Text = sGame;
-
-                        //g_bLoaded = true;
-                    });
+                    }
+                    TitleGameModified = false;
                 }
-                /*else
+
+                BeginInvoke((MethodInvoker)delegate
                 {
-                    Currency_HandoutLabel.Text = "Handout " + IRC.currency + " to :";
-
-                    Giveaway_MinCurrencyCheckBox.Text = "Min. " + IRC.currency;
-
-                    ChannelLabel.Text = sName;
-                    ChannelLabel.ForeColor = Color.Red;
+                    ChannelStatusLabel.Text = "DISCONNECTED";
+                    ChannelStatusLabel.ForeColor = Color.Red;
                     if (iStatus == 2)
                     {
-                        ChannelLabel.ForeColor = Color.Green;
-                        ChannelLabel.Text += sViewers;
+                        ChannelStatusLabel.Text = "ON AIR";
+                        ChannelStatusLabel.ForeColor = Color.Green;
+                        int iViewers = Irc.ActiveUsers.Count;
+                        foreach (string user in Irc.IgnoredUsers)
+                        {
+                            if (Irc.ActiveUsers.ContainsKey(user))
+                            {
+                                iViewers--;
+                            }
+                        }
+                        ChannelStatusLabel.Text += " (" + iViewers + ")";
                     }
                     else if (iStatus == 1)
                     {
-                        ChannelLabel.ForeColor = Color.Blue;
+                        ChannelStatusLabel.Text = "OFF AIR";
+                        ChannelStatusLabel.ForeColor = Color.Blue;
                     }
-                    ChannelTitleTextBox.Text = sTitle;
-                    ChannelGameTextBox.Text = sGame;
-                }*/
+
+                    //g_bLoaded = true;
+                });
 
                 if (Irc.g_bResourceKeeper)
                 {
@@ -1033,6 +1043,11 @@ namespace ModBot
                     Windows[CB].BringToFront();
                 }
             }
+
+            if(CurrentWindow != ChannelWindow)
+            {
+                TitleGameModified = false;
+            }
         }
 
         private void ConnectButton_Click(object sender, EventArgs e)
@@ -1043,13 +1058,16 @@ namespace ModBot
             ini.SetValue("Settings", "Channel_Name", ChannelBox.Text);
             Irc.admin = ChannelBox.Text.Replace("#", "");
             Irc.channel = "#" + ChannelBox.Text.Replace("#", "").ToLower();
+            ini.SetValue("Settings", "Channel_Token", Irc.channeltoken = ChannelTokenBox.Text);
+            if(Irc.channeltoken.StartsWith("oauth:")) Irc.channeltoken = ChannelTokenBox.Text.Substring(6);
             ini.SetValue("Settings", "Currency_Name", Irc.currencyName = CurrencyNameBox.Text);
-            ini.SetValue("Settings", "Currency_Command", Irc.currency = CurrencyCommandBox.Text);
+            ini.SetValue("Settings", "Currency_Command", Irc.currency = CurrencyCommandBox.Text.StartsWith("!") ? CurrencyCommandBox.Text.Substring(1) : CurrencyCommandBox.Text);
             ini.SetValue("Settings", "Currency_Interval", CurrencyHandoutInterval.Value.ToString());
             Irc.interval = Convert.ToInt32(CurrencyHandoutInterval.Value.ToString());
             ini.SetValue("Settings", "Currency_Payout", CurrencyHandoutAmount.Value.ToString());
             Irc.payout = Convert.ToInt32(CurrencyHandoutAmount.Value.ToString());
-            ini.SetValue("Settings", "Donations_Key", Irc.donationkey = DonationsKeyBox.Text);
+            ini.SetValue("Settings", "Donations_ClientID", Irc.donation_clientid = DonationsClientIdBox.Text);
+            ini.SetValue("Settings", "Donations_Token", Irc.donation_token = DonationsTokenBox.Text);
             if (SubLinkBox.Text != "")
             {
                 if ((SubLinkBox.Text.StartsWith("https://spreadsheets.google.com") || SubLinkBox.Text.StartsWith("http://spreadsheets.google.com")) && SubLinkBox.Text.EndsWith("?alt=json"))
@@ -1202,7 +1220,7 @@ namespace ModBot
             }
             else
             {
-                AuthenticationScopes = "channel_editor channel_commercial channel_check_subscription chat_login";
+                AuthenticationScopes = "user_read channel_editor channel_commercial channel_check_subscription chat_login";
             }
             AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
         }
@@ -1227,6 +1245,10 @@ namespace ModBot
                 if (AuthenticationScopes == "chat_login")
                 {
                     BotPasswordBox.Text = "oauth:" + e.Url.Fragment.Substring(14).Split('&')[0];
+                }
+                else
+                {
+                    ChannelTokenBox.Text = e.Url.Fragment.Substring(14).Split('&')[0];
                 }
 
                 AuthenticationScopes = "";
@@ -1272,6 +1294,31 @@ namespace ModBot
                     AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
                 }
             }
+        }
+
+        private void UpdateTitleGameButton_Click(object sender, EventArgs e)
+        {
+            new Thread(() =>
+            {
+                using (WebClient w = new WebClient())
+                {
+                    try
+                    {
+                        //w.Headers["Accept"] = "application/vnd.twitchtv.v3+json";
+                        w.Headers["Authorization"] = "OAuth " + Irc.channeltoken;
+                        w.UploadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1) + "?channel[status]=" + ChannelTitleBox.Text + "&channel[game]=" + ChannelGameBox.Text, "PUT", "");
+                        TitleGameModified = false;
+                    }
+                    catch
+                    {
+                    }
+                }
+            }).Start();
+        }
+
+        private void TitleGame_Modified(object sender, EventArgs e)
+        {
+            TitleGameModified = true;
         }
     }
 }

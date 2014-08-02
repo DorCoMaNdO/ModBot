@@ -61,7 +61,6 @@ namespace ModBot
                             string json_data = "";
                             try
                             {
-                                w.Proxy = null;
                                 json_data = w.DownloadString("https://api.twitch.tv/kraken/users/" + user);
                                 Database.setDisplayName(user, JObject.Parse(json_data)["display_name"].ToString());
                             }
@@ -133,7 +132,6 @@ namespace ModBot
                     {
                         try
                         {
-                            w.Proxy = null;
                             string sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + user + "/follows/channels/" + Irc.channel.Substring(1));
                             bFollower = !sData.Contains("is not following");
                         }
@@ -152,25 +150,27 @@ namespace ModBot
         {
             user = user.ToLower();
             bool bSubscriber = false;
-            Thread thread = new Thread(
-                () =>
-                {
-                    using (WebClient w = new WebClient())
+            if (Irc.partnered && Irc.channeltoken != "")
+            {
+                Thread thread = new Thread(
+                    () =>
                     {
-                        try
+                        using (WebClient w = new WebClient())
                         {
-                            w.Proxy = null;
-                            string sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + Irc.channel.Substring(1) + "/subscriptions/channels/" + user + "?oauth_token=");
-                            bSubscriber = !sData.Contains("Token invalid or missing required scope");
+                            try
+                            {
+                                string sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + Irc.channel.Substring(1) + "/subscriptions/" + user + "?oauth_token=" + Irc.channeltoken);
+                                //bSubscriber = (!sData.Contains("Token invalid or missing required scope"));
+                            }
+                            catch
+                            {
+                            }
                         }
-                        catch
-                        {
-                        }
-                    }
-                });
-            thread.Name = "Subscriber check for " + user;
-            thread.Start();
-            thread.Join();
+                    });
+                thread.Name = "Subscriber check for " + user;
+                thread.Start();
+                thread.Join();
+            }
             return bSubscriber;
         }
 
@@ -187,7 +187,6 @@ namespace ModBot
                     {
                         try
                         {
-                            w.Proxy = null;
                             json_data = w.DownloadString(sSubURL);
                             JObject list = JObject.Parse(json_data);
                             foreach (JToken x in list["feed"]["entry"])
@@ -213,46 +212,44 @@ namespace ModBot
         public static List<Transaction> UpdateTransactions()
         {
             List<Transaction> Transactions = new List<Transaction>();
-            if (Irc.donationkey != "")
+            if (Irc.donation_clientid != "" && Irc.donation_token != "")
             {
                 using (WebClient w = new WebClient())
                 {
                     try
                     {
-                        w.Proxy = null;
-                        string json_data = w.DownloadString("https://www.streamdonations.net/api/donations?channel=" + Irc.channel.Substring(1) + "&key=" + Irc.donationkey);
-                        if (json_data.Contains("Not a valid channel and/or key"))
-                        {
-                            Console.WriteLine("Stream Donations key is incorrect. Donations checks disabled.");
-                            Irc.donationkey = "";
-                            return Transactions;
-                        }
-                        foreach (JToken transaction in JObject.Parse(json_data)["aaData"])
-                        {
-                            Transactions.Add(new Transaction(transaction["4"].ToString(), transaction["2"].ToString(), transaction["3"].ToString(), transaction["0"].ToString(), transaction["1"].ToString()));
-                        }
-                        /*int count = 100;
+                        int count = 100;
                         while (Transactions.Count < count)
                         {
                             string json_data = w.DownloadString("https://streamtip.com/api/tips?client_id=" + Irc.donation_clientid + "&access_token=" + Irc.donation_token + "&limit=100&offset=" + Transactions.Count);
-                            if (json_data == "{\"status\":401,\"message\":\"Unauthorized\"}")
-                            {
-                                Console.WriteLine("Stream Tip key is incorrect. Donations checks disabled.");
-                                Irc.donationkey = "";
-                                return Transactions;
-                            }
-
                             JObject json = JObject.Parse(json_data);
                             count = (int)json["_count"];
                             foreach (JToken transaction in json["tips"])
                             {
                                 Transactions.Add(new Transaction(transaction["transactionId"].ToString(), DateTime.Parse(transaction["date"].ToString(), null, System.Globalization.DateTimeStyles.RoundtripKind).ToString(), transaction["amount"].ToString(), transaction["username"].ToString(), transaction["note"].ToString()));
                             }
-                        }*/
+                        }
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            MainForm.DonationsWindowButton.Enabled = true;
+                        });
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Unable to connect to Stream Donations to check the transactions.");
+                        if (e.Message.Contains("(401) Unauthorized"))
+                        {
+                            Console.WriteLine("Stream Tip key is incorrect. Donations checks disabled.");
+                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                            {
+                                MainForm.DonationsWindowButton.Enabled = false;
+                                MainForm.DonationsWindowButton.Text = "Donations\r\n(Disabled)";
+                            });
+                            Irc.donation_clientid = "";
+                            Irc.donation_token = "";
+                            return Transactions;
+                        }
+
+                        Console.WriteLine("Unable to connect to Stream Tip to check the transactions.");
                         LogError("*************Error Message (via UpdateTransactions()): " + DateTime.Now + "*********************************\r\nUnable to connect to Stream Dontaions to check the transactions.\r\n" + e + "\r\n");
                     }
                 }

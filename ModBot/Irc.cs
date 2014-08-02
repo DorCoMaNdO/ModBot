@@ -36,7 +36,8 @@ namespace ModBot
         public static TcpClient irc;
         public static StreamReader read;
         public static StreamWriter write;
-        public static string nick, password, channel, currency, currencyName, admin, donationkey, channeltoken;
+        public static string nick, password, channel, currency, currencyName, admin, donation_clientid, donation_token, channeltoken;
+        public static bool partnered = false;
         public static int interval, payout;
         public static bool auctionOpen;
         public static List<string> IgnoredUsers = new List<string>();
@@ -61,6 +62,16 @@ namespace ModBot
         public static void Initialize()
         {
             MainForm = Program.MainForm;
+            if (donation_clientid == "" || donation_token == "")
+            {
+                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                {
+                    MainForm.DonationsWindowButton.Enabled = false;
+                    MainForm.DonationsWindowButton.Text = "Donations\r\n(Disabled)";
+                });
+                Irc.donation_clientid = "";
+                Irc.donation_token = "";
+            }
 
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
@@ -89,7 +100,6 @@ namespace ModBot
                     {
                         try
                         {
-                            w.Proxy = null;
                             string json_data = w.DownloadString("https://api.twitch.tv/kraken?oauth_token=" + password.Replace("oauth:", ""));
                             JObject json = JObject.Parse(json_data);
                             if (json["token"]["valid"].ToString() == "True" && json["token"]["user_name"].ToString() == nick)
@@ -149,75 +159,89 @@ namespace ModBot
 
             if (!bAbort)
             {
-                Console.WriteLine("Validating channel's access token...");
-
-                OnInitialize(InitializationStep.ValidateChannelToken);
-
-                thread = new Thread(() =>
+                if (channeltoken != "")
                 {
-                    for (int attempts = 0; attempts < 5; attempts++)
-                    {
-                        Console.WriteLine("Channel's access token validation attempt : " + (attempts + 1) + "/5");
-                        using (WebClient w = new WebClient())
-                        {
-                            try
-                            {
-                                w.Proxy = null;
-                                string json_data = w.DownloadString("https://api.twitch.tv/kraken?oauth_token=" + channeltoken);
-                                JObject json = JObject.Parse(json_data);
-                                if (json["token"]["valid"].ToString() == "True" && json["token"]["user_name"].ToString() == channel.Substring(1))
-                                {
-                                    int scopes = 0;
-                                    foreach (JToken x in json["token"]["authorization"]["scopes"])
-                                    {
-                                        if (x.ToString() == "channel_editor" || x.ToString() == "channel_commercial" || x.ToString() == "channel_check_subscription" || x.ToString() == "chat_login")
-                                        {
-                                            scopes++;
-                                        }
-                                    }
+                    Console.WriteLine("Validating channel's access token...");
 
-                                    if (scopes == 4)
+                    OnInitialize(InitializationStep.ValidateChannelToken);
+
+                    thread = new Thread(() =>
+                    {
+                        for (int attempts = 0; attempts < 5; attempts++)
+                        {
+                            Console.WriteLine("Channel's access token validation attempt : " + (attempts + 1) + "/5");
+                            using (WebClient w = new WebClient())
+                            {
+                                try
+                                {
+                                    JObject json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken?oauth_token=" + channeltoken));
+                                    if (json["token"]["valid"].ToString() == "True" && json["token"]["user_name"].ToString() == channel.Substring(1))
                                     {
-                                        Console.WriteLine("Channel's access token has been validated.\r\n");
-                                        bAbort = false;
-                                        return;
+                                        int scopes = 0;
+                                        foreach (JToken x in json["token"]["authorization"]["scopes"])
+                                        {
+                                            if (x.ToString() == "user_read" || x.ToString() == "channel_editor" || x.ToString() == "channel_commercial" || x.ToString() == "channel_check_subscription" || x.ToString() == "chat_login")
+                                            {
+                                                scopes++;
+                                            }
+                                        }
+
+                                        if (scopes == 5)
+                                        {
+                                            Console.WriteLine("Channel's access token has been validated.\r\n\r\nChecking partnership status...");
+
+                                            json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/user?oauth_token=" + channeltoken));
+                                            Console.WriteLine((partnered = json["partnered"].ToString() == "True") ? "Partnered.\r\n" : "Not partnered.\r\n");
+
+                                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                            {
+                                                MainForm.ChannelTitleBox.ReadOnly = false;
+                                                MainForm.ChannelGameBox.ReadOnly = false;
+                                                MainForm.UpdateTitleGameButton.Enabled = true;
+                                            });
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                            {
+                                                Console.WriteLine(MainForm.SettingsErrorLabel.Text = "The channel's access token is missing access and will not be used, some functions will be disabled..\r\n");
+                                            });
+                                            Thread.Sleep(10);
+                                            break;
+                                        }
                                     }
                                     else
                                     {
-                                        Console.WriteLine("The channel's access token is missing access and will not be used, some functions will be disabled..\r\n");
+                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                        {
+                                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel's auth token invalid, some functions will be disabled.\r\n");
+                                        });
+                                        Thread.Sleep(10);
+                                        break;
                                     }
                                 }
-                                else
+                                catch (Exception e)
                                 {
-                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                                    {
-                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel's auth token invalid, some functions will be disabled.\r\n");
-                                    });
-                                    Thread.Sleep(10);
-                                    break;
+                                    Api.LogError("*************Error Message (via validateBotToken()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                                 }
                             }
-                            catch (Exception e)
+
+                            if (attempts == 4)
                             {
-                                Api.LogError("*************Error Message (via validateBotToken()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                                Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
                             }
+                            Thread.Sleep(100);
                         }
 
-                        if (attempts == 4)
-                        {
-                            Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
-                        }
-                        Thread.Sleep(100);
-                    }
-
-                    // Disable token-related functions here.
-                    channeltoken = "";
-                });
-                Threads.Add(thread);
-                thread.Name = "Channel's access token validation";
-                thread.Start();
-                thread.Join();
-                if (Threads.Contains(thread)) Threads.Remove(thread);
+                        channeltoken = "";
+                    });
+                    Threads.Add(thread);
+                    thread.Name = "Channel's access token validation";
+                    thread.Start();
+                    thread.Join();
+                    if (Threads.Contains(thread)) Threads.Remove(thread);
+                }
 
                 Console.WriteLine("Confirming channel's existence in Twitch...");
 
@@ -232,7 +256,6 @@ namespace ModBot
                         {
                             try
                             {
-                                w.Proxy = null;
                                 w.DownloadString("https://api.twitch.tv/kraken/channels/" + channel.Substring(1));
                                 Console.WriteLine("Channel existence confirmed.\r\n");
                                 bAbort = false;
@@ -439,7 +462,7 @@ namespace ModBot
                                 MainForm.ChannelWindowButton.Font = new Font(MainForm.ChannelWindowButton.Font.Name, MainForm.ChannelWindowButton.Font.Size - 1, FontStyle.Bold);
                             }
 
-                            MainForm.DonationsWindowButton.Enabled = !(donationkey == "");
+                            MainForm.DonationsWindowButton.Enabled = false;
 
                             MainForm.DisconnectButton.Enabled = true;
 
@@ -523,6 +546,7 @@ namespace ModBot
                 MainForm.ChannelWindowButton.Font = new Font(MainForm.ChannelWindowButton.Font.Name, 10F, FontStyle.Bold);
                 MainForm.ChannelStatusLabel.Text = "DISCONNECTED";
                 MainForm.ChannelStatusLabel.ForeColor = Color.Red;
+                MainForm.DonationsWindowButton.Text = "Donations";
 
                 foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
                 {
@@ -695,7 +719,6 @@ namespace ModBot
                         string json_data = "";
                         try
                         {
-                            w.Proxy = null;
                             json_data = w.DownloadString("https://api.twitch.tv/kraken/streams/" + channel.Substring(1));
                             JObject stream = JObject.Parse(json_data);
                             if (stream["stream"].HasValues)
@@ -721,11 +744,11 @@ namespace ModBot
                                     });
                                 }).Start();
                             }
-                            else if (e.Message.Contains("(503) Server Unavailable"))
+                            /*else if (e.Message.Contains("(503) Server Unavailable"))
                             {
                                 Console.WriteLine("Unable to connect to Twitch API to check stream status, retrying...");
-                            }
-                            else
+                            }*/
+                            else if (!e.Message.Contains("(503) Server Unavailable"))
                             {
                                 Console.WriteLine("Unable to connect to Twitch API to check stream status, retrying...");
                                 Api.LogError("*************Error Message (via checkStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
@@ -1813,7 +1836,6 @@ namespace ModBot
                     string json_data = "";
                     try
                     {
-                        w.Proxy = null;
                         json_data = w.DownloadString("http://tmi.twitch.tv/group/user/" + channel.Substring(1) + "/chatters");
                         //users.Clear();
                         List<string> lUsers = new List<string>();

@@ -29,13 +29,13 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyleMultiline = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollowCheckBox = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.ChannelTitleTextBox = new System.Windows.Forms.TextBox();
+            this.ChannelTitleBox = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.ChannelGameTextBox = new System.Windows.Forms.TextBox();
+            this.ChannelGameBox = new System.Windows.Forms.TextBox();
             this.Giveaway_MinCurrencyCheckBox = new System.Windows.Forms.CheckBox();
             this.Giveaway_MinCurrency = new System.Windows.Forms.NumericUpDown();
             this.Giveaway_StartButton = new System.Windows.Forms.Button();
@@ -71,6 +71,11 @@
             this.SettingsWindowButton = new System.Windows.Forms.CheckBox();
             this.DonationsWindowButton = new System.Windows.Forms.CheckBox();
             this.SettingsWindow = new System.Windows.Forms.Panel();
+            this.DonationsTokenBox = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.GenerateChannelTokenButton = new System.Windows.Forms.Button();
+            this.ChannelTokenBox = new System.Windows.Forms.TextBox();
             this.GenerateBotTokenButton = new System.Windows.Forms.Button();
             this.label21 = new System.Windows.Forms.Label();
             this.CurrencyCommandBox = new System.Windows.Forms.TextBox();
@@ -87,7 +92,7 @@
             this.CurrencySpacer = new System.Windows.Forms.GroupBox();
             this.SubscribersSpacer = new System.Windows.Forms.GroupBox();
             this.ConnectionSpacer = new System.Windows.Forms.GroupBox();
-            this.DonationsKeyBox = new System.Windows.Forms.TextBox();
+            this.DonationsClientIdBox = new System.Windows.Forms.TextBox();
             this.label13 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
@@ -135,6 +140,7 @@
             this.AuthenticationBrowser = new System.Windows.Forms.WebBrowser();
             this.ChannelWindowButton = new System.Windows.Forms.CheckBox();
             this.ChannelWindow = new System.Windows.Forms.Panel();
+            this.UpdateTitleGameButton = new System.Windows.Forms.Button();
             this.CurrencyWindow = new System.Windows.Forms.Panel();
             this.CurrencyWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindowButton = new System.Windows.Forms.CheckBox();
@@ -198,16 +204,17 @@
             this.label2.TabIndex = 16;
             this.label2.Text = "Title :";
             // 
-            // ChannelTitleTextBox
+            // ChannelTitleBox
             // 
-            this.ChannelTitleTextBox.BackColor = System.Drawing.Color.White;
-            this.ChannelTitleTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ChannelTitleTextBox.Location = new System.Drawing.Point(6, 41);
-            this.ChannelTitleTextBox.Name = "ChannelTitleTextBox";
-            this.ChannelTitleTextBox.ReadOnly = true;
-            this.ChannelTitleTextBox.Size = new System.Drawing.Size(802, 20);
-            this.ChannelTitleTextBox.TabIndex = 17;
-            this.ChannelTitleTextBox.Text = "Loading...";
+            this.ChannelTitleBox.BackColor = System.Drawing.Color.White;
+            this.ChannelTitleBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.ChannelTitleBox.Location = new System.Drawing.Point(6, 41);
+            this.ChannelTitleBox.Name = "ChannelTitleBox";
+            this.ChannelTitleBox.ReadOnly = true;
+            this.ChannelTitleBox.Size = new System.Drawing.Size(653, 20);
+            this.ChannelTitleBox.TabIndex = 17;
+            this.ChannelTitleBox.Text = "Loading...";
+            this.ChannelTitleBox.TextChanged += new System.EventHandler(this.TitleGame_Modified);
             // 
             // label3
             // 
@@ -219,16 +226,17 @@
             this.label3.TabIndex = 18;
             this.label3.Text = "Game :";
             // 
-            // ChannelGameTextBox
+            // ChannelGameBox
             // 
-            this.ChannelGameTextBox.BackColor = System.Drawing.Color.White;
-            this.ChannelGameTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ChannelGameTextBox.Location = new System.Drawing.Point(6, 80);
-            this.ChannelGameTextBox.Name = "ChannelGameTextBox";
-            this.ChannelGameTextBox.ReadOnly = true;
-            this.ChannelGameTextBox.Size = new System.Drawing.Size(802, 20);
-            this.ChannelGameTextBox.TabIndex = 19;
-            this.ChannelGameTextBox.Text = "Loading...";
+            this.ChannelGameBox.BackColor = System.Drawing.Color.White;
+            this.ChannelGameBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.ChannelGameBox.Location = new System.Drawing.Point(6, 80);
+            this.ChannelGameBox.Name = "ChannelGameBox";
+            this.ChannelGameBox.ReadOnly = true;
+            this.ChannelGameBox.Size = new System.Drawing.Size(653, 20);
+            this.ChannelGameBox.TabIndex = 19;
+            this.ChannelGameBox.Text = "Loading...";
+            this.ChannelGameBox.TextChanged += new System.EventHandler(this.TitleGame_Modified);
             // 
             // Giveaway_MinCurrencyCheckBox
             // 
@@ -665,6 +673,11 @@
             // SettingsWindow
             // 
             this.SettingsWindow.BackColor = System.Drawing.Color.White;
+            this.SettingsWindow.Controls.Add(this.DonationsTokenBox);
+            this.SettingsWindow.Controls.Add(this.label5);
+            this.SettingsWindow.Controls.Add(this.label4);
+            this.SettingsWindow.Controls.Add(this.GenerateChannelTokenButton);
+            this.SettingsWindow.Controls.Add(this.ChannelTokenBox);
             this.SettingsWindow.Controls.Add(this.GenerateBotTokenButton);
             this.SettingsWindow.Controls.Add(this.label21);
             this.SettingsWindow.Controls.Add(this.CurrencyCommandBox);
@@ -681,7 +694,7 @@
             this.SettingsWindow.Controls.Add(this.CurrencySpacer);
             this.SettingsWindow.Controls.Add(this.SubscribersSpacer);
             this.SettingsWindow.Controls.Add(this.ConnectionSpacer);
-            this.SettingsWindow.Controls.Add(this.DonationsKeyBox);
+            this.SettingsWindow.Controls.Add(this.DonationsClientIdBox);
             this.SettingsWindow.Controls.Add(this.label13);
             this.SettingsWindow.Controls.Add(this.label8);
             this.SettingsWindow.Controls.Add(this.label12);
@@ -702,14 +715,63 @@
             this.SettingsWindow.TabIndex = 58;
             this.SettingsWindow.Visible = this.SettingsWindowButton.Checked;
             // 
+            // DonationsTokenBox
+            // 
+            this.DonationsTokenBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.DonationsTokenBox.Location = new System.Drawing.Point(410, 319);
+            this.DonationsTokenBox.Name = "DonationsTokenBox";
+            this.DonationsTokenBox.PasswordChar = '*';
+            this.DonationsTokenBox.Size = new System.Drawing.Size(398, 20);
+            this.DonationsTokenBox.TabIndex = 91;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(407, 303);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(95, 13);
+            this.label5.TabIndex = 92;
+            this.label5.Text = "Stream Tip Token:";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(309, 57);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(249, 13);
+            this.label4.TabIndex = 90;
+            this.label4.Text = "Channel\'s Access Token (Optional, recommended):";
+            // 
+            // GenerateChannelTokenButton
+            // 
+            this.GenerateChannelTokenButton.BackColor = System.Drawing.Color.White;
+            this.GenerateChannelTokenButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.GenerateChannelTokenButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GenerateChannelTokenButton.Location = new System.Drawing.Point(708, 72);
+            this.GenerateChannelTokenButton.Name = "GenerateChannelTokenButton";
+            this.GenerateChannelTokenButton.Size = new System.Drawing.Size(100, 22);
+            this.GenerateChannelTokenButton.TabIndex = 89;
+            this.GenerateChannelTokenButton.Text = "Generate";
+            this.GenerateChannelTokenButton.UseVisualStyleBackColor = false;
+            this.GenerateChannelTokenButton.Click += new System.EventHandler(this.GenerateToken_Request);
+            // 
+            // ChannelTokenBox
+            // 
+            this.ChannelTokenBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.ChannelTokenBox.Location = new System.Drawing.Point(312, 73);
+            this.ChannelTokenBox.Name = "ChannelTokenBox";
+            this.ChannelTokenBox.PasswordChar = '*';
+            this.ChannelTokenBox.Size = new System.Drawing.Size(390, 20);
+            this.ChannelTokenBox.TabIndex = 88;
+            // 
             // GenerateBotTokenButton
             // 
             this.GenerateBotTokenButton.BackColor = System.Drawing.Color.White;
             this.GenerateBotTokenButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.GenerateBotTokenButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.GenerateBotTokenButton.Location = new System.Drawing.Point(629, 72);
+            this.GenerateBotTokenButton.Location = new System.Drawing.Point(708, 33);
             this.GenerateBotTokenButton.Name = "GenerateBotTokenButton";
-            this.GenerateBotTokenButton.Size = new System.Drawing.Size(178, 22);
+            this.GenerateBotTokenButton.Size = new System.Drawing.Size(100, 22);
             this.GenerateBotTokenButton.TabIndex = 87;
             this.GenerateBotTokenButton.Text = "Generate";
             this.GenerateBotTokenButton.UseVisualStyleBackColor = false;
@@ -718,7 +780,7 @@
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(3, 269);
+            this.label21.Location = new System.Drawing.Point(407, 191);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(164, 13);
             this.label21.TabIndex = 85;
@@ -727,9 +789,10 @@
             // CurrencyCommandBox
             // 
             this.CurrencyCommandBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.CurrencyCommandBox.Location = new System.Drawing.Point(6, 285);
+            this.CurrencyCommandBox.Location = new System.Drawing.Point(410, 207);
+            this.CurrencyCommandBox.MaxLength = 64;
             this.CurrencyCommandBox.Name = "CurrencyCommandBox";
-            this.CurrencyCommandBox.Size = new System.Drawing.Size(801, 20);
+            this.CurrencyCommandBox.Size = new System.Drawing.Size(398, 20);
             this.CurrencyCommandBox.TabIndex = 86;
             this.CurrencyCommandBox.Text = "ModCoins";
             // 
@@ -738,7 +801,7 @@
             this.SettingsErrorLabel.AutoSize = true;
             this.SettingsErrorLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.SettingsErrorLabel.ForeColor = System.Drawing.Color.Red;
-            this.SettingsErrorLabel.Location = new System.Drawing.Point(3, 447);
+            this.SettingsErrorLabel.Location = new System.Drawing.Point(3, 369);
             this.SettingsErrorLabel.Name = "SettingsErrorLabel";
             this.SettingsErrorLabel.Size = new System.Drawing.Size(34, 13);
             this.SettingsErrorLabel.TabIndex = 84;
@@ -749,7 +812,7 @@
             this.DisconnectButton.BackColor = System.Drawing.Color.White;
             this.DisconnectButton.Enabled = false;
             this.DisconnectButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.DisconnectButton.Location = new System.Drawing.Point(491, 506);
+            this.DisconnectButton.Location = new System.Drawing.Point(492, 506);
             this.DisconnectButton.Name = "DisconnectButton";
             this.DisconnectButton.Size = new System.Drawing.Size(316, 50);
             this.DisconnectButton.TabIndex = 83;
@@ -760,19 +823,18 @@
             // label14
             // 
             this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(3, 420);
+            this.label14.Location = new System.Drawing.Point(3, 342);
             this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(620, 26);
+            this.label14.Size = new System.Drawing.Size(406, 13);
             this.label14.TabIndex = 82;
-            this.label14.Text = "NOTE : Currently only StreamDonations is supported. The old data is available on " +
-    "their servers, although they moved to StreamTip.\r\n             StreamTip will be" +
-    " supported soon.";
+            this.label14.Text = "NOTE : The client id and token are both available on your account information pag" +
+    "e.";
             // 
             // DonationsLabel
             // 
             this.DonationsLabel.AutoSize = true;
             this.DonationsLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.DonationsLabel.Location = new System.Drawing.Point(290, 367);
+            this.DonationsLabel.Location = new System.Drawing.Point(290, 289);
             this.DonationsLabel.Name = "DonationsLabel";
             this.DonationsLabel.Size = new System.Drawing.Size(63, 19);
             this.DonationsLabel.TabIndex = 81;
@@ -783,7 +845,7 @@
             // 
             this.SubscribersLabel.AutoSize = true;
             this.SubscribersLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SubscribersLabel.Location = new System.Drawing.Point(292, 311);
+            this.SubscribersLabel.Location = new System.Drawing.Point(292, 233);
             this.SubscribersLabel.Name = "SubscribersLabel";
             this.SubscribersLabel.Size = new System.Drawing.Size(72, 19);
             this.SubscribersLabel.TabIndex = 64;
@@ -792,7 +854,7 @@
             // 
             // CurrencyHandoutAmount
             // 
-            this.CurrencyHandoutAmount.Location = new System.Drawing.Point(6, 207);
+            this.CurrencyHandoutAmount.Location = new System.Drawing.Point(6, 168);
             this.CurrencyHandoutAmount.Maximum = new decimal(new int[] {
             200,
             0,
@@ -815,7 +877,7 @@
             // DonationsSpacer
             // 
             this.DonationsSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
-            this.DonationsSpacer.Location = new System.Drawing.Point(-1, 367);
+            this.DonationsSpacer.Location = new System.Drawing.Point(-1, 289);
             this.DonationsSpacer.Name = "DonationsSpacer";
             this.DonationsSpacer.Size = new System.Drawing.Size(816, 11);
             this.DonationsSpacer.TabIndex = 80;
@@ -823,7 +885,7 @@
             // 
             // CurrencyHandoutInterval
             // 
-            this.CurrencyHandoutInterval.Location = new System.Drawing.Point(6, 168);
+            this.CurrencyHandoutInterval.Location = new System.Drawing.Point(6, 129);
             this.CurrencyHandoutInterval.Maximum = new decimal(new int[] {
             120,
             0,
@@ -847,7 +909,7 @@
             // 
             this.CurrencyLabel.AutoSize = true;
             this.CurrencyLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.CurrencyLabel.Location = new System.Drawing.Point(289, 138);
+            this.CurrencyLabel.Location = new System.Drawing.Point(289, 99);
             this.CurrencyLabel.Name = "CurrencyLabel";
             this.CurrencyLabel.Size = new System.Drawing.Size(61, 19);
             this.CurrencyLabel.TabIndex = 62;
@@ -868,7 +930,7 @@
             // CurrencySpacer
             // 
             this.CurrencySpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
-            this.CurrencySpacer.Location = new System.Drawing.Point(-1, 138);
+            this.CurrencySpacer.Location = new System.Drawing.Point(-1, 99);
             this.CurrencySpacer.Name = "CurrencySpacer";
             this.CurrencySpacer.Size = new System.Drawing.Size(816, 11);
             this.CurrencySpacer.TabIndex = 61;
@@ -877,7 +939,7 @@
             // SubscribersSpacer
             // 
             this.SubscribersSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
-            this.SubscribersSpacer.Location = new System.Drawing.Point(-1, 311);
+            this.SubscribersSpacer.Location = new System.Drawing.Point(-1, 233);
             this.SubscribersSpacer.Name = "SubscribersSpacer";
             this.SubscribersSpacer.Size = new System.Drawing.Size(816, 11);
             this.SubscribersSpacer.TabIndex = 63;
@@ -892,14 +954,14 @@
             this.ConnectionSpacer.TabIndex = 50;
             this.ConnectionSpacer.TabStop = false;
             // 
-            // DonationsKeyBox
+            // DonationsClientIdBox
             // 
-            this.DonationsKeyBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.DonationsKeyBox.Location = new System.Drawing.Point(6, 397);
-            this.DonationsKeyBox.Name = "DonationsKeyBox";
-            this.DonationsKeyBox.PasswordChar = '*';
-            this.DonationsKeyBox.Size = new System.Drawing.Size(801, 20);
-            this.DonationsKeyBox.TabIndex = 76;
+            this.DonationsClientIdBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.DonationsClientIdBox.Location = new System.Drawing.Point(6, 319);
+            this.DonationsClientIdBox.Name = "DonationsClientIdBox";
+            this.DonationsClientIdBox.PasswordChar = '*';
+            this.DonationsClientIdBox.Size = new System.Drawing.Size(398, 20);
+            this.DonationsClientIdBox.TabIndex = 76;
             // 
             // label13
             // 
@@ -913,16 +975,16 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(3, 381);
+            this.label8.Location = new System.Drawing.Point(3, 303);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(132, 13);
+            this.label8.Size = new System.Drawing.Size(104, 13);
             this.label8.TabIndex = 77;
-            this.label8.Text = "StreamDonations API Key:";
+            this.label8.Text = "Stream Tip Client ID:";
             // 
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(3, 57);
+            this.label12.Location = new System.Drawing.Point(309, 19);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(105, 13);
             this.label12.TabIndex = 65;
@@ -931,7 +993,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(3, 230);
+            this.label11.Location = new System.Drawing.Point(3, 191);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(83, 13);
             this.label11.TabIndex = 61;
@@ -940,15 +1002,15 @@
             // SubLinkBox
             // 
             this.SubLinkBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.SubLinkBox.Location = new System.Drawing.Point(6, 341);
+            this.SubLinkBox.Location = new System.Drawing.Point(6, 263);
             this.SubLinkBox.Name = "SubLinkBox";
-            this.SubLinkBox.Size = new System.Drawing.Size(801, 20);
+            this.SubLinkBox.Size = new System.Drawing.Size(802, 20);
             this.SubLinkBox.TabIndex = 68;
             // 
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(3, 152);
+            this.label10.Location = new System.Drawing.Point(3, 113);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(137, 13);
             this.label10.TabIndex = 62;
@@ -957,7 +1019,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(3, 325);
+            this.label7.Location = new System.Drawing.Point(3, 247);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(92, 13);
             this.label7.TabIndex = 74;
@@ -966,7 +1028,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(3, 96);
+            this.label9.Location = new System.Drawing.Point(3, 57);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(49, 13);
             this.label9.TabIndex = 63;
@@ -975,7 +1037,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(3, 191);
+            this.label1.Location = new System.Drawing.Point(3, 152);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(82, 13);
             this.label1.TabIndex = 72;
@@ -996,10 +1058,10 @@
             // BotPasswordBox
             // 
             this.BotPasswordBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.BotPasswordBox.Location = new System.Drawing.Point(6, 73);
+            this.BotPasswordBox.Location = new System.Drawing.Point(312, 34);
             this.BotPasswordBox.Name = "BotPasswordBox";
             this.BotPasswordBox.PasswordChar = '*';
-            this.BotPasswordBox.Size = new System.Drawing.Size(617, 20);
+            this.BotPasswordBox.Size = new System.Drawing.Size(390, 20);
             this.BotPasswordBox.TabIndex = 66;
             this.BotPasswordBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
             // 
@@ -1007,8 +1069,9 @@
             // 
             this.BotNameBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.BotNameBox.Location = new System.Drawing.Point(6, 34);
+            this.BotNameBox.MaxLength = 64;
             this.BotNameBox.Name = "BotNameBox";
-            this.BotNameBox.Size = new System.Drawing.Size(801, 20);
+            this.BotNameBox.Size = new System.Drawing.Size(300, 20);
             this.BotNameBox.TabIndex = 64;
             this.BotNameBox.Text = "ModBot";
             this.BotNameBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
@@ -1016,9 +1079,10 @@
             // ChannelBox
             // 
             this.ChannelBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ChannelBox.Location = new System.Drawing.Point(6, 112);
+            this.ChannelBox.Location = new System.Drawing.Point(6, 73);
+            this.ChannelBox.MaxLength = 64;
             this.ChannelBox.Name = "ChannelBox";
-            this.ChannelBox.Size = new System.Drawing.Size(801, 20);
+            this.ChannelBox.Size = new System.Drawing.Size(300, 20);
             this.ChannelBox.TabIndex = 67;
             this.ChannelBox.Text = "ModChannel";
             this.ChannelBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
@@ -1026,9 +1090,10 @@
             // CurrencyNameBox
             // 
             this.CurrencyNameBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.CurrencyNameBox.Location = new System.Drawing.Point(6, 246);
+            this.CurrencyNameBox.Location = new System.Drawing.Point(6, 207);
+            this.CurrencyNameBox.MaxLength = 64;
             this.CurrencyNameBox.Name = "CurrencyNameBox";
-            this.CurrencyNameBox.Size = new System.Drawing.Size(801, 20);
+            this.CurrencyNameBox.Size = new System.Drawing.Size(398, 20);
             this.CurrencyNameBox.TabIndex = 71;
             this.CurrencyNameBox.Text = "Mod Coins";
             this.CurrencyNameBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
@@ -1156,8 +1221,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyleMultiline.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyleMultiline;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle1;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1412,15 +1477,28 @@
             // ChannelWindow
             // 
             this.ChannelWindow.BackColor = System.Drawing.Color.White;
+            this.ChannelWindow.Controls.Add(this.UpdateTitleGameButton);
             this.ChannelWindow.Controls.Add(this.ChannelStatusLabel);
             this.ChannelWindow.Controls.Add(this.label2);
-            this.ChannelWindow.Controls.Add(this.ChannelTitleTextBox);
+            this.ChannelWindow.Controls.Add(this.ChannelTitleBox);
             this.ChannelWindow.Controls.Add(this.label3);
-            this.ChannelWindow.Controls.Add(this.ChannelGameTextBox);
+            this.ChannelWindow.Controls.Add(this.ChannelGameBox);
             this.ChannelWindow.Location = new System.Drawing.Point(108, 30);
             this.ChannelWindow.Name = "ChannelWindow";
             this.ChannelWindow.Size = new System.Drawing.Size(814, 562);
             this.ChannelWindow.TabIndex = 63;
+            // 
+            // UpdateTitleGameButton
+            // 
+            this.UpdateTitleGameButton.BackColor = System.Drawing.Color.White;
+            this.UpdateTitleGameButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.UpdateTitleGameButton.Location = new System.Drawing.Point(665, 41);
+            this.UpdateTitleGameButton.Name = "UpdateTitleGameButton";
+            this.UpdateTitleGameButton.Size = new System.Drawing.Size(143, 59);
+            this.UpdateTitleGameButton.TabIndex = 32;
+            this.UpdateTitleGameButton.Text = "Update";
+            this.UpdateTitleGameButton.UseVisualStyleBackColor = false;
+            this.UpdateTitleGameButton.Click += new System.EventHandler(this.UpdateTitleGameButton_Click);
             // 
             // CurrencyWindow
             // 
@@ -1614,29 +1692,29 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
+            this.Controls.Add(this.ChannelWindow);
+            this.Controls.Add(this.CurrencyWindow);
             this.Controls.Add(this.GiveawayWindow);
             this.Controls.Add(this.AuthenticationBrowser);
             this.Controls.Add(this.panel2);
-            this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
+            this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.DonationsWindow);
-            this.Controls.Add(this.ChannelWindow);
-            this.Controls.Add(this.CurrencyWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
-            this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
+            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.AboutWindow, 0);
-            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
             this.Controls.SetChildIndex(this.GiveawayWindow, 0);
+            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
+            this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -1674,9 +1752,9 @@
         public System.Windows.Forms.Label ChannelStatusLabel;
         public System.Windows.Forms.CheckBox Giveaway_MustFollowCheckBox;
         private System.Windows.Forms.Label label2;
-        public System.Windows.Forms.TextBox ChannelTitleTextBox;
+        public System.Windows.Forms.TextBox ChannelTitleBox;
         private System.Windows.Forms.Label label3;
-        public System.Windows.Forms.TextBox ChannelGameTextBox;
+        public System.Windows.Forms.TextBox ChannelGameBox;
         public System.Windows.Forms.CheckBox Giveaway_MinCurrencyCheckBox;
         public System.Windows.Forms.NumericUpDown Giveaway_MinCurrency;
         public System.Windows.Forms.Button Giveaway_StartButton;
@@ -1715,7 +1793,7 @@
         public System.Windows.Forms.Panel DonationsWindow;
         private System.Windows.Forms.GroupBox ConnectionSpacer;
         private System.Windows.Forms.Label ConnectionLabel;
-        private System.Windows.Forms.TextBox DonationsKeyBox;
+        private System.Windows.Forms.TextBox DonationsClientIdBox;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label12;
@@ -1739,7 +1817,6 @@
         private System.Windows.Forms.GroupBox DonationsSpacer;
         private System.Windows.Forms.GroupBox SubscribersSpacer;
         public System.Windows.Forms.Button DisconnectButton;
-        private System.Windows.Forms.Label label14;
         public System.Windows.Forms.NumericUpDown RecentDonorsLimit;
         public System.Windows.Forms.CheckBox UpdateTopDonorsCheckBox;
         private System.Windows.Forms.Label label15;
@@ -1788,5 +1865,12 @@
         private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTop;
         private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTopDonor;
         private System.Windows.Forms.Label HashLabel;
+        public System.Windows.Forms.Button GenerateChannelTokenButton;
+        public System.Windows.Forms.TextBox ChannelTokenBox;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox DonationsTokenBox;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label14;
+        public System.Windows.Forms.Button UpdateTitleGameButton;
     }
 }
