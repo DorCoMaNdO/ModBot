@@ -738,7 +738,7 @@ namespace ModBot
                                 {
                                     MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                     {
-                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
+                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported that the channel was not found.");
                                         Disconnect();
                                         MainForm.ConnectButton.Enabled = false;
                                     });

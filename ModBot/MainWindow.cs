@@ -30,21 +30,18 @@ namespace ModBot
         {
             InitializeComponent();
             Text = "ModBot v" + (VersionLabel.Text = "Version: " + Assembly.GetExecutingAssembly().GetName().Version.ToString()).Substring(9);
-            VersionLabel.Text += " (" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(Assembly.GetExecutingAssembly().GetName().Version.Build).AddSeconds(Assembly.GetExecutingAssembly().GetName().Version.Revision * 2).ToString("M/dd/yyyy hh:mm:ss tt") + ")";
-
-            string Hash;
-            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
-            {
-                using (FileStream stream = File.OpenRead(AppDomain.CurrentDomain.FriendlyName))
-                {
-                    Hash = BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLower();
-                }
-            }
-
-            HashLabel.Text = "Hash: " + Hash;
 
             Thread thread = new Thread(() =>
             {
+                string Hash;
+                using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+                {
+                    using (FileStream stream = File.OpenRead(AppDomain.CurrentDomain.FriendlyName))
+                    {
+                        Hash = BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLower();
+                    }
+                }
+
                 while (true)
                 {
                     Thread.Sleep(60000);
@@ -55,9 +52,9 @@ namespace ModBot
                             try
                             {
                                 int iViewers = Irc.ActiveUsers.Count;
-                                foreach (string user in Irc.IgnoredUsers)
+                                foreach (string user in Irc.ActiveUsers.Keys)
                                 {
-                                    if (Irc.ActiveUsers.ContainsKey(user))
+                                    if (Irc.IgnoredUsers.Contains(user.ToLower()))
                                     {
                                         iViewers--;
                                     }
@@ -687,9 +684,9 @@ namespace ModBot
                         ChannelStatusLabel.Text = "ON AIR";
                         ChannelStatusLabel.ForeColor = Color.Green;
                         int iViewers = Irc.ActiveUsers.Count;
-                        foreach (string user in Irc.IgnoredUsers)
+                        foreach (string user in Irc.ActiveUsers.Keys)
                         {
-                            if (Irc.ActiveUsers.ContainsKey(user))
+                            if (Irc.IgnoredUsers.Contains(user.ToLower()))
                             {
                                 iViewers--;
                             }

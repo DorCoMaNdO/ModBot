@@ -127,7 +127,6 @@
             this.UpdateLastDonorCheckBox = new System.Windows.Forms.CheckBox();
             this.AboutWindowButton = new System.Windows.Forms.CheckBox();
             this.AboutWindow = new System.Windows.Forms.Panel();
-            this.HashLabel = new System.Windows.Forms.Label();
             this.SupportLinkLabel = new System.Windows.Forms.LinkLabel();
             this.EmailLinkLabel = new System.Windows.Forms.LinkLabel();
             this.label17 = new System.Windows.Forms.Label();
@@ -1331,7 +1330,6 @@
             // AboutWindow
             // 
             this.AboutWindow.BackColor = System.Drawing.Color.White;
-            this.AboutWindow.Controls.Add(this.HashLabel);
             this.AboutWindow.Controls.Add(this.SupportLinkLabel);
             this.AboutWindow.Controls.Add(this.EmailLinkLabel);
             this.AboutWindow.Controls.Add(this.label17);
@@ -1344,15 +1342,6 @@
             this.AboutWindow.Name = "AboutWindow";
             this.AboutWindow.Size = new System.Drawing.Size(814, 562);
             this.AboutWindow.TabIndex = 61;
-            // 
-            // HashLabel
-            // 
-            this.HashLabel.AutoSize = true;
-            this.HashLabel.Location = new System.Drawing.Point(3, 269);
-            this.HashLabel.Name = "HashLabel";
-            this.HashLabel.Size = new System.Drawing.Size(38, 13);
-            this.HashLabel.TabIndex = 24;
-            this.HashLabel.Text = "Hash: ";
             // 
             // SupportLinkLabel
             // 
@@ -1692,29 +1681,29 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
+            this.Controls.Add(this.AboutWindow);
+            this.Controls.Add(this.SettingsWindow);
+            this.Controls.Add(this.AuthenticationLabel);
+            this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
             this.Controls.Add(this.CurrencyWindow);
             this.Controls.Add(this.GiveawayWindow);
             this.Controls.Add(this.AuthenticationBrowser);
             this.Controls.Add(this.panel2);
-            this.Controls.Add(this.AboutWindow);
-            this.Controls.Add(this.SettingsWindow);
-            this.Controls.Add(this.AuthenticationLabel);
-            this.Controls.Add(this.DonationsWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.Controls.SetChildIndex(this.DonationsWindow, 0);
-            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
-            this.Controls.SetChildIndex(this.SettingsWindow, 0);
-            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
             this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.CurrencyWindow, 0);
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
+            this.Controls.SetChildIndex(this.DonationsWindow, 0);
+            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
+            this.Controls.SetChildIndex(this.SettingsWindow, 0);
+            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -1864,7 +1853,6 @@
         private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeLatest;
         private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTop;
         private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTopDonor;
-        private System.Windows.Forms.Label HashLabel;
         public System.Windows.Forms.Button GenerateChannelTokenButton;
         public System.Windows.Forms.TextBox ChannelTokenBox;
         private System.Windows.Forms.Label label4;
