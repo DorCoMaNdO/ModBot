@@ -8,18 +8,15 @@ namespace ModBotUpdater
 {
     static class Program
     {
-        public static bool LaunchUpdate = false;
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main(string[] args)
         {
-            LaunchUpdate = args.Contains("-force");
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Updater());
+            Application.Run(new Updater(args));
         }
     }
 }

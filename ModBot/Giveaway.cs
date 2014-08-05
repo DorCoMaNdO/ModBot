@@ -266,7 +266,7 @@ namespace ModBot
                             return;
                         }
                     }
-                    catch (InvalidOperationException)
+                    catch
                     {
                         Console.WriteLine("Error while rolling, retrying");
                         continue;

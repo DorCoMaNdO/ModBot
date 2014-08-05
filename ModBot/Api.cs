@@ -212,7 +212,7 @@ namespace ModBot
         public static List<Transaction> UpdateTransactions()
         {
             List<Transaction> Transactions = new List<Transaction>();
-            if (Irc.donation_clientid != "" && Irc.donation_token != "")
+            if (Irc.DetailsConfirmed && Irc.donation_clientid != "" && Irc.donation_token != "")
             {
                 using (WebClient w = new WebClient())
                 {
@@ -231,7 +231,10 @@ namespace ModBot
                         }
                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                         {
-                            MainForm.DonationsWindowButton.Enabled = true;
+                            if (Irc.DetailsConfirmed)
+                            {
+                                MainForm.DonationsWindowButton.Enabled = true;
+                            }
                         });
                     }
                     catch (Exception e)

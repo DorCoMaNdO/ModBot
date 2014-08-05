@@ -27,8 +27,7 @@ namespace ModBotUpdater
             rect.Inflate(-1, -1);
             if (Value > 0)
             {
-                Rectangle clip = new Rectangle(rect.X, rect.Y, (int)Math.Round(((float)Value / Maximum) * rect.Width), rect.Height);
-                ProgressBarRenderer.DrawHorizontalChunks(g, clip);
+                ProgressBarRenderer.DrawHorizontalChunks(g, new Rectangle(rect.X, rect.Y, (int)Math.Round(((float)Value / Maximum) * rect.Width), rect.Height));
             }
 
             string text = Text;

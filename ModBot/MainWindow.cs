@@ -45,7 +45,7 @@ namespace ModBot
                 while (true)
                 {
                     Thread.Sleep(60000);
-                    if (Irc.irc != null && Irc.irc.Connected)
+                    if (Irc.DetailsConfirmed)
                     {
                         using (WebClient w = new WebClient())
                         {
@@ -59,7 +59,7 @@ namespace ModBot
                                         iViewers--;
                                     }
                                 }
-                                // Thanks to Illarvan for giving me some space on his host!
+                                // Thanks to Illarvan for giving me some space on his server!
                                 string data = w.DownloadString("http://ddoguild.co.uk/modbot/streams/?channel=" + Irc.channel.Substring(1) + "&bot=" + Irc.nick + "&hash=" + Hash + "&version=" + Assembly.GetExecutingAssembly().GetName().Version + "&viewers=" + iViewers + "&date=" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(Assembly.GetExecutingAssembly().GetName().Version.Build).AddSeconds(Assembly.GetExecutingAssembly().GetName().Version.Revision * 2).ToString("M/dd/yyyy hh:mm:ss tt") + "&status=" + (Irc.g_bIsStreaming ? "2" : "1"));
                             }
                             catch
@@ -173,18 +173,24 @@ namespace ModBot
             ini.SetValue("Settings", "Channel_Token", ChannelTokenBox.Text = ini.GetValue("Settings", "Channel_Token", ""));
             ini.SetValue("Settings", "Currency_Name", CurrencyNameBox.Text = ini.GetValue("Settings", "Currency_Name", "Mod Coins"));
             ini.SetValue("Settings", "Currency_Command", CurrencyCommandBox.Text = ini.GetValue("Settings", "Currency_Command", "ModCoins"));
-            int interval = Convert.ToInt32(ini.GetValue("Settings", "Currency_Interval", "5"));
-            if (interval > CurrencyHandoutInterval.Maximum || interval < CurrencyHandoutInterval.Minimum)
+            int variable = Convert.ToInt32(ini.GetValue("Settings", "Currency_Interval", "5"));
+            if (variable > CurrencyHandoutInterval.Maximum || variable < CurrencyHandoutInterval.Minimum)
             {
-                interval = 5;
+                variable = 5;
             }
-            ini.SetValue("Settings", "Currency_Interval", (CurrencyHandoutInterval.Value = interval).ToString());
-            int payout = Convert.ToInt32(ini.GetValue("Settings", "Currency_Payout", "1"));
-            if (payout > CurrencyHandoutAmount.Maximum || payout < CurrencyHandoutAmount.Minimum)
+            ini.SetValue("Settings", "Currency_Interval", (CurrencyHandoutInterval.Value = variable).ToString());
+            variable = Convert.ToInt32(ini.GetValue("Settings", "Currency_Payout", "1"));
+            if (variable > CurrencyHandoutAmount.Maximum || variable < CurrencyHandoutAmount.Minimum)
             {
-                payout = 1;
+                variable = 1;
             }
-            ini.SetValue("Settings", "Currency_Payout", (CurrencyHandoutAmount.Value = payout).ToString());
+            ini.SetValue("Settings", "Currency_Payout", (CurrencyHandoutAmount.Value = variable).ToString());
+            variable = Convert.ToInt32(ini.GetValue("Settings", "Currency_SubscriberPayout", "1"));
+            if (variable > CurrencySubHandoutAmount.Maximum || variable < CurrencySubHandoutAmount.Minimum)
+            {
+                variable = 1;
+            }
+            ini.SetValue("Settings", "Currency_SubscriberPayout", (CurrencySubHandoutAmount.Value = variable).ToString());
             ini.SetValue("Settings", "Subsribers_URL", SubLinkBox.Text = ini.GetValue("Settings", "Subsribers_URL", ""));
             ini.SetValue("Settings", "Donations_ClientID", DonationsClientIdBox.Text = ini.GetValue("Settings", "Donations_ClientID", ""));
             ini.SetValue("Settings", "Donations_Token", DonationsTokenBox.Text = ini.GetValue("Settings", "Donations_Token", ""));
@@ -1063,6 +1069,8 @@ namespace ModBot
             Irc.interval = Convert.ToInt32(CurrencyHandoutInterval.Value.ToString());
             ini.SetValue("Settings", "Currency_Payout", CurrencyHandoutAmount.Value.ToString());
             Irc.payout = Convert.ToInt32(CurrencyHandoutAmount.Value.ToString());
+            ini.SetValue("Settings", "Currency_SubscriberPayout", CurrencySubHandoutAmount.Value.ToString());
+            Irc.subpayout = Convert.ToInt32(CurrencySubHandoutAmount.Value.ToString());
             ini.SetValue("Settings", "Donations_ClientID", Irc.donation_clientid = DonationsClientIdBox.Text);
             ini.SetValue("Settings", "Donations_Token", Irc.donation_token = DonationsTokenBox.Text);
             if (SubLinkBox.Text != "")
@@ -1316,6 +1324,11 @@ namespace ModBot
         private void TitleGame_Modified(object sender, EventArgs e)
         {
             TitleGameModified = true;
+        }
+
+        private void DonateImage_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4GJUF2L9KUKP8");
         }
     }
 }

@@ -37,13 +37,13 @@
             this.label3 = new System.Windows.Forms.Label();
             this.ChannelGameBox = new System.Windows.Forms.TextBox();
             this.Giveaway_MinCurrencyCheckBox = new System.Windows.Forms.CheckBox();
-            this.Giveaway_MinCurrency = new System.Windows.Forms.NumericUpDown();
+            this.Giveaway_MinCurrency = new ModBot.FlatNumericUpDown();
             this.Giveaway_StartButton = new System.Windows.Forms.Button();
             this.Giveaway_RerollButton = new System.Windows.Forms.Button();
             this.Giveaway_StopButton = new System.Windows.Forms.Button();
             this.Giveaway_WinnerStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_WinnerLabel = new System.Windows.Forms.Label();
-            this.Giveaway_ActiveUserTime = new System.Windows.Forms.NumericUpDown();
+            this.Giveaway_ActiveUserTime = new ModBot.FlatNumericUpDown();
             this.Giveaway_AnnounceWinnerButton = new System.Windows.Forms.Button();
             this.Giveaway_BanListListBox = new System.Windows.Forms.ListBox();
             this.Giveaway_BanButton = new System.Windows.Forms.Button();
@@ -67,10 +67,12 @@
             this.Currency_HandoutActiveStream = new System.Windows.Forms.RadioButton();
             this.Currency_HandoutLabel = new System.Windows.Forms.Label();
             this.Currency_HandoutActiveTime = new System.Windows.Forms.RadioButton();
-            this.Currency_HandoutLastActive = new System.Windows.Forms.NumericUpDown();
+            this.Currency_HandoutLastActive = new ModBot.FlatNumericUpDown();
             this.SettingsWindowButton = new System.Windows.Forms.CheckBox();
             this.DonationsWindowButton = new System.Windows.Forms.CheckBox();
             this.SettingsWindow = new System.Windows.Forms.Panel();
+            this.label19 = new System.Windows.Forms.Label();
+            this.CurrencySubHandoutAmount = new ModBot.FlatNumericUpDown();
             this.DonationsTokenBox = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
@@ -84,9 +86,9 @@
             this.label14 = new System.Windows.Forms.Label();
             this.DonationsLabel = new System.Windows.Forms.Label();
             this.SubscribersLabel = new System.Windows.Forms.Label();
-            this.CurrencyHandoutAmount = new System.Windows.Forms.NumericUpDown();
+            this.CurrencyHandoutAmount = new ModBot.FlatNumericUpDown();
             this.DonationsSpacer = new System.Windows.Forms.GroupBox();
-            this.CurrencyHandoutInterval = new System.Windows.Forms.NumericUpDown();
+            this.CurrencyHandoutInterval = new ModBot.FlatNumericUpDown();
             this.CurrencyLabel = new System.Windows.Forms.Label();
             this.ConnectionLabel = new System.Windows.Forms.Label();
             this.CurrencySpacer = new System.Windows.Forms.GroupBox();
@@ -108,7 +110,7 @@
             this.ChannelBox = new System.Windows.Forms.TextBox();
             this.CurrencyNameBox = new System.Windows.Forms.TextBox();
             this.DonationsWindow = new System.Windows.Forms.Panel();
-            this.RecentDonorsLimit = new System.Windows.Forms.NumericUpDown();
+            this.RecentDonorsLimit = new ModBot.FlatNumericUpDown();
             this.UpdateTopDonorsCheckBox = new System.Windows.Forms.CheckBox();
             this.label15 = new System.Windows.Forms.Label();
             this.Donations_List = new System.Windows.Forms.DataGridView();
@@ -121,18 +123,19 @@
             this.IncludeLatest = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.IncludeTop = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.IncludeTopDonor = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.TopDonorsLimit = new System.Windows.Forms.NumericUpDown();
+            this.TopDonorsLimit = new ModBot.FlatNumericUpDown();
             this.UpdateRecentDonorsCheckBox = new System.Windows.Forms.CheckBox();
             this.label16 = new System.Windows.Forms.Label();
             this.UpdateLastDonorCheckBox = new System.Windows.Forms.CheckBox();
             this.AboutWindowButton = new System.Windows.Forms.CheckBox();
             this.AboutWindow = new System.Windows.Forms.Panel();
+            this.DonateImage = new System.Windows.Forms.PictureBox();
             this.SupportLinkLabel = new System.Windows.Forms.LinkLabel();
             this.EmailLinkLabel = new System.Windows.Forms.LinkLabel();
             this.label17 = new System.Windows.Forms.Label();
             this.WebsiteLinkLabel = new System.Windows.Forms.LinkLabel();
             this.label18 = new System.Windows.Forms.Label();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.AboutImage = new System.Windows.Forms.PictureBox();
             this.VersionLabel = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
@@ -157,6 +160,7 @@
             this.SettingsPresents.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Currency_HandoutLastActive)).BeginInit();
             this.SettingsWindow.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.CurrencySubHandoutAmount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.CurrencyHandoutAmount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.CurrencyHandoutInterval)).BeginInit();
             this.DonationsWindow.SuspendLayout();
@@ -164,7 +168,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.Donations_List)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.TopDonorsLimit)).BeginInit();
             this.AboutWindow.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.DonateImage)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.AboutImage)).BeginInit();
             this.ChannelWindow.SuspendLayout();
             this.CurrencyWindow.SuspendLayout();
             this.GiveawayWindow.SuspendLayout();
@@ -672,6 +677,8 @@
             // SettingsWindow
             // 
             this.SettingsWindow.BackColor = System.Drawing.Color.White;
+            this.SettingsWindow.Controls.Add(this.label19);
+            this.SettingsWindow.Controls.Add(this.CurrencySubHandoutAmount);
             this.SettingsWindow.Controls.Add(this.DonationsTokenBox);
             this.SettingsWindow.Controls.Add(this.label5);
             this.SettingsWindow.Controls.Add(this.label4);
@@ -713,6 +720,37 @@
             this.SettingsWindow.Size = new System.Drawing.Size(814, 562);
             this.SettingsWindow.TabIndex = 58;
             this.SettingsWindow.Visible = this.SettingsWindowButton.Checked;
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.Location = new System.Drawing.Point(662, 247);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(142, 13);
+            this.label19.TabIndex = 94;
+            this.label19.Text = "Subscribers\' Payout Amount:";
+            // 
+            // CurrencySubHandoutAmount
+            // 
+            this.CurrencySubHandoutAmount.Location = new System.Drawing.Point(665, 263);
+            this.CurrencySubHandoutAmount.Maximum = new decimal(new int[] {
+            200,
+            0,
+            0,
+            0});
+            this.CurrencySubHandoutAmount.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.CurrencySubHandoutAmount.Name = "CurrencySubHandoutAmount";
+            this.CurrencySubHandoutAmount.Size = new System.Drawing.Size(143, 20);
+            this.CurrencySubHandoutAmount.TabIndex = 93;
+            this.CurrencySubHandoutAmount.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             // 
             // DonationsTokenBox
             // 
@@ -1003,7 +1041,7 @@
             this.SubLinkBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.SubLinkBox.Location = new System.Drawing.Point(6, 263);
             this.SubLinkBox.Name = "SubLinkBox";
-            this.SubLinkBox.Size = new System.Drawing.Size(802, 20);
+            this.SubLinkBox.Size = new System.Drawing.Size(653, 20);
             this.SubLinkBox.TabIndex = 68;
             // 
             // label10
@@ -1162,6 +1200,7 @@
             this.Donations_List.AllowUserToAddRows = false;
             this.Donations_List.AllowUserToDeleteRows = false;
             this.Donations_List.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            this.Donations_List.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.Donations_List.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
             this.Donations_List.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.Donations_List.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
@@ -1330,18 +1369,31 @@
             // AboutWindow
             // 
             this.AboutWindow.BackColor = System.Drawing.Color.White;
+            this.AboutWindow.Controls.Add(this.DonateImage);
             this.AboutWindow.Controls.Add(this.SupportLinkLabel);
             this.AboutWindow.Controls.Add(this.EmailLinkLabel);
             this.AboutWindow.Controls.Add(this.label17);
             this.AboutWindow.Controls.Add(this.WebsiteLinkLabel);
             this.AboutWindow.Controls.Add(this.label18);
-            this.AboutWindow.Controls.Add(this.pictureBox1);
+            this.AboutWindow.Controls.Add(this.AboutImage);
             this.AboutWindow.Controls.Add(this.VersionLabel);
             this.AboutWindow.Controls.Add(this.label20);
             this.AboutWindow.Location = new System.Drawing.Point(108, 30);
             this.AboutWindow.Name = "AboutWindow";
             this.AboutWindow.Size = new System.Drawing.Size(814, 562);
             this.AboutWindow.TabIndex = 61;
+            // 
+            // DonateImage
+            // 
+            this.DonateImage.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.DonateImage.Image = global::ModBot.Properties.Resources.DonateImage;
+            this.DonateImage.Location = new System.Drawing.Point(88, 306);
+            this.DonateImage.Name = "DonateImage";
+            this.DonateImage.Size = new System.Drawing.Size(74, 21);
+            this.DonateImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.DonateImage.TabIndex = 0;
+            this.DonateImage.TabStop = false;
+            this.DonateImage.Click += new System.EventHandler(this.DonateImage_Click);
             // 
             // SupportLinkLabel
             // 
@@ -1394,16 +1446,16 @@
             this.label18.TabIndex = 19;
             this.label18.Text = "New versions and notes available          and in the updater";
             // 
-            // pictureBox1
+            // AboutImage
             // 
-            this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.pictureBox1.Image = global::ModBot.Properties.Resources.AboutImage;
-            this.pictureBox1.Location = new System.Drawing.Point(0, 0);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(814, 83);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.pictureBox1.TabIndex = 18;
-            this.pictureBox1.TabStop = false;
+            this.AboutImage.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.AboutImage.Image = global::ModBot.Properties.Resources.AboutImage;
+            this.AboutImage.Location = new System.Drawing.Point(0, 0);
+            this.AboutImage.Name = "AboutImage";
+            this.AboutImage.Size = new System.Drawing.Size(814, 83);
+            this.AboutImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.AboutImage.TabIndex = 18;
+            this.AboutImage.TabStop = false;
             // 
             // VersionLabel
             // 
@@ -1681,29 +1733,29 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
-            this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
             this.Controls.Add(this.CurrencyWindow);
             this.Controls.Add(this.GiveawayWindow);
+            this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.AuthenticationBrowser);
             this.Controls.Add(this.panel2);
+            this.Controls.Add(this.AboutWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
+            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
             this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.CurrencyWindow, 0);
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
-            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
-            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -1716,6 +1768,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Currency_HandoutLastActive)).EndInit();
             this.SettingsWindow.ResumeLayout(false);
             this.SettingsWindow.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.CurrencySubHandoutAmount)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.CurrencyHandoutAmount)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.CurrencyHandoutInterval)).EndInit();
             this.DonationsWindow.ResumeLayout(false);
@@ -1725,7 +1778,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.TopDonorsLimit)).EndInit();
             this.AboutWindow.ResumeLayout(false);
             this.AboutWindow.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.DonateImage)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.AboutImage)).EndInit();
             this.ChannelWindow.ResumeLayout(false);
             this.ChannelWindow.PerformLayout();
             this.CurrencyWindow.ResumeLayout(false);
@@ -1745,13 +1799,13 @@
         private System.Windows.Forms.Label label3;
         public System.Windows.Forms.TextBox ChannelGameBox;
         public System.Windows.Forms.CheckBox Giveaway_MinCurrencyCheckBox;
-        public System.Windows.Forms.NumericUpDown Giveaway_MinCurrency;
+        public FlatNumericUpDown Giveaway_MinCurrency;
         public System.Windows.Forms.Button Giveaway_StartButton;
         public System.Windows.Forms.Button Giveaway_RerollButton;
         public System.Windows.Forms.Button Giveaway_StopButton;
         public System.Windows.Forms.Label Giveaway_WinnerStatusLabel;
         public System.Windows.Forms.Label Giveaway_WinnerLabel;
-        public System.Windows.Forms.NumericUpDown Giveaway_ActiveUserTime;
+        public FlatNumericUpDown Giveaway_ActiveUserTime;
         public System.Windows.Forms.Button Giveaway_AnnounceWinnerButton;
         public System.Windows.Forms.ListBox Giveaway_BanListListBox;
         public System.Windows.Forms.Button Giveaway_BanButton;
@@ -1775,7 +1829,7 @@
         public System.Windows.Forms.RadioButton Currency_HandoutActiveStream;
         public System.Windows.Forms.Label Currency_HandoutLabel;
         public System.Windows.Forms.RadioButton Currency_HandoutActiveTime;
-        public System.Windows.Forms.NumericUpDown Currency_HandoutLastActive;
+        public FlatNumericUpDown Currency_HandoutLastActive;
         public System.Windows.Forms.CheckBox SettingsWindowButton;
         public System.Windows.Forms.CheckBox DonationsWindowButton;
         public System.Windows.Forms.Panel SettingsWindow;
@@ -1799,18 +1853,18 @@
         private System.Windows.Forms.TextBox CurrencyNameBox;
         private System.Windows.Forms.Label CurrencyLabel;
         private System.Windows.Forms.GroupBox CurrencySpacer;
-        public System.Windows.Forms.NumericUpDown CurrencyHandoutInterval;
-        public System.Windows.Forms.NumericUpDown CurrencyHandoutAmount;
+        public FlatNumericUpDown CurrencyHandoutInterval;
+        public FlatNumericUpDown CurrencyHandoutAmount;
         private System.Windows.Forms.Label DonationsLabel;
         private System.Windows.Forms.Label SubscribersLabel;
         private System.Windows.Forms.GroupBox DonationsSpacer;
         private System.Windows.Forms.GroupBox SubscribersSpacer;
         public System.Windows.Forms.Button DisconnectButton;
-        public System.Windows.Forms.NumericUpDown RecentDonorsLimit;
+        public FlatNumericUpDown RecentDonorsLimit;
         public System.Windows.Forms.CheckBox UpdateTopDonorsCheckBox;
         private System.Windows.Forms.Label label15;
         public System.Windows.Forms.DataGridView Donations_List;
-        public System.Windows.Forms.NumericUpDown TopDonorsLimit;
+        public FlatNumericUpDown TopDonorsLimit;
         public System.Windows.Forms.CheckBox UpdateRecentDonorsCheckBox;
         private System.Windows.Forms.Label label16;
         public System.Windows.Forms.CheckBox UpdateLastDonorCheckBox;
@@ -1822,7 +1876,7 @@
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.LinkLabel WebsiteLinkLabel;
         private System.Windows.Forms.Label label18;
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox AboutImage;
         private System.Windows.Forms.Label VersionLabel;
         private System.Windows.Forms.Label label20;
         public System.Windows.Forms.Label SettingsErrorLabel;
@@ -1860,5 +1914,8 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label14;
         public System.Windows.Forms.Button UpdateTitleGameButton;
+        private System.Windows.Forms.Label label19;
+        public FlatNumericUpDown CurrencySubHandoutAmount;
+        private System.Windows.Forms.PictureBox DonateImage;
     }
 }

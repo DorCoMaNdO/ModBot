@@ -37,8 +37,8 @@ namespace ModBot
         public static StreamReader read;
         public static StreamWriter write;
         public static string nick, password, channel, currency, currencyName, admin, donation_clientid, donation_token, channeltoken;
-        public static bool partnered = false;
-        public static int interval, payout;
+        public static bool partnered;
+        public static int interval, payout, subpayout;
         public static bool auctionOpen;
         public static List<string> IgnoredUsers = new List<string>();
         public static List<string> betOptions = new List<string>();
@@ -52,8 +52,8 @@ namespace ModBot
         public static bool g_bIsStreaming;
         public static bool g_bResourceKeeper;
         public static MainWindow MainForm = Program.MainForm;
-        public static int g_iLastHandout;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
+        public static bool DetailsConfirmed;
         private static bool CommandsRegistered;
         public static List<Thread> Threads = new List<Thread>();
 
@@ -62,6 +62,7 @@ namespace ModBot
         public static void Initialize()
         {
             MainForm = Program.MainForm;
+            DetailsConfirmed = false;
             if (donation_clientid == "" || donation_token == "")
             {
                 MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
@@ -132,12 +133,12 @@ namespace ModBot
 
                     if (attempts == 4)
                     {
-                        Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
+                        Console.WriteLine("Failed to validate the bot's access token after 5 attempts.");
                     }
                     Thread.Sleep(100);
                 }
 
-                Console.WriteLine("Aborting connection.\r\n");
+                Console.WriteLine("Aborting connection...");
 
                 OnInitialize(InitializationStep.ConnectionAborted);
 
@@ -159,7 +160,70 @@ namespace ModBot
 
             if (!bAbort)
             {
-                if (channeltoken != "")
+                Console.WriteLine("Confirming channel's existence in Twitch...");
+
+                OnInitialize(InitializationStep.ConfirmChannel);
+
+                thread = new Thread(() =>
+                {
+                    for (int attempts = 0; attempts < 5; attempts++)
+                    {
+                        Console.WriteLine("Channel's existence confirming attempt : " + (attempts + 1) + "/5");
+                        using (WebClient w = new WebClient())
+                        {
+                            try
+                            {
+                                w.DownloadString("https://api.twitch.tv/kraken/channels/" + channel.Substring(1));
+                                Console.WriteLine("Channel existence confirmed.\r\n");
+                                bAbort = false;
+                                return;
+                            }
+                            catch (Exception e)
+                            {
+                                if (e.Message.Contains("(404) Not Found."))
+                                {
+                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                    {
+                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
+                                    });
+                                    System.Threading.Thread.Sleep(10);
+                                    break;
+                                }
+                                else
+                                {
+                                    Api.LogError("*************Error Message (via confirmStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                                }
+                            }
+                        }
+
+                        if (attempts == 4)
+                        {
+                            Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
+                        }
+                        Thread.Sleep(100);
+                    }
+
+                    Console.WriteLine("Aborting connection...");
+
+                    OnInitialize(InitializationStep.ConnectionAborted);
+
+                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
+                        {
+                            ctrl.Enabled = true;
+                        }
+                        MainForm.DisconnectButton.Enabled = false;
+                        MainForm.ConnectButton.Enabled = false;
+                    });
+                });
+                Threads.Add(thread);
+                thread.Name = "Channel confirming";
+                thread.Start();
+                thread.Join();
+                if (Threads.Contains(thread)) Threads.Remove(thread);
+
+                if (!bAbort && channeltoken != "")
                 {
                     Console.WriteLine("Validating channel's access token...");
 
@@ -229,7 +293,7 @@ namespace ModBot
 
                             if (attempts == 4)
                             {
-                                Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
+                                Console.WriteLine("Failed to validate the channel's access token after 5 attempts.");
                             }
                             Thread.Sleep(100);
                         }
@@ -242,72 +306,15 @@ namespace ModBot
                     thread.Join();
                     if (Threads.Contains(thread)) Threads.Remove(thread);
                 }
-
-                Console.WriteLine("Confirming channel's existence in Twitch...");
-
-                OnInitialize(InitializationStep.ConfirmChannel);
-
-                thread = new Thread(() =>
-                {
-                    for (int attempts = 0; attempts < 5; attempts++)
-                    {
-                        Console.WriteLine("Channel's existence confirming attempt : " + (attempts + 1) + "/5");
-                        using (WebClient w = new WebClient())
-                        {
-                            try
-                            {
-                                w.DownloadString("https://api.twitch.tv/kraken/channels/" + channel.Substring(1));
-                                Console.WriteLine("Channel existence confirmed.\r\n");
-                                bAbort = false;
-                                return;
-                            }
-                            catch (Exception e)
-                            {
-                                if (e.Message.Contains("(404) Not Found."))
-                                {
-                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                                    {
-                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
-                                    });
-                                    System.Threading.Thread.Sleep(10);
-                                    break;
-                                }
-                                else
-                                {
-                                    Api.LogError("*************Error Message (via confirmStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                                }
-                            }
-                        }
-
-                        if (attempts == 4)
-                        {
-                            Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
-                        }
-                        Thread.Sleep(100);
-                    }
-
-                    Console.WriteLine("Aborting connection.\r\n");
-
-                    OnInitialize(InitializationStep.ConnectionAborted);
-
-                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                    {
-                        foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
-                        {
-                            ctrl.Enabled = true;
-                        }
-                        MainForm.DisconnectButton.Enabled = false;
-                        MainForm.ConnectButton.Enabled = false;
-                    });
-                });
-                Threads.Add(thread);
-                thread.Name = "Channel confirming";
-                thread.Start();
-                thread.Join();
-                if (Threads.Contains(thread)) Threads.Remove(thread);
             }
 
-            if (bAbort) return;
+            if (bAbort)
+            {
+                Console.WriteLine("Connection aborted.\r\n");
+                return;
+            }
+
+            DetailsConfirmed = true;
 
             Console.WriteLine("Configuring settings...");
 
@@ -538,6 +545,8 @@ namespace ModBot
 
             Console.WriteLine("\r\nDisconnecting...\r\n");
 
+            DetailsConfirmed = false;
+
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 MainForm.CurrencyWindowButton.Text = "Currency";
@@ -672,18 +681,61 @@ namespace ModBot
                                 {
                                     Database.addTimeWatched(user, 1);
                                     TimeSpan t = Database.getTimeWatched(user);
-                                    if (t.Days * 24 * 60 + t.Hours * 60 + t.Minutes % interval == 0 && (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
+                                    if (t.TotalMinutes % interval == 0 && (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
                                     {
+                                        int old = Database.checkCurrency(user);
+                                        while (old == Database.checkCurrency(user))
+                                        {
+                                            //old = Database.checkCurrency(user);
+                                            if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Api.IsSubscriber(user))
+                                            {
+                                                Database.addCurrency(user, subpayout);
+                                            }
+                                            else
+                                            {
+                                                Database.addCurrency(user, payout);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                /*if (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked)
+                                {
+                                    Console.WriteLine("Handout type : 0");
+                                }
+                                if (MainForm.Currency_HandoutActiveStream.Checked)
+                                {
+                                    Console.WriteLine("Handout type : 1");
+                                }
+                                if (MainForm.Currency_HandoutActiveTime.Checked)
+                                {
+                                    Console.WriteLine("Handout type : 2");
+                                }
+                                foreach (string user in ActiveUsers.Keys)
+                                {
+                                    Console.Write("\r\n" + user);
+                                    Database.addTimeWatched(user, 1);
+                                    TimeSpan t = Database.getTimeWatched(user);
+                                    if (t.TotalMinutes % interval == 0)
+                                    {
+                                        Console.Write(" should get points");
+                                    }
+                                    if (t.TotalMinutes % interval == 0 && (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
+                                    {
+                                        Console.Write(", passed the checks");
+                                        int old = Database.checkCurrency(user);
                                         if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Api.IsSubscriber(user))
                                         {
-                                            Database.addCurrency(user, payout * 2);
+                                            Database.addCurrency(user, subpayout);
+                                            Console.Write(", got a point, old amount : " + old + ", new amount : " + Database.checkCurrency(user));
                                         }
                                         else
                                         {
                                             Database.addCurrency(user, payout);
+                                            Console.Write(", got a point, old amount : " + old + ", new amount : " + Database.checkCurrency(user));
                                         }
                                     }
-                                }
+                                }*/
                             }
                         }).Start();
                     }
@@ -781,7 +833,7 @@ namespace ModBot
             thread.Name = "Connection ping";
             thread.Start();
 
-            Console.Write("DONE\r\nCreating currency check queue timer... ");
+            Console.Write("DONE\r\nCurrency check queue timer... ");
 
             currencyQueue = new Timer(handleCurrencyQueue, null, Timeout.Infinite, Timeout.Infinite);
 
@@ -804,6 +856,7 @@ namespace ModBot
             //Listen();
             thread = new Thread(() =>
             {
+                Console.WriteLine("Attempting to listen to input...");
                 int attempt = 0;
                 while (attempt < 5)
                 {
@@ -848,8 +901,8 @@ namespace ModBot
                 }
                 Running = false;
                 //MainForm.Hide();
-                System.Windows.Forms.MessageBox.Show("ModBot has encountered an error, more information available in the console...", "ModBot", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 Console.WriteLine("The attempts were unsuccessful... In order get ModBot back to function please restart it...");
+                System.Windows.Forms.MessageBox.Show("ModBot has encountered an error, more information available in the console...", "ModBot", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
             });
             Threads.Add(thread);
             thread.Name = "Input listening";
@@ -1554,6 +1607,19 @@ namespace ModBot
                                 sendMessage("Can't change payout amount. Must be a valid integer greater than " + (MainForm.CurrencyHandoutAmount.Minimum - 1) + " and less than " + (MainForm.CurrencyHandoutAmount.Maximum + 1));
                             }
                         }
+                        else if (args[0].Equals("subpayout"))
+                        {
+                            int amount = 0;
+                            if (int.TryParse(args[1], out amount) && amount >= MainForm.CurrencySubHandoutAmount.Minimum && amount <= MainForm.CurrencySubHandoutAmount.Maximum)
+                            {
+                                payout = amount;
+                                sendMessage("New subscribers' payout amount: " + amount);
+                            }
+                            else
+                            {
+                                sendMessage("Can't change subscribers' payout amount. Must be a valid integer greater than " + (MainForm.CurrencySubHandoutAmount.Minimum - 1) + " and less than " + (MainForm.CurrencySubHandoutAmount.Maximum + 1));
+                            }
+                        }
                         else if (args[0].Equals("interval"))
                         {
                             int tempInterval = -1;
@@ -1567,9 +1633,8 @@ namespace ModBot
                                 sendMessage("Payout interval could not be changed. A valid interval must be greater than " + (MainForm.CurrencyHandoutInterval.Minimum - 1) + " and less than " + (MainForm.CurrencyHandoutInterval.Maximum + 1) + " minutes.");
                             }
                         }
-                        else if (args[0].Equals("greeting"))
+                        else if (args[0].Equals("greeting") || args[0].Equals("greetings"))
                         {
-                            //Console.WriteLine(Database.getUserLevel(user) + "test 1");
                             if (args[1].Equals("on"))
                             {
                                 greetingOn = true;
@@ -1603,7 +1668,7 @@ namespace ModBot
                                 sendMessage(Api.GetDisplayName(args[1]) + " does not exist in the database. Have them type !<currency> then try again.");
                             }
                         }
-                        else if (args[0].Equals("removesub"))
+                        else if (args[0].Equals("removesub") || args[0].Equals("delsub") || args[0].Equals("deletesub"))
                         {
                             if (Database.removeSub(args[1]))
                             {
@@ -1713,7 +1778,7 @@ namespace ModBot
                 }
                 if (Database.getUserLevel(user) >= 2)
                 {
-                    if (args[0].Equals("addcommand") && args.Length >= 4)
+                    if ((args[0].Equals("addcommand") || args[0].Equals("addcmd")) && args.Length >= 4)
                     {
                         int level;
                         if (int.TryParse(args[1], out level) && level >= 0 && level <= 4)
@@ -1739,7 +1804,7 @@ namespace ModBot
                             sendMessage("Invalid syntax. Correct syntax is \"!modbot addcommand <access level> <command> <text you want to output>");
                         }
                     }
-                    else if (args[0].Equals("removecommand") && args.Length >= 2)
+                    else if ((args[0].Equals("removecommand") || args[0].Equals("removecmd") || args[0].Equals("delcmd") || args[0].Equals("deletecmd") || args[0].Equals("deletecmd") || args[0].Equals("deletecommand")) && args.Length >= 2)
                     {
                         string command = args[1].ToLower();
                         if (Commands.cmdExists(command))
@@ -1755,7 +1820,7 @@ namespace ModBot
                 }
                 if (Database.getUserLevel(user) >= 1)
                 {
-                    if (args[0].Equals("commmandlist"))
+                    if (args[0].Equals("commmandlist") || args[0].Equals("cmdlist") || args[0].Equals("commmandslist") || args[0].Equals("cmdslist") || args[0].Equals("cmds") || args[0].Equals("commands"))
                     {
                         string temp = Commands.getList();
                         if (temp != "")
