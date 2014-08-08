@@ -11,7 +11,6 @@ namespace ModBot
     public static class Database
     {
         public static SQLiteConnection DB;
-        private static SQLiteCommand cmd;
         private static string channel;
 
         public static void Initialize()
@@ -40,25 +39,25 @@ namespace ModBot
                 DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
                 DB.Open();
 
-                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB))
+                using (SQLiteCommand query = new SQLiteCommand("CREATE TABLE IF NOT EXISTS '" + channel + "' (id INTEGER PRIMARY KEY, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB))
                 {
-                    cmd.ExecuteNonQuery();
+                    query.ExecuteNonQuery();
                 }
 
-                using (cmd = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'commands' (id INTEGER PRIMARY KEY, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", DB))
+                using (SQLiteCommand query = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'commands' (id INTEGER PRIMARY KEY, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", DB))
                 {
-                    cmd.ExecuteNonQuery();
+                    query.ExecuteNonQuery();
                 }
 
                 // Handle old users
-                using (cmd = new SQLiteCommand("SELECT display_name FROM '" + channel + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT display_name FROM '" + channel + "';", DB))
                 {
                     try
                     {
-                        cmd.ExecuteNonQuery();
-                        /*using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", myDB))
+                        query.ExecuteNonQuery();
+                        /*using (query = new SQLiteCommand("SELECT * FROM '" + channel + "';", myDB))
                         {
-                            using (SQLiteDataReader r = cmd.ExecuteReader())
+                            using (SQLiteDataReader r = query.ExecuteReader())
                             {
                                 while (r.Read())
                                 {
@@ -73,38 +72,38 @@ namespace ModBot
                     }
                     catch (SQLiteException)
                     {
-                        using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN display_name TEXT DEFAULT null;", DB))
+                        using (SQLiteCommand query2 = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN display_name TEXT DEFAULT null;", DB))
                         {
-                            cmd.ExecuteNonQuery();
+                            query2.ExecuteNonQuery();
                         }
                     }
                 }
 
-                using (cmd = new SQLiteCommand("SELECT time_watched FROM '" + channel + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT time_watched FROM '" + channel + "';", DB))
                 {
                     try
                     {
-                        cmd.ExecuteNonQuery();
+                        query.ExecuteNonQuery();
                     }
                     catch (SQLiteException)
                     {
-                        using (cmd = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN time_watched INTEGER DEFAULT 0;", DB))
+                        using (SQLiteCommand query2 = new SQLiteCommand("ALTER TABLE '" + channel + "' ADD COLUMN time_watched INTEGER DEFAULT 0;", DB))
                         {
-                            cmd.ExecuteNonQuery();
+                            query2.ExecuteNonQuery();
                         }
                     }
                 }
 
                 if (tableExists("transfers") && !tableHasData(channel))
                 {
-                    using (cmd = new SQLiteCommand("INSERT INTO '" + channel + "' SELECT * FROM transfers;", DB))
+                    using (SQLiteCommand query = new SQLiteCommand("INSERT INTO '" + channel + "' SELECT * FROM transfers;", DB))
                     {
-                        cmd.ExecuteNonQuery();
+                        query.ExecuteNonQuery();
                     }
 
-                    /*using (cmd = new SQLiteCommand("DROP TABLE transfers;", myDB))
+                    /*using (SQLiteCommand query = new SQLiteCommand("DROP TABLE transfers;", myDB))
                     {
-                        cmd.ExecuteNonQuery();
+                        query.ExecuteNonQuery();
                     }*/
                 }
 
@@ -126,9 +125,9 @@ namespace ModBot
             user = Api.capName(user);
             if (!userExists(user))
             {
-                using (cmd = new SQLiteCommand("INSERT INTO '" + channel + "' (user) VALUES ('" + user + "');", DB))
+                using (SQLiteCommand query = new SQLiteCommand("INSERT INTO '" + channel + "' (user) VALUES ('" + user + "');", DB))
                 {
-                    cmd.ExecuteNonQuery();
+                    query.ExecuteNonQuery();
                 }
                 if (bCheckDisplayName)
                 {
@@ -140,9 +139,9 @@ namespace ModBot
         public static List<string> GetAllUsers()
         {
             List<string> users = new List<string>();
-            using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel + "';", DB))
             {
-                using (SQLiteDataReader r = cmd.ExecuteReader())
+                using (SQLiteDataReader r = query.ExecuteReader())
                 {
                     while (r.Read())
                     {
@@ -164,9 +163,9 @@ namespace ModBot
             {
                 newUser(user, false);
             }
-            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET display_name = '" + name + "' WHERE user = '" + user + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("UPDATE '" + channel + "' SET display_name = '" + name + "' WHERE user = '" + user + "';", DB))
             {
-                cmd.ExecuteNonQuery();
+                query.ExecuteNonQuery();
             }
         }
 
@@ -175,9 +174,9 @@ namespace ModBot
             user = Api.capName(user);
             if (userExists(user))
             {
-                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
                 {
-                    using (SQLiteDataReader r = cmd.ExecuteReader())
+                    using (SQLiteDataReader r = query.ExecuteReader())
                     {
                         if (r.Read())
                         {
@@ -205,9 +204,9 @@ namespace ModBot
             {
                 newUser(user);
             }
-            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET currency = " + amount + " WHERE user = '" + user + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("UPDATE '" + channel + "' SET currency = " + amount + " WHERE user = '" + user + "';", DB))
             {
-                cmd.ExecuteNonQuery();
+                query.ExecuteNonQuery();
             }
         }
 
@@ -215,9 +214,9 @@ namespace ModBot
         {
             user = Api.capName(user);
             if (userExists(user)) {
-                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
                 {
-                    using (SQLiteDataReader r = cmd.ExecuteReader())
+                    using (SQLiteDataReader r = query.ExecuteReader())
                     {
                         if (r.Read())
                         {
@@ -251,9 +250,9 @@ namespace ModBot
             {
                 newUser(user);
             }
-            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET currency = currency + " + amount + " WHERE user = '" + user + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("UPDATE '" + channel + "' SET currency = currency + " + amount + " WHERE user = '" + user + "';", DB))
             {
-                cmd.ExecuteNonQuery();
+                query.ExecuteNonQuery();
             }
         }
 
@@ -272,18 +271,18 @@ namespace ModBot
             {
                 newUser(user);
             }
-            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET currency = currency - " + amount + " WHERE user = '" + user + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("UPDATE '" + channel + "' SET currency = currency - " + amount + " WHERE user = '" + user + "';", DB))
             {
-                cmd.ExecuteNonQuery();
+                query.ExecuteNonQuery();
             }
         }
 
         public static bool userExists(string user)
         {
             user = Api.capName(user);
-            using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel + "';", DB))
             {
-                using (SQLiteDataReader r = cmd.ExecuteReader())
+                using (SQLiteDataReader r = query.ExecuteReader())
                 {
                     while (r.Read())
                     {
@@ -302,9 +301,9 @@ namespace ModBot
             user = Api.capName(user);
             if (userExists(user))
             {
-                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
                 {
-                    using (SQLiteDataReader r = cmd.ExecuteReader())
+                    using (SQLiteDataReader r = query.ExecuteReader())
                     {
                         if (r.Read())
                         {
@@ -332,9 +331,9 @@ namespace ModBot
             {
                 newUser(user);
             }
-            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET btag = '" + btag + "' WHERE user = '" + user + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("UPDATE '" + channel + "' SET btag = '" + btag + "' WHERE user = '" + user + "';", DB))
             {
-                cmd.ExecuteNonQuery();
+                query.ExecuteNonQuery();
             }
         }
 
@@ -347,9 +346,9 @@ namespace ModBot
             }
             else
             {
-                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
                 {
-                    using (SQLiteDataReader r = cmd.ExecuteReader())
+                    using (SQLiteDataReader r = query.ExecuteReader())
                     {
                         if (r.Read())
                         {
@@ -369,9 +368,9 @@ namespace ModBot
             user = Api.capName(user);
             if (userExists(user))
             {
-                using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET subscriber = 1 WHERE user = '" + user + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("UPDATE '" + channel + "' SET subscriber = 1 WHERE user = '" + user + "';", DB))
                 {
-                    cmd.ExecuteNonQuery();
+                    query.ExecuteNonQuery();
                     return true;
                 }
             }
@@ -383,9 +382,9 @@ namespace ModBot
             user = Api.capName(user);
             if (userExists(user))
             {
-                using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET subscriber = 0 WHERE user = '" + user + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("UPDATE '" + channel + "' SET subscriber = 0 WHERE user = '" + user + "';", DB))
                 {
-                    cmd.ExecuteNonQuery();
+                    query.ExecuteNonQuery();
                 }
                 return true;
             }
@@ -401,9 +400,9 @@ namespace ModBot
             }
             else
             {
-                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
                 {
-                    using (SQLiteDataReader r = cmd.ExecuteReader())
+                    using (SQLiteDataReader r = query.ExecuteReader())
                     {
                         if (r.Read())
                         {
@@ -422,9 +421,9 @@ namespace ModBot
             {
                 newUser(user);
             }
-            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET userlevel = " + level + " WHERE user = '" + user + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("UPDATE '" + channel + "' SET userlevel = " + level + " WHERE user = '" + user + "';", DB))
             {
-                cmd.ExecuteNonQuery();
+                query.ExecuteNonQuery();
             }
         }
 
@@ -437,9 +436,9 @@ namespace ModBot
             }
             else
             {
-                using (cmd = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel + "' WHERE user = '" + user + "';", DB))
                 {
-                    using (SQLiteDataReader r = cmd.ExecuteReader())
+                    using (SQLiteDataReader r = query.ExecuteReader())
                     {
                         if (r.Read())
                         {
@@ -458,9 +457,9 @@ namespace ModBot
             {
                 newUser(user);
             }
-            using (cmd = new SQLiteCommand("UPDATE '" + channel + "' SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("UPDATE '" + channel + "' SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", DB))
             {
-                cmd.ExecuteNonQuery();
+                query.ExecuteNonQuery();
             }
         }
 
@@ -468,9 +467,9 @@ namespace ModBot
         {
             try
             {
-                using (cmd = new SQLiteCommand("SELECT COUNT(*) FROM sqlite_master WHERE name = '" + table + "';", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT COUNT(*) FROM sqlite_master WHERE name = '" + table + "';", DB))
                 {
-                    using (SQLiteDataReader r = cmd.ExecuteReader())
+                    using (SQLiteDataReader r = query.ExecuteReader())
                     {
                         while (r.Read())
                         {
@@ -491,9 +490,9 @@ namespace ModBot
 
         private static bool tableHasData(string table)
         {
-            using (cmd = new SQLiteCommand("SELECT * FROM '" + table + "';", DB))
+            using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + table + "';", DB))
             {
-                using (SQLiteDataReader r = cmd.ExecuteReader())
+                using (SQLiteDataReader r = query.ExecuteReader())
                 {
                     if (r.HasRows)
                     {

@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
 using System.Drawing;
+using System.Data.SQLite;
 
 namespace ModBot
 {
@@ -40,11 +41,6 @@ namespace ModBot
         public static bool partnered;
         public static int interval, payout, subpayout;
         public static bool auctionOpen;
-        public static List<string> IgnoredUsers = new List<string>();
-        public static List<string> betOptions = new List<string>();
-        public static Timer currencyQueue;
-        public static List<string> usersToLookup = new List<string>();
-        public static Timer auctionLooper;
         public static string greeting;
         public static bool greetingOn;
         public static int g_iLastCurrencyDisabledAnnounce, g_iLastTop5Announce;
@@ -53,16 +49,29 @@ namespace ModBot
         public static bool g_bResourceKeeper;
         public static MainWindow MainForm = Program.MainForm;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
+        public static Dictionary<string, int> Warnings = new Dictionary<string, int>();
+        public static List<string> IgnoredUsers = new List<string>();
+        public static Timer currencyQueue, auctionLoop, giveawayQueue, warningsRemoval;
+        public static List<string> usersToLookup = new List<string>();
         public static bool DetailsConfirmed;
         private static bool CommandsRegistered;
+        public static List<string> Moderators = new List<string>();
+        public static bool IsModerator;
         public static List<Thread> Threads = new List<Thread>();
+        private static StreamWriter log = new StreamWriter("CommandLog.log", true);
 
         public static event OnInitialize OnInitialize = ((InitializationStep step) => { });
 
         public static void Initialize()
         {
             MainForm = Program.MainForm;
+            ActiveUsers.Clear();
+            Warnings.Clear();
+            usersToLookup.Clear();
+            Moderators.Clear();
             DetailsConfirmed = false;
+            IsModerator = false;
+
             if (donation_clientid == "" || donation_token == "")
             {
                 MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
@@ -92,52 +101,180 @@ namespace ModBot
             OnInitialize(InitializationStep.ValidateBotToken);
 
             bool bAbort = true;
-            Thread thread = new Thread(() =>
+            for (int attempts = 0; attempts < 5; attempts++)
             {
-                for (int attempts = 0; attempts < 5; attempts++)
+                Console.WriteLine("Bot's access token validation attempt : " + (attempts + 1) + "/5");
+                using (WebClient w = new WebClient())
                 {
-                    Console.WriteLine("Bot's access token validation attempt : " + (attempts + 1) + "/5");
-                    using (WebClient w = new WebClient())
+                    w.Proxy = null;
+                    try
                     {
-                        try
+                        string json_data = w.DownloadString("https://api.twitch.tv/kraken?oauth_token=" + password.Replace("oauth:", ""));
+                        JObject json = JObject.Parse(json_data);
+                        if (json["token"]["valid"].ToString() == "True" && json["token"]["user_name"].ToString() == nick)
                         {
-                            string json_data = w.DownloadString("https://api.twitch.tv/kraken?oauth_token=" + password.Replace("oauth:", ""));
-                            JObject json = JObject.Parse(json_data);
-                            if (json["token"]["valid"].ToString() == "True" && json["token"]["user_name"].ToString() == nick)
+                            foreach (JToken x in json["token"]["authorization"]["scopes"])
                             {
-                                foreach (JToken x in json["token"]["authorization"]["scopes"])
+                                if (x.ToString() == "chat_login")
                                 {
-                                    if (x.ToString() == "chat_login")
-                                    {
-                                        Console.WriteLine("Bot's access token has been validated.\r\n");
-                                        bAbort = false;
-                                        return;
-                                    }
+                                    Console.WriteLine("Bot's access token has been validated.\r\n");
+                                    bAbort = false;
+                                    break;
                                 }
                             }
-                            else
+                            if (!bAbort) break;
+                        }
+                        else
+                        {
+                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                             {
-                                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                                {
-                                    Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported bot's auth token invalid.");
-                                });
-                                Thread.Sleep(10);
-                                break;
-                            }
+                                Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported bot's auth token invalid.");
+                            });
+                            Thread.Sleep(10);
+                            break;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Api.LogError("*************Error Message (via validateBotToken()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                    }
+                }
+
+                if (attempts == 4)
+                {
+                    Console.WriteLine("Failed to validate the bot's access token after 5 attempts.");
+                }
+                Thread.Sleep(100);
+            }
+
+            if(!bAbort)
+            {
+                Console.WriteLine("Confirming channel's existence in Twitch...");
+
+                OnInitialize(InitializationStep.ConfirmChannel);
+
+                for (int attempts = 0; attempts < 5; attempts++)
+                {
+                    Console.WriteLine("Channel's existence confirming attempt : " + (attempts + 1) + "/5");
+                    using (WebClient w = new WebClient())
+                    {
+                        w.Proxy = null;
+                        try
+                        {
+                            w.DownloadString("https://api.twitch.tv/kraken/channels/" + channel.Substring(1));
+                            Console.WriteLine("Channel existence confirmed.\r\n");
+                            bAbort = false;
+                            break;
                         }
                         catch (Exception e)
                         {
-                            Api.LogError("*************Error Message (via validateBotToken()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            if (e.Message.Contains("(404) Not Found."))
+                            {
+                                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                {
+                                    Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
+                                });
+                                bAbort = true;
+                                System.Threading.Thread.Sleep(10);
+                                break;
+                            }
+                            else
+                            {
+                                Api.LogError("*************Error Message (via confirmStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            }
                         }
                     }
 
                     if (attempts == 4)
                     {
-                        Console.WriteLine("Failed to validate the bot's access token after 5 attempts.");
+                        Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
                     }
                     Thread.Sleep(100);
                 }
 
+                if (!bAbort && channeltoken != "")
+                {
+                    Console.WriteLine("Validating channel's access token...");
+
+                    OnInitialize(InitializationStep.ValidateChannelToken);
+
+                    for (int attempts = 0; attempts < 5; attempts++)
+                    {
+                        Console.WriteLine("Channel's access token validation attempt : " + (attempts + 1) + "/5");
+                        using (WebClient w = new WebClient())
+                        {
+                            w.Proxy = null;
+                            try
+                            {
+                                JObject json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken?oauth_token=" + channeltoken));
+                                if (json["token"]["valid"].ToString() == "True" && json["token"]["user_name"].ToString() == channel.Substring(1))
+                                {
+                                    int scopes = 0;
+                                    foreach (JToken x in json["token"]["authorization"]["scopes"])
+                                    {
+                                        if (x.ToString() == "user_read" || x.ToString() == "channel_editor" || x.ToString() == "channel_commercial" || x.ToString() == "channel_check_subscription" || x.ToString() == "chat_login")
+                                        {
+                                            scopes++;
+                                        }
+                                    }
+
+                                    if (scopes == 5)
+                                    {
+                                        Console.WriteLine("Channel's access token has been validated.\r\n\r\nChecking partnership status...");
+
+                                        json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/user?oauth_token=" + channeltoken));
+                                        Console.WriteLine((partnered = json["partnered"].ToString() == "True") ? "Partnered.\r\n" : "Not partnered.\r\n");
+
+                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                        {
+                                            /*if (MainForm.ChannelTitleBox.Text != "Loading..." && MainForm.ChannelGameBox.Text != "Loading...")
+                                            {
+                                                MainForm.ChannelTitleBox.ReadOnly = false;
+                                                MainForm.ChannelGameBox.ReadOnly = false;
+                                                MainForm.UpdateTitleGameButton.Enabled = true;
+                                            }*/
+                                        });
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                        {
+                                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "The channel's access token is missing access and will not be used, some functions will be disabled..\r\n");
+                                        });
+                                        channeltoken = "";
+                                        Thread.Sleep(10);
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                    {
+                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel's auth token invalid, some functions will be disabled.\r\n");
+                                    });
+                                    channeltoken = "";
+                                    Thread.Sleep(10);
+                                    break;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Api.LogError("*************Error Message (via validateBotToken()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            }
+                        }
+
+                        if (attempts == 4)
+                        {
+                            Console.WriteLine("Failed to validate the channel's access token after 5 attempts.");
+                        }
+                        Thread.Sleep(100);
+                    }
+                }
+            }
+
+            if (bAbort)
+            {
                 Console.WriteLine("Aborting connection...");
 
                 OnInitialize(InitializationStep.ConnectionAborted);
@@ -151,165 +288,7 @@ namespace ModBot
                     MainForm.DisconnectButton.Enabled = false;
                     MainForm.ConnectButton.Enabled = false;
                 });
-            });
-            Threads.Add(thread);
-            thread.Name = "Bot's access token validation";
-            thread.Start();
-            thread.Join();
-            if (Threads.Contains(thread)) Threads.Remove(thread);
 
-            if (!bAbort)
-            {
-                Console.WriteLine("Confirming channel's existence in Twitch...");
-
-                OnInitialize(InitializationStep.ConfirmChannel);
-
-                thread = new Thread(() =>
-                {
-                    for (int attempts = 0; attempts < 5; attempts++)
-                    {
-                        Console.WriteLine("Channel's existence confirming attempt : " + (attempts + 1) + "/5");
-                        using (WebClient w = new WebClient())
-                        {
-                            try
-                            {
-                                w.DownloadString("https://api.twitch.tv/kraken/channels/" + channel.Substring(1));
-                                Console.WriteLine("Channel existence confirmed.\r\n");
-                                bAbort = false;
-                                return;
-                            }
-                            catch (Exception e)
-                            {
-                                if (e.Message.Contains("(404) Not Found."))
-                                {
-                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                                    {
-                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
-                                    });
-                                    System.Threading.Thread.Sleep(10);
-                                    break;
-                                }
-                                else
-                                {
-                                    Api.LogError("*************Error Message (via confirmStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                                }
-                            }
-                        }
-
-                        if (attempts == 4)
-                        {
-                            Console.WriteLine("Failed to confirm the channel's existence after 5 attempts.");
-                        }
-                        Thread.Sleep(100);
-                    }
-
-                    Console.WriteLine("Aborting connection...");
-
-                    OnInitialize(InitializationStep.ConnectionAborted);
-
-                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                    {
-                        foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
-                        {
-                            ctrl.Enabled = true;
-                        }
-                        MainForm.DisconnectButton.Enabled = false;
-                        MainForm.ConnectButton.Enabled = false;
-                    });
-                });
-                Threads.Add(thread);
-                thread.Name = "Channel confirming";
-                thread.Start();
-                thread.Join();
-                if (Threads.Contains(thread)) Threads.Remove(thread);
-
-                if (!bAbort && channeltoken != "")
-                {
-                    Console.WriteLine("Validating channel's access token...");
-
-                    OnInitialize(InitializationStep.ValidateChannelToken);
-
-                    thread = new Thread(() =>
-                    {
-                        for (int attempts = 0; attempts < 5; attempts++)
-                        {
-                            Console.WriteLine("Channel's access token validation attempt : " + (attempts + 1) + "/5");
-                            using (WebClient w = new WebClient())
-                            {
-                                try
-                                {
-                                    JObject json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken?oauth_token=" + channeltoken));
-                                    if (json["token"]["valid"].ToString() == "True" && json["token"]["user_name"].ToString() == channel.Substring(1))
-                                    {
-                                        int scopes = 0;
-                                        foreach (JToken x in json["token"]["authorization"]["scopes"])
-                                        {
-                                            if (x.ToString() == "user_read" || x.ToString() == "channel_editor" || x.ToString() == "channel_commercial" || x.ToString() == "channel_check_subscription" || x.ToString() == "chat_login")
-                                            {
-                                                scopes++;
-                                            }
-                                        }
-
-                                        if (scopes == 5)
-                                        {
-                                            Console.WriteLine("Channel's access token has been validated.\r\n\r\nChecking partnership status...");
-
-                                            json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/user?oauth_token=" + channeltoken));
-                                            Console.WriteLine((partnered = json["partnered"].ToString() == "True") ? "Partnered.\r\n" : "Not partnered.\r\n");
-
-                                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                                            {
-                                                MainForm.ChannelTitleBox.ReadOnly = false;
-                                                MainForm.ChannelGameBox.ReadOnly = false;
-                                                MainForm.UpdateTitleGameButton.Enabled = true;
-                                            });
-                                            return;
-                                        }
-                                        else
-                                        {
-                                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                                            {
-                                                Console.WriteLine(MainForm.SettingsErrorLabel.Text = "The channel's access token is missing access and will not be used, some functions will be disabled..\r\n");
-                                            });
-                                            Thread.Sleep(10);
-                                            break;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                                        {
-                                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel's auth token invalid, some functions will be disabled.\r\n");
-                                        });
-                                        Thread.Sleep(10);
-                                        break;
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    Api.LogError("*************Error Message (via validateBotToken()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                                }
-                            }
-
-                            if (attempts == 4)
-                            {
-                                Console.WriteLine("Failed to validate the channel's access token after 5 attempts.");
-                            }
-                            Thread.Sleep(100);
-                        }
-
-                        channeltoken = "";
-                    });
-                    Threads.Add(thread);
-                    thread.Name = "Channel's access token validation";
-                    thread.Start();
-                    thread.Join();
-                    if (Threads.Contains(thread)) Threads.Remove(thread);
-                }
-            }
-
-            if (bAbort)
-            {
                 Console.WriteLine("Connection aborted.\r\n");
                 return;
             }
@@ -386,6 +365,8 @@ namespace ModBot
 
                 Commands.Add("!raffle", Command_Giveaway);
                 Commands.Add("!giveaway", Command_Giveaway);
+                Commands.Add("!ticket", Command_Tickets);
+                Commands.Add("!tickets", Command_Tickets);
                 Commands.Add("!" + currency, Command_Currency);
                 Commands.Add("!gamble", Command_Gamble);
                 Commands.Add("!bet", Command_Bet);
@@ -450,6 +431,7 @@ namespace ModBot
                         lLines.Add("No fear, ModBot is here!");
                         lLines.Add("ModBot with style.");
                         lLines.Add("Fear not, here's the (Mod)Bot.");
+                        lLines.Add("ModBot's in the HOUSE!");
                         sendMessage(lLines[new Random().Next(0, lLines.Count)], "", false);
 
                         RegisterCommands();
@@ -470,6 +452,8 @@ namespace ModBot
                             }
 
                             MainForm.DonationsWindowButton.Enabled = false;
+
+                            MainForm.SpamFilterWindowButton.Enabled = Moderators.Contains(Api.capName(nick));
 
                             MainForm.DisconnectButton.Enabled = true;
 
@@ -505,7 +489,7 @@ namespace ModBot
                     MainForm.DisconnectButton.Enabled = false;
                 });
 
-                if (attempt < 5)
+                if (attempt <= 5)
                 {
                     Console.WriteLine("Failed connect or configure post-connection settings.\r\nRetrying in 5 seconds.\r\n");
                     Thread.Sleep(5000);
@@ -515,6 +499,9 @@ namespace ModBot
                     Console.WriteLine("Failed to connect to Twitch.TV chat servers...");
 
                     OnInitialize(InitializationStep.ConnectionFailed);
+
+                    DetailsConfirmed = false;
+                    IsModerator = false;
 
                     //MainForm.Hide();
                     List<Thread> Ts = new List<Thread>();
@@ -535,6 +522,47 @@ namespace ModBot
                         while (t.IsAlive) Thread.Sleep(10);
                     }
                     //Thread.Sleep(TimeSpan.FromDays(365));
+
+                    Pool.cancel();
+
+                    if (Database.DB != null)
+                    {
+                        Database.DB.Close();
+                        Database.DB.Dispose();
+                        Database.DB = null;
+                    }
+
+                    if (irc != null && irc.Connected)
+                    {
+                        irc.Close();
+                    }
+
+                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        MainForm.CurrencyWindowButton.Text = "Currency";
+                        MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, 10F, FontStyle.Bold);
+                        MainForm.ChannelWindowButton.Text = "Channel";
+                        MainForm.ChannelWindowButton.Font = new Font(MainForm.ChannelWindowButton.Font.Name, 10F, FontStyle.Bold);
+                        MainForm.ChannelStatusLabel.Text = "DISCONNECTED";
+                        MainForm.ChannelStatusLabel.ForeColor = Color.Red;
+                        MainForm.DonationsWindowButton.Text = "Donations";
+
+                        foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
+                        {
+                            if (btn != MainForm.SettingsWindowButton && btn != MainForm.AboutWindowButton)
+                            {
+                                btn.Enabled = false;
+                            }
+                        }
+                        MainForm.SettingsWindowButton.Enabled = true;
+
+                        foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
+                        {
+                            ctrl.Enabled = true;
+                        }
+                        MainForm.DisconnectButton.Enabled = false;
+                        MainForm.ConnectButton.Enabled = true;
+                    });
                 }
             }
         }
@@ -545,7 +573,10 @@ namespace ModBot
 
             Console.WriteLine("\r\nDisconnecting...\r\n");
 
+            Pool.cancel();
+
             DetailsConfirmed = false;
+            IsModerator = false;
 
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
@@ -768,6 +799,7 @@ namespace ModBot
                     bool bIsStreaming = false;
                     using (WebClient w = new WebClient())
                     {
+                        w.Proxy = null;
                         string json_data = "";
                         try
                         {
@@ -799,12 +831,12 @@ namespace ModBot
                             /*else if (e.Message.Contains("(503) Server Unavailable"))
                             {
                                 Console.WriteLine("Unable to connect to Twitch API to check stream status, retrying...");
-                            }*/
+                            }
                             else if (!e.Message.Contains("(503) Server Unavailable"))
                             {
                                 Console.WriteLine("Unable to connect to Twitch API to check stream status, retrying...");
                                 Api.LogError("*************Error Message (via checkStream()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                            }
+                            }*/
                         }
                     }
                     g_bIsStreaming = bIsStreaming;
@@ -835,11 +867,43 @@ namespace ModBot
 
             Console.Write("DONE\r\nCurrency check queue timer... ");
 
-            currencyQueue = new Timer(handleCurrencyQueue, null, Timeout.Infinite, Timeout.Infinite);
+            if (currencyQueue == null)
+            {
+                currencyQueue = new Timer(handleCurrencyQueue, null, Timeout.Infinite, Timeout.Infinite);
+            }
+            else
+            {
+                currencyQueue.Change(Timeout.Infinite, Timeout.Infinite);
+            }
 
             Console.Write("DONE\r\nAuction highest bidder timer... ");
 
-            auctionLooper = new Timer(auctionLoop, null, Timeout.Infinite, Timeout.Infinite);
+            if (auctionLoop == null)
+            {
+                auctionLoop = new Timer(auctionLoopHandler, null, Timeout.Infinite, Timeout.Infinite);
+            }
+            else
+            {
+                auctionLoop.Change(Timeout.Infinite, Timeout.Infinite);
+            }
+
+            Console.Write("DONE\r\nGiveaway joining report timer... ");
+
+            if (giveawayQueue == null)
+            {
+                giveawayQueue = new Timer(giveawayQueueHandler, null, Timeout.Infinite, Timeout.Infinite);
+            }
+            else
+            {
+                giveawayQueue.Change(Timeout.Infinite, Timeout.Infinite);
+            }
+
+            Console.Write("DONE\r\nWarnings removal timer... ");
+
+            if (warningsRemoval == null)
+            {
+                warningsRemoval = new Timer(warningsRemovalHandler, null, 900000, 900000);
+            }
 
             Console.Write("DONE\r\nLayout updating thread... ");
 
@@ -911,11 +975,39 @@ namespace ModBot
             Console.Write("DONE\r\nSuccessfully created and started all threads and timers!\r\n\r\n");
         }
 
+        private static void warningsRemovalHandler(object state)
+        {
+            lock (Warnings)
+            {
+                Dictionary<string, int> warns = new Dictionary<string, int>();
+                foreach (string user in Warnings.Keys)
+                {
+                    if (Warnings[user] > 1)
+                    {
+                        warns.Add(user, Warnings[user] - 1);
+                    }
+                }
+                if (Warnings.Count > 0)
+                {
+                    Warnings = warns;
+                    sendMessage("Users with warnings now have one less.");
+                }
+            }
+        }
+
+        private static void giveawayQueueHandler(object state)
+        {
+            if(Giveaway.Started && Giveaway.Open)
+            {
+                sendMessage("Total of " + Giveaway.Users.Count + " people joined the giveaway.");
+            }
+        }
+
         private static void parseMessage(string message)
         {
             //Console.WriteLine(message);
             string[] msg = message.Split(' ');
-            string user = "";
+            string user;
 
             if (msg[0].Equals("PING"))
             {
@@ -928,14 +1020,52 @@ namespace ModBot
                 addUserToList(user);
                 //Console.WriteLine(message);
                 string temp = message.Substring(message.IndexOf(":", 1) + 1);
-                if (user == "Jtv" && temp.StartsWith("HISTORYEND"))
+                if (user == "Jtv")
                 {
-                    Console.WriteLine("Everything should be set and ready!\r\nModBot is good to go!\r\n");
-                    return;
+                    if (temp.StartsWith("HISTORYEND"))
+                    {
+                        Console.WriteLine("Everything should be set and ready!\r\nModBot is good to go!\r\n");
+                        return;
+                    }
+                    else if (temp.StartsWith("You have banned"))
+                    {
+                        return;
+                    }
+                    else if (temp.StartsWith("The moderators of this room are: "))
+                    {
+                        lock (Moderators)
+                        {
+                            Moderators.Clear();
+                            foreach (string mod in temp.Substring(33).Replace(" ", "").Split(','))
+                            {
+                                user = Api.capName(mod);
+                                if (mod != "" && !Moderators.Contains(user))
+                                {
+                                    Moderators.Add(user);
+                                }
+                            }
+                        }
+
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            MainForm.SpamFilterWindowButton.Enabled = Moderators.Contains(Api.capName(nick));
+                        });
+                        return;
+                    }
                 }
                 string name = Api.GetDisplayName(user);
                 Console.WriteLine(name + ": " + temp);
                 //handleMessage(temp);
+                if (IsModerator && MainForm.Spam_CWL.Checked)
+                {
+                    foreach (char character in temp)
+                    {
+                        if (!"()*&^%$@!'\"\\/.,?[]{}+_=-<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.Contains(character.ToString().ToLower()))
+                        {
+                            if (timeoutUser(user, 30, "Using restricted character")) return;
+                        }
+                    }
+                }
                 Commands.CheckCommand(name, temp, true);
                 if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                 {
@@ -998,6 +1128,33 @@ namespace ModBot
                     });
                 }
             }
+            else if (msg[1].Equals("MODE"))
+            {
+                user = msg[4].ToLower();
+                if (msg[3] == "+o")
+                {
+                    /*if (!Moderators.Contains(user))
+                    {
+                        Moderators.Add(user);
+                    }*/
+                    if (user == nick.ToLower())
+                    {
+                        IsModerator = true;
+                    }
+                }
+                else if (msg[3] == "-o")
+                {
+                    /*if (Moderators.Contains(user))
+                    {
+                        Moderators.Remove(user);
+                    }*/
+                    if (user == nick.ToLower())
+                    {
+                        IsModerator = false;
+                    }
+                }
+                buildUserList();
+            }
             else if (msg[1].Equals("352"))
             {
                 //Console.WriteLine(message);
@@ -1011,14 +1168,14 @@ namespace ModBot
 
         private static void Command_Giveaway(string user, string cmd, string[] args)
         {
-            if (args.Length >= 1)
+            if (args.Length > 0)
             {
                 //ADMIN GIVEAWAY COMMANDS: !giveaway open <TicketCost> <MaxTickets>, !giveaway close, !giveaway draw, !giveaway cancel//
                 if (Database.getUserLevel(user) >= 1)
                 {
                     if (args[0].Equals("announce"))
                     {
-                        string sMessage = "Get the party started! Viewers active in chat within the last " + Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) + " minutes ";
+                        /*string sMessage = "Get the party started! Viewers active in chat within the last " + Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) + " minutes ";
                         if (MainForm.Giveaway_MustFollowCheckBox.Checked)
                         {
                             if (!MainForm.Giveaway_MinCurrencyCheckBox.Checked)
@@ -1035,28 +1192,154 @@ namespace ModBot
                             sMessage = sMessage + "and have " + MainForm.Giveaway_MinCurrency.Value + " " + currencyName + " ";
                         }
                         sMessage = sMessage + "will qualify for the giveaway!";
-                        sendMessage(sMessage);
+                        sendMessage(sMessage);*/
+                        sendMessage("Get the party started! Viewers active in chat within the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes" + (MainForm.Giveaway_MustFollowCheckBox.Checked ? MainForm.Giveaway_MinCurrencyCheckBox.Checked ? " follow the stream, and have " + MainForm.Giveaway_MinCurrency.Value + " " + currencyName : " and follow the stream" : "") + " will qualify for the giveaway!");
                     }
+
                     if (Database.getUserLevel(user) >= 2)
                     {
                         if (args[0].Equals("roll"))
                         {
-                            string winner = Giveaway.getWinner();
-                            if (winner.Equals(""))
+                            if (Giveaway.Started)
                             {
-                                sendMessage("No valid winner found, please try again!");
+                                if (!Giveaway.Open)
+                                {
+                                    string winner = Giveaway.getWinner();
+                                    if (winner.Equals(""))
+                                    {
+                                        sendMessage("No valid winner found, please try again!");
+                                    }
+                                    else
+                                    {
+                                        TimeSpan t = Database.getTimeWatched(winner);
+                                        sendMessage(winner + " has won the giveaway! (" + (Api.IsFollower(winner) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+                                    }
+                                }
+                                else
+                                {
+                                    sendMessage("The giveaway has to be closed first!");
+                                }
                             }
                             else
                             {
-                                TimeSpan t = Database.getTimeWatched(winner);
-                                sendMessage(winner + " has won the giveaway! (" + (Api.IsFollower(winner) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+                                sendMessage("No giveaway running!");
+                            }
+                        }
+                        else if (args[0].Equals("type") && args.Length > 1)
+                        {
+                            if (!Giveaway.Started)
+                            {
+                                int type;
+                                if (int.TryParse(args[1], out type) && type >= 1 && type <= 3)
+                                {
+                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                    {
+                                        MainForm.Giveaway_TypeActive.Checked = (type == 1);
+                                        MainForm.Giveaway_TypeKeyword.Checked = (type == 2);
+                                        MainForm.Giveaway_TypeTickets.Checked = (type == 3);
+                                    });
+                                    sendMessage("Giveaway type changed!");
+                                }
+                            }
+                            else
+                            {
+                                sendMessage("Can't change giveaway type while a giveaway is running!");
+                            }
+                        }
+                        else if (args[0].Equals("start") || args[0].Equals("create") || args[0].Equals("run"))
+                        {
+                            if (!Giveaway.Started)
+                            {
+                                if(MainForm.Giveaway_TypeTickets.Checked)
+                                {
+                                    int ticketcost = 0, maxtickets = 1;
+                                    if(args.Length > 1)
+                                    {
+                                        int.TryParse(args[1], out ticketcost);
+                                        if (args.Length > 2)
+                                        {
+                                            int.TryParse(args[2], out maxtickets);
+                                        }
+                                    }
+                                    if (ticketcost >= 0 && maxtickets > 0)
+                                    {
+                                        Giveaway.startGiveaway(ticketcost, maxtickets);;
+                                    }
+                                    else
+                                    {
+                                        sendMessage("Ticket cost cannot be lower than 0 and max tickets cannot be lower than 1.");
+                                    }
+                                }
+                                else
+                                {
+                                    Giveaway.startGiveaway();
+                                }
+                            }
+                            else
+                            {
+                                sendMessage("A giveaway is already running.");
+                            }
+                        }
+                        else if (args[0].Equals("close") || args[0].Equals("lock"))
+                        {
+                            if (Giveaway.Started)
+                            {
+                                if (Giveaway.Open)
+                                {
+                                    giveawayQueue.Change(0, Timeout.Infinite);
+                                    Giveaway.closeGiveaway();
+                                }
+                                else
+                                {
+                                    sendMessage("Entries to the giveaway has been closed already.");
+                                }
+                            }
+                            else
+                            {
+                                sendMessage("A giveaway is not running.");
+                            }
+                        }
+                        else if (args[0].Equals("open") || args[0].Equals("unlock"))
+                        {
+                            if (Giveaway.Started)
+                            {
+                                if (!Giveaway.Open)
+                                {
+                                    Giveaway.openGiveaway();
+                                }
+                                else
+                                {
+                                    sendMessage("Entries to the giveaway are already open.");
+                                }
+                            }
+                            else
+                            {
+                                sendMessage("A giveaway is not running.");
+                            }
+                        }
+                        else if (args[0].Equals("stop") || args[0].Equals("end"))
+                        {
+                            if (Giveaway.Started)
+                            {
+                                Giveaway.endGiveaway();
+                            }
+                            else
+                            {
+                                sendMessage("A giveaway is not running.");
+                            }
+                        }
+                        else if (args[0].Equals("cancel") || args[0].Equals("abort"))
+                        {
+                            if (Giveaway.Started)
+                            {
+                                Giveaway.cancelGiveaway();
                             }
                         }
                     }
                 }
 
                 //REGULAR USER COMMANDS: !giveaway help
-                if (args[0].Equals("help"))
+                /*if (args[0].Equals("help"))
                 {
                     string sMessage = "In order to join the giveaway, you have to be active in chat ";
                     if (MainForm.Giveaway_MustFollowCheckBox.Checked)
@@ -1074,27 +1357,62 @@ namespace ModBot
                     {
                         sMessage = sMessage + "and have " + MainForm.Giveaway_MinCurrency.Value + " " + currencyName + ", ";
                     }
-                    sMessage = sMessage + "the winner is selected from a list of viewers that were active in the last " + Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) + " minutes";
+                    sMessage = sMessage + "the winner is selected from a list of viewers that were active in the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes";
                     if (MainForm.Giveaway_MustFollowCheckBox.Checked || MainForm.Giveaway_MinCurrencyCheckBox.Checked) sMessage = sMessage + " and comply the terms";
                     sMessage = sMessage + ".";
                     sendMessage(sMessage);
+                }*/
+
+                if ((args[0].Equals("buy") || args[0].Equals("join") || args[0].Equals("purchase") || args[0].Equals("ticket") || args[0].Equals("tickets")) && args.Length > 1)
+                {
+                    Command_Tickets(user, "!ticket", new string[] { args[1] });
                 }
             }
             else
             {
-                if (Giveaway.Started && MainForm.Giveaway_TypeKeyword.Checked)
+                Command_Tickets(user, "!ticket", args);
+            }
+        }
+
+        private static void Command_Tickets(string user, string cmd, string[] args)
+        {
+            if (Giveaway.Started && (MainForm.Giveaway_TypeKeyword.Checked || MainForm.Giveaway_TypeTickets.Checked))
+            {
+                if (Giveaway.Open)
                 {
-                    if (Giveaway.Open && !Giveaway.HasBoughtTickets(user))
+                    if (MainForm.Giveaway_TypeKeyword.Checked)
                     {
-                        if (Giveaway.BuyTickets(user))
+                        if (!Giveaway.HasBoughtTickets(user))
                         {
-                            sendMessage(user + " has joined the giveaway!");
+                            if (Giveaway.BuyTickets(user))
+                            {
+                                giveawayQueue.Change(5000, Timeout.Infinite);
+                            }
+                        }
+                        else
+                        {
+                            warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false);
                         }
                     }
                     else
                     {
-                        sendMessage("/timeout " + user + " 5");
+                        if (args.Length > 0)
+                        {
+                            int tickets;
+                            if (int.TryParse(args[0], out tickets) && tickets > 0 && Giveaway.BuyTickets(user, tickets))
+                            {
+                                giveawayQueue.Change(5000, Timeout.Infinite);
+                            }
+                            else if (Moderators.Contains(Api.capName(nick)))
+                            {
+                                if(!warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters")) sendMessage(user + " you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid. (Warning number: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
+                            }
+                        }
                     }
+                }
+                else
+                {
+                    warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false);
                 }
             }
         }
@@ -1110,19 +1428,28 @@ namespace ModBot
                         if (!MainForm.Currency_DisableCommandCheckBox.Checked && Api.GetUnixTimeNow() - g_iLastTop5Announce > 600 || Database.getUserLevel(user) >= 1)
                         {
                             g_iLastTop5Announce = Api.GetUnixTimeNow();
+                            int max = 5;
                             Dictionary<string, int> TopPoints = new Dictionary<string, int>();
-                            foreach (string usr in Database.GetAllUsers())
+                            //"SELECT * FROM table ORDER BY amount DESC LIMIT 5;"
+                            List<string> users = new List<string>();
+                            using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel.Substring(1) + "' ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", Database.DB))
                             {
-                                if (!IgnoredUsers.Any(c => c.Equals(usr.ToLower())))
+                                using (SQLiteDataReader r = query.ExecuteReader())
                                 {
-                                    TopPoints.Add(usr, Database.checkCurrency(usr));
+                                    while (r.Read())
+                                    {
+                                        string usr = Api.capName(r["user"].ToString());
+                                        if (!IgnoredUsers.Any(c => c.Equals(usr.ToLower())) && !TopPoints.ContainsKey(usr))
+                                        {
+                                            TopPoints.Add(usr, int.Parse(r["currency"].ToString()));
+                                        }
+                                    }
                                 }
                             }
-                            TopPoints = TopPoints.OrderByDescending(key => key.Value).ToDictionary(item => item.Key, item => item.Value);
+                            //TopPoints = TopPoints.OrderByDescending(key => key.Value).ToDictionary(item => item.Key, item => item.Value);
                             if (TopPoints.Count > 0)
                             {
                                 string output = "";
-                                int max = 5;
                                 if (TopPoints.Count < max)
                                 {
                                     max = TopPoints.Count;
@@ -1302,15 +1629,15 @@ namespace ModBot
                         {
                             if (maxBet > 0)
                             {
-                                buildBetOptions(args);
-                                if (betOptions.Count > 1)
+                                List<string> Options = buildBetOptions(args);
+                                if (Options.Count > 1)
                                 {
-                                    Pool.CreatePool(maxBet, betOptions);
+                                    Pool.CreatePool(maxBet, Options);
                                     sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currencyName);
                                     string temp = "Betting open for: ";
-                                    for (int i = 0; i < betOptions.Count; i++)
+                                    for (int i = 0; i < Options.Count; i++)
                                     {
-                                        temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
+                                        temp += "(" + (i + 1).ToString() + ") " + Options[i] + " ";
                                     }
                                     sendMessage(temp);
                                     sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currencyName + " on option 1, \"!bet 25 option2name\" to bet 25 " + currencyName + " on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\"");
@@ -1343,6 +1670,16 @@ namespace ModBot
                         {
                             Pool.Locked = true;
                             sendMessage("Bets locked in. Good luck everyone!");
+                            string temp = "The following options were open for betting: ";
+                            for (int i = 0; i < Pool.options.Count; i++)
+                            {
+                                temp += "(" + (i + 1).ToString() + ") " + Pool.options[i] + " - " + Pool.getNumberOfBets(Pool.options[i]) + " bets (" + Pool.getTotalBetsOn(Pool.options[i]) + " " + currencyName + " bet)";
+                                if (i + 1 < Pool.options.Count)
+                                {
+                                    temp += ", ";
+                                }
+                            }
+                            sendMessage(temp);
                         }
                         else
                         {
@@ -1391,15 +1728,15 @@ namespace ModBot
                                 }
                             }
                         }
-                        if (betOptions.Contains(option))
+                        if (Pool.options.Contains(option))
                         {
                             Pool.closePool(option);
                             sendMessage("Betting Pool closed! A total of " + Pool.getTotalBets() + " " + currencyName + " were bet.");
                             string output = "Bets for:";
-                            for (int i = 0; i < betOptions.Count; i++)
+                            for (int i = 0; i < Pool.options.Count; i++)
                             {
-                                double x = ((double)Pool.getTotalBetsOn(betOptions[i]) / Pool.getTotalBets()) * 100;
-                                output += " " + betOptions[i] + " - " + Pool.getNumberOfBets(betOptions[i]) + " (" + Math.Round(x) + "%);";
+                                double x = ((double)Pool.getTotalBetsOn(Pool.options[i]) / Pool.getTotalBets()) * 100;
+                                output += " " + Pool.options[i] + " - " + Pool.getNumberOfBets(Pool.options[i]) + " (" + Math.Round(x) + "%);";
                                 //Console.WriteLine("TESTING: getTotalBetsOn(" + i + ") = " + pool.getTotalBetsOn(i) + " --- getTotalBets() = " + pool.getTotalBets() + " ---  (double)betsOn(i)/totalBets() = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) + " --- *100 = " + (double)(pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100 + " --- Converted to a double = " + (double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100) + " --- Rounded double = " + Math.Round((double)((pool.getTotalBetsOn(i) / pool.getTotalBets()) * 100)));
                             }
                             sendMessage(output);
@@ -1423,6 +1760,8 @@ namespace ModBot
                                     output = "";
                                 }
                             }
+
+                            Pool.Clear();
                         }
                         else
                         {
@@ -1453,73 +1792,93 @@ namespace ModBot
 
         private static void Command_Bet(string user, string cmd, string[] args)
         {
-            if (args.Length > 0 && Pool.Running)
+            if (Pool.Running)
             {
-                int betAmount;
-                if (args[0].Equals("help"))
+                if (args.Length > 0)
                 {
-                    if (!Pool.Locked)
+                    int betAmount;
+                    if (args[0].Equals("help"))
                     {
-                        string temp = "Betting open for: ";
-                        for (int i = 0; i < betOptions.Count; i++)
+                        if (!Pool.Locked)
                         {
-                            temp += "(" + (i + 1).ToString() + ") " + betOptions[i] + " ";
-                        }
-                        sendMessage(temp);
-                        sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currencyName + " on option 1, \"bet 25 option2name\" to bet 25 " + currencyName + " on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\".");
-                    }
-                }
-                else if (int.TryParse(args[0], out betAmount) && args.Length >= 2 && !Pool.Locked)
-                {
-                    bool inQuote = false;
-                    string option = "";
-                    for (int i = 1; i < args.Length; i++)
-                    {
-                        if (args[i].StartsWith("\""))
-                        {
-                            inQuote = true;
-                        }
-                        if (!inQuote)
-                        {
-                            option = args[i];
-                        }
-                        if (inQuote)
-                        {
-                            option += args[i] + " ";
-                        }
-                        if (args[i].EndsWith("\""))
-                        {
-                            option = option.Substring(1, option.Length - 3);
-                            inQuote = false;
-                        }
-                    }
-                    if (option == args[1])
-                    {
-                        if (option.StartsWith("#"))
-                        {
-                            int optionnumber = 0;
-                            if (int.TryParse(option.Substring(1), out optionnumber))
+                            string temp = "Betting open for: ";
+                            for (int i = 0; i < Pool.options.Count; i++)
                             {
-                                option = Pool.GetOptionFromNumber(optionnumber);
-                                if (option == "")
+                                temp += "(" + (i + 1).ToString() + ") " + Pool.options[i];
+                                if(i + 1 < Pool.options.Count)
                                 {
-                                    sendMessage(user + " the option number does not exist");
-                                    return;
+                                    temp += ", ";
+                                }
+                            }
+                            sendMessage(temp);
+                            sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currencyName + " on option 1, \"bet 25 option2name\" to bet 25 " + currencyName + " on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\".");
+                        }
+                        else
+                        {
+                            string temp = "The pool is now closed, the following options were open for betting: ";
+                            for (int i = 0; i < Pool.options.Count; i++)
+                            {
+                                temp += "(" + (i + 1).ToString() + ") " + Pool.options[i] + " - " + Pool.getNumberOfBets(Pool.options[i]) + " bets (" + Pool.getTotalBetsOn(Pool.options[i]) + " " + currencyName + " bet)";
+                                if (i + 1 < Pool.options.Count)
+                                {
+                                    temp += ", ";
+                                }
+                            }
+                            sendMessage(temp);
+                        }
+                    }
+                    else if (!Pool.Locked && int.TryParse(args[0], out betAmount) && args.Length >= 2)
+                    {
+                        bool inQuote = false;
+                        string option = "";
+                        for (int i = 1; i < args.Length; i++)
+                        {
+                            if (args[i].StartsWith("\""))
+                            {
+                                inQuote = true;
+                            }
+                            if (!inQuote)
+                            {
+                                option = args[i];
+                            }
+                            if (inQuote)
+                            {
+                                option += args[i] + " ";
+                            }
+                            if (args[i].EndsWith("\""))
+                            {
+                                option = option.Substring(1, option.Length - 3);
+                                inQuote = false;
+                            }
+                        }
+                        if (option == args[1])
+                        {
+                            if (option.StartsWith("#"))
+                            {
+                                int optionnumber = 0;
+                                if (int.TryParse(option.Substring(1), out optionnumber))
+                                {
+                                    option = Pool.GetOptionFromNumber(optionnumber);
+                                    if (option == "")
+                                    {
+                                        sendMessage(user + " the option number does not exist");
+                                        return;
+                                    }
                                 }
                             }
                         }
-                    }
-                    if (Pool.placeBet(user, option, betAmount))
-                    {
-                        sendMessage(user + " you have placed a " + betAmount + " " + currencyName + " bet on \"" + option + "\"");
+                        if (Pool.placeBet(user, option, betAmount))
+                        {
+                            sendMessage(user + " has placed a " + betAmount + " " + currencyName + " bet on \"" + option + "\"");
+                        }
                     }
                 }
-            }
-            else
-            {
-                if (Pool.isInPool(user))
+                else
                 {
-                    sendMessage(user + ": " + Pool.getBetOn(user) + " (" + Pool.getBetAmount(user) + ")");
+                    if (Pool.isInPool(user))
+                    {
+                        sendMessage(user + ": " + Pool.getBetOn(user) + " (" + Pool.getBetAmount(user) + ")");
+                    }
                 }
             }
         }
@@ -1571,7 +1930,7 @@ namespace ModBot
                     {
                         if (Auction.placeBid(user, amount))
                         {
-                            auctionLooper.Change(0, 30000);
+                            auctionLoop.Change(0, 30000);
                         }
                     }
                 }
@@ -1896,6 +2255,8 @@ namespace ModBot
             //sendRaw("WHO " + channel);
             Thread thread = new Thread(() =>
             {
+                sendMessage("/mods", "", false, false);
+
                 using (WebClient w = new WebClient())
                 {
                     string json_data = "";
@@ -1903,30 +2264,34 @@ namespace ModBot
                     {
                         json_data = w.DownloadString("http://tmi.twitch.tv/group/user/" + channel.Substring(1) + "/chatters");
                         //users.Clear();
-                        List<string> lUsers = new List<string>();
                         if (json_data.Replace("\"", "") != "")
                         {
                             JObject stream = JObject.Parse(JObject.Parse(json_data)["chatters"].ToString());
-                            string[] sUsers = (stream["moderators"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["staff"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["admins"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["viewers"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "")).Split(',');
-                            foreach (string sUser in sUsers)
+                            /*string[] sMods = stream["moderators"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "").Split(',');
+                            lock (Moderators)
                             {
-                                if (sUser != "")
+                                Moderators.Clear();
+                                foreach (string sMod in sMods)
                                 {
-                                    Api.GetDisplayName(sUser);
-                                    if (!lUsers.Contains(Api.capName(sUser)))
+                                    string user = Api.capName(sMod);
+                                    if (sMod != "" && !Moderators.Contains(user))
                                     {
-                                        lUsers.Add(Api.capName(sUser));
+                                        Moderators.Add(user);
                                     }
                                 }
-                            }
-                        }
-                        lock (ActiveUsers)
-                        {
-                            foreach (string user in lUsers)
+                            }*/
+
+                            string[] sUsers = (stream["moderators"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["staff"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["admins"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["viewers"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "")).Split(',');
+                            lock (ActiveUsers)
                             {
-                                if (!ActiveUsers.ContainsKey(user))
+                                foreach (string sUser in sUsers)
                                 {
-                                    addUserToList(user);
+                                    Api.GetDisplayName(sUser);
+                                    string user = Api.capName(sUser);
+                                    if (sUser != "" && !ActiveUsers.ContainsKey(user))
+                                    {
+                                        addUserToList(user);
+                                    }
                                 }
                             }
                         }
@@ -1986,6 +2351,55 @@ namespace ModBot
             }
         }
 
+        private static bool warnUser(string user, int add = 1, int rate = 5, string reason = "", int max = 3, bool announcewarns = true, bool console = true, bool chat = true)
+        {
+            string name = Api.GetDisplayName(user = Api.capName(user));
+            if (!Moderators.Contains(user) && !IgnoredUsers.Contains(user) && Database.getUserLevel(user) == 0)
+            {
+                lock (Warnings)
+                {
+                    if (Warnings.Count == 0)
+                    {
+                        warningsRemoval.Change(900000, 900000);
+                    }
+                    if (!Warnings.ContainsKey(user))
+                    {
+                        Warnings.Add(user, add);
+                    }
+                    else
+                    {
+                        Warnings[user] += add;
+                    }
+                    if (Warnings[user] > max)
+                    {
+                        timeoutUser(name, Warnings[user] * rate, (reason != "" ? reason + " " : "") + (announcewarns ? "after " + max + " warnings." : ""), console, chat);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool timeoutUser(string user, int interval=10, string reason="", bool console = true, bool chat = true)
+        {
+            user = user.ToLower();
+            if (!IsModerator || Moderators.Contains(Api.capName(user)) || IgnoredUsers.Contains(user) || Database.getUserLevel(user) > 0) return false;
+
+            //sendRaw("PRIVMSG " + channel + " :/timeout " + user + " " + interval);
+            sendMessage("/timeout " + user + " " + interval, "", false, false);
+            user = Api.GetDisplayName(user);
+            if (chat)
+            {
+                sendMessage(user + " has been timed out for " + interval + " seconds." + (reason != "" ? " Reason: " + reason : ""), "", false);
+            }
+            if (console)
+            {
+                Console.WriteLine(user + " has been timed out for " + interval + " seconds." + (reason != "" ? " Reason: " + reason : ""));
+            }
+            Log(user + " has been timed out for " + interval + " seconds." + (reason != "" ? " Reason: " + reason : ""));
+            return true;
+        }
+
         private static string checkBtag(string person)
         {
             //DB Lookup person to see if they have a battletag set
@@ -1998,13 +2412,13 @@ namespace ModBot
             else return person + " (" + btag + ") ";
         }
 
-        private static void buildBetOptions(string[] temp)
+        private static List<string> buildBetOptions(string[] temp)
         {
+            List<string> betOptions = new List<string>();
             try
             {
                 lock (betOptions)
                 {
-                    betOptions.Clear();
                     bool inQuote = false;
                     string option = "";
                     for (int i = 2; i < temp.Length; i++)
@@ -2036,28 +2450,27 @@ namespace ModBot
 
                 //print(sb.ToString());
             }
-            catch (Exception e)
+            //catch (Exception e)
+            catch
             {
-                Console.WriteLine(e.ToString());
-                Api.LogError("*************Error Message (via buildBetOptions()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                //Console.WriteLine(e.ToString());
+                //Api.LogError("*************Error Message (via buildBetOptions()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
             }
+            return betOptions;
         }
 
         private static void addToLookups(string user)
         {
-            if (usersToLookup.Count == 0)
-            {
-                currencyQueue.Change(4000, Timeout.Infinite);
-            }
             if (!usersToLookup.Contains(user))
             {
+                currencyQueue.Change(5000, Timeout.Infinite);
                 usersToLookup.Add(user);
             }
         }
 
         private static void handleCurrencyQueue(Object state)
         {
-            if (usersToLookup.Count != 0)
+            if (usersToLookup.Count > 0)
             {
                 string output = currencyName + ":";
                 bool addComma = false;
@@ -2082,13 +2495,12 @@ namespace ModBot
                         addComma = true;
                     }
                 }
-                //sendRaw("PRIVMSG " + channel + " :" + output);
-                sendMessage(output);
                 usersToLookup.Clear();
+                sendMessage(output);
             }
         }
 
-        private static void auctionLoop(Object state)
+        private static void auctionLoopHandler(Object state)
         {
             if (auctionOpen)
             {
@@ -2098,16 +2510,23 @@ namespace ModBot
 
         private static void Log(string output)
         {
-            try
+            for (int attempts = 0; attempts < 5; attempts++)
             {
-                StreamWriter log = new StreamWriter("CommandLog.log", true);
-                log.WriteLine("<" + DateTime.Now + "> " + output);
-                log.Close();
-            }
-            catch (Exception e)
-            {
-                //Console.WriteLine(e);
-                Api.LogError("*************Error Message (via Log()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                try
+                {
+                    log.WriteLine("[" + DateTime.Now + "] " + output);
+                    break;
+                }
+                catch (IOException)
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
+                catch (Exception e)
+                {
+                    //Console.WriteLine(e);
+                    Api.LogError("*************Error Message (via Log()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                    break;
+                }
             }
         }
     }

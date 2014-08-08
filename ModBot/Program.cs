@@ -56,6 +56,8 @@ namespace ModBot
             }
             Console.Title = originalTitle;*/
 
+            ServicePointManager.DefaultConnectionLimit = int.MaxValue;
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
@@ -97,6 +99,7 @@ namespace ModBot
                     string sLatestVersion = "", sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
                     using (WebClient w = new WebClient())
                     {
+                        w.Proxy = null;
                         try
                         {
                             sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");

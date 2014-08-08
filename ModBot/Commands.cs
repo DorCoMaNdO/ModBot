@@ -75,7 +75,6 @@ namespace ModBot
         }
 
         private static SQLiteConnection DB = Database.DB;
-        private static SQLiteCommand cmd;
         private static List<Command> lCommands = new List<Command>();
 
         public static void Add(string Command, CommandExecutedHandler Handler)
@@ -206,7 +205,7 @@ namespace ModBot
 
         public static bool cmdExists(string command)
         {
-            using (cmd = new SQLiteCommand("SELECT * FROM commands", DB))
+            using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM commands", DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -224,7 +223,7 @@ namespace ModBot
 
         public static void addCommand(string command, int level, string output)
         {
-            using (cmd = new SQLiteCommand("INSERT INTO commands (command, level, output) VALUES (\"" + command + "\", " + level + ", \"" + output + "\");", DB))
+            using (SQLiteCommand cmd = new SQLiteCommand("INSERT INTO commands (command, level, output) VALUES (\"" + command + "\", " + level + ", \"" + output + "\");", DB))
             {
                 cmd.ExecuteNonQuery();
             }
@@ -232,7 +231,7 @@ namespace ModBot
 
         public static void removeCommand(string command)
         {
-            using (cmd = new SQLiteCommand("DELETE FROM commands WHERE command = \"" + command + "\";", DB))
+            using (SQLiteCommand cmd = new SQLiteCommand("DELETE FROM commands WHERE command = \"" + command + "\";", DB))
             {
                 cmd.ExecuteNonQuery();
             }
@@ -240,7 +239,7 @@ namespace ModBot
 
         public static int LevelRequired(string command)
         {
-            using (cmd = new SQLiteCommand("SELECT * FROM commands WHERE command = \"" + command + "\";", DB))
+            using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM commands WHERE command = \"" + command + "\";", DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -256,7 +255,7 @@ namespace ModBot
         public static string getList()
         {
             string commands = "";
-            using (cmd = new SQLiteCommand("SELECT * FROM commands;", DB))
+            using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM commands;", DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {
@@ -271,7 +270,7 @@ namespace ModBot
 
         public static string getOutput(string command)
         {
-            using (cmd = new SQLiteCommand("SELECT * FROM commands WHERE command = \"" + command + "\";", DB))
+            using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM commands WHERE command = \"" + command + "\";", DB))
             {
                 using (SQLiteDataReader r = cmd.ExecuteReader())
                 {

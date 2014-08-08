@@ -15,7 +15,7 @@ namespace ModBot
         private static MainWindow MainForm = Program.MainForm;
         public static int LastRoll;
         public static bool Started { get; private set; }
-        public static bool Open { get; private set; }
+        public static bool Open;
         public static int Cost { get; private set; }
         public static int MaxTickets { get; private set; }
         public static Dictionary<string, int> Users = new Dictionary<string, int>();
@@ -24,72 +24,148 @@ namespace ModBot
 
         public static void startGiveaway(int ticketcost = 0, int maxtickets = 1)
         {
-            MainForm.Giveaway_StartButton.Enabled = false;
-            MainForm.Giveaway_RerollButton.Enabled = true;
-            MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
-            MainForm.Giveaway_StopButton.Enabled = true;
-            MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
-            /*MainForm.Giveaway_MustFollowCheckBox.Enabled = false;
-            MainForm.Giveaway_MinCurrencyCheckBox.Enabled = false;
-            MainForm.Giveaway_MinCurrency.Enabled = false;
-            MainForm.Giveaway_ActiveUserTime.Enabled = false;*/
-            dState.Clear();
-            foreach(Control ctrl in MainForm.GiveawayWindow.Controls)
+            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
-                if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(CheckBox) || ctrl.GetType() == typeof(RadioButton) || ctrl.GetType() == typeof(NumericUpDown)) && ctrl != MainForm.Giveaway_AutoBanWinnerCheckBox)
+                MainForm.Giveaway_SettingsPresents.Enabled = false;
+                MainForm.Giveaway_StartButton.Enabled = false;
+                MainForm.Giveaway_RerollButton.Enabled = false;
+                MainForm.Giveaway_CloseButton.Enabled = true;
+                MainForm.Giveaway_OpenButton.Enabled = false;
+                MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
+                MainForm.Giveaway_StopButton.Enabled = true;
+                MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
+                /*MainForm.Giveaway_MustFollowCheckBox.Enabled = false;
+                MainForm.Giveaway_MinCurrencyCheckBox.Enabled = false;
+                MainForm.Giveaway_MinCurrency.Enabled = false;
+                MainForm.Giveaway_ActiveUserTime.Enabled = false;*/
+                dState.Clear();
+                foreach (Control ctrl in MainForm.GiveawayWindow.Controls)
                 {
-                    dState.Add(ctrl, ctrl.Enabled);
-                    ctrl.Enabled = false;
+                    if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(CheckBox) || ctrl.GetType() == typeof(RadioButton) || ctrl.GetType() == typeof(NumericUpDown)) && ctrl != MainForm.Giveaway_AutoBanWinnerCheckBox)
+                    {
+                        dState.Add(ctrl, ctrl.Enabled);
+                        ctrl.Enabled = false;
+                    }
                 }
-            }
-            MainForm.Giveaway_CopyWinnerButton.Enabled = false;
-            MainForm.Giveaway_WinnerTimerLabel.Text = "0:00";
-            MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.Black;
-            MainForm.Giveaway_WinTimeLabel.Text = "0:00";
-            MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
-            MainForm.Giveaway_WinnerChat.Clear();
-            MainForm.Giveaway_WinnerLabel.Text = "Waiting for a roll...";
-            MainForm.Giveaway_WinnerLabel.ForeColor = Color.Red;
-            MainForm.Giveaway_WinnerStatusLabel.Text = "";
-            LastRoll = 0;
-            Cost = ticketcost;
-            MaxTickets = maxtickets;
-            Users.Clear();
-            Started = true;
-            Open = true;
+                MainForm.Giveaway_CopyWinnerButton.Enabled = false;
+                MainForm.Giveaway_WinnerTimerLabel.Text = "0:00";
+                MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.Black;
+                MainForm.Giveaway_WinTimeLabel.Text = "0:00";
+                MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
+                MainForm.Giveaway_WinnerChat.Clear();
+                MainForm.Giveaway_WinnerLabel.Text = "Entries open, close to roll for a winner...";
+                MainForm.Giveaway_WinnerLabel.ForeColor = Color.Red;
+                MainForm.Giveaway_WinnerStatusLabel.Text = "";
+                LastRoll = 0;
+                Cost = ticketcost;
+                MaxTickets = maxtickets;
+                Users.Clear();
+                Started = true;
+                Open = true;
+
+                if (MainForm.Giveaway_TypeTickets.Checked)
+                {
+                    MainForm.Giveaway_CancelButton.Enabled = true;
+
+                    Irc.sendMessage("A giveaway has started! Ticket cost: " + ticketcost + ", max. tickets: " + maxtickets + ". Anyone " + (MainForm.Giveaway_MustFollowCheckBox.Checked ? " who follows the stream" : "") + " can join!");
+                    Irc.sendMessage("Join by using \"!ticket AMOUNT\".");
+                }
+                else if (MainForm.Giveaway_TypeKeyword.Checked)
+                {
+                    Irc.sendMessage("A giveaway has started! Join by using \"!ticket\". Anyone " + (MainForm.Giveaway_MustFollowCheckBox.Checked ? MainForm.Giveaway_MinCurrencyCheckBox.Checked ? " who follows the stream, and have " + MainForm.Giveaway_MinCurrency.Value + " " + Irc.currencyName : " who follows the stream" : "") + " can join!");
+                }
+                else
+                {
+                    closeGiveaway(false);
+
+                    Irc.sendMessage("A giveaway has started! Anyone who sent a message in the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes" + (MainForm.Giveaway_MustFollowCheckBox.Checked ? MainForm.Giveaway_MinCurrencyCheckBox.Checked ? " follows the stream, and has " + MainForm.Giveaway_MinCurrency.Value + " " + Irc.currencyName : " and follows the stream" : "") + " qualifies!");
+                }
+            });
         }
 
-        public static void endGiveaway()
+        public static void closeGiveaway(bool announce = true)
         {
-            MainForm.Giveaway_StartButton.Enabled = true;
-            MainForm.Giveaway_RerollButton.Enabled = false;
-            MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
-            MainForm.Giveaway_StopButton.Enabled = false;
-            /*MainForm.Giveaway_MustFollowCheckBox.Enabled = true;
-            MainForm.Giveaway_MinCurrencyCheckBox.Enabled = true;
-            MainForm.Giveaway_MinCurrency.Enabled = MainForm.Giveaway_MinCurrencyCheckBox.Checked;
-            MainForm.Giveaway_ActiveUserTime.Enabled = true;*/
-            foreach (Control ctrl in dState.Keys)
-            {
-                ctrl.Enabled = dState[ctrl];
-            }
-            dState.Clear();
-            MainForm.Giveaway_CopyWinnerButton.Enabled = false;
-            MainForm.Giveaway_WinnerTimerLabel.Text = "0:00";
-            MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.Black;
-            MainForm.Giveaway_WinTimeLabel.Text = "0:00";
-            MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
-            MainForm.Giveaway_WinnerChat.Clear();
-            MainForm.Giveaway_WinnerLabel.Text = "Giveaway isn't active";
-            MainForm.Giveaway_WinnerLabel.ForeColor = Color.Blue;
-            MainForm.Giveaway_RerollButton.Text = "Roll";
-            MainForm.Giveaway_WinnerStatusLabel.Text = "";
-            LastRoll = 0;
-            Cost = 0;
-            MaxTickets = 0;
-            Users.Clear();
-            Started = false;
             Open = false;
+            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                MainForm.Giveaway_WinnerLabel.Text = "Waiting for a roll...";
+                MainForm.Giveaway_RerollButton.Text = "Roll";
+                MainForm.Giveaway_RerollButton.Enabled = true;
+                MainForm.Giveaway_CloseButton.Enabled = false;
+                MainForm.Giveaway_OpenButton.Enabled = true;
+            });
+            if (announce)
+            {
+                Irc.sendMessage("Entries to the giveaway are now closed.");
+            }
+        }
+
+        public static void openGiveaway()
+        {
+            Open = true;
+            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                MainForm.Giveaway_WinnerLabel.Text = "Entries open, close to roll for a winner...";
+                MainForm.Giveaway_RerollButton.Text = "Roll";
+                MainForm.Giveaway_RerollButton.Enabled = false;
+                MainForm.Giveaway_CloseButton.Enabled = true;
+                MainForm.Giveaway_OpenButton.Enabled = false;
+            });
+            Irc.sendMessage("Entries to the giveaway are now open.");
+        }
+
+        public static void endGiveaway(bool announce = true)
+        {
+            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                MainForm.Giveaway_SettingsPresents.Enabled = true;
+                MainForm.Giveaway_StartButton.Enabled = true;
+                MainForm.Giveaway_RerollButton.Enabled = false;
+                MainForm.Giveaway_CloseButton.Enabled = false;
+                MainForm.Giveaway_OpenButton.Enabled = false;
+                MainForm.Giveaway_CancelButton.Enabled = false;
+                MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
+                MainForm.Giveaway_StopButton.Enabled = false;
+                /*MainForm.Giveaway_MustFollowCheckBox.Enabled = true;
+                MainForm.Giveaway_MinCurrencyCheckBox.Enabled = true;
+                MainForm.Giveaway_MinCurrency.Enabled = MainForm.Giveaway_MinCurrencyCheckBox.Checked;
+                MainForm.Giveaway_ActiveUserTime.Enabled = true;*/
+                foreach (Control ctrl in dState.Keys)
+                {
+                    ctrl.Enabled = dState[ctrl];
+                }
+                dState.Clear();
+                MainForm.Giveaway_CopyWinnerButton.Enabled = false;
+                MainForm.Giveaway_WinnerTimerLabel.Text = "0:00";
+                MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.Black;
+                MainForm.Giveaway_WinTimeLabel.Text = "0:00";
+                MainForm.Giveaway_WinTimeLabel.ForeColor = Color.Black;
+                MainForm.Giveaway_WinnerChat.Clear();
+                MainForm.Giveaway_WinnerLabel.Text = "Giveaway isn't active";
+                MainForm.Giveaway_WinnerLabel.ForeColor = Color.Blue;
+                MainForm.Giveaway_RerollButton.Text = "Roll";
+                MainForm.Giveaway_WinnerStatusLabel.Text = "";
+                LastRoll = 0;
+                Cost = 0;
+                MaxTickets = 0;
+                Users.Clear();
+                Started = false;
+                Open = false;
+            });
+            if (announce)
+            {
+                Irc.sendMessage("The giveaway has ended!");
+            }
+        }
+
+        public static void cancelGiveaway()
+        {
+            foreach (string user in Users.Keys)
+            {
+                Database.addCurrency(user, Users[user] * Cost);
+            }
+            endGiveaway(false);
+            Irc.sendMessage("The giveaway has been cancelled" + (MainForm.Giveaway_TypeTickets.Checked ? ", entries has been refunded." : "."));
         }
 
         public static bool HasBoughtTickets(string user)
@@ -100,7 +176,7 @@ namespace ModBot
         public static bool BuyTickets(string user, int tickets=1)
         {
             user = Api.capName(user);
-            if (Started && (MainForm.Giveaway_TypeKeyword.Checked || MainForm.Giveaway_TypeTickets.Checked) && Open && tickets <= MaxTickets && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked))
+            if (Started && (MainForm.Giveaway_TypeKeyword.Checked || MainForm.Giveaway_TypeTickets.Checked) && Open && tickets <= MaxTickets && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked) && Database.checkCurrency(user) >= GetMinCurrency())
             {
                 int paid = 0;
                 if (Users.ContainsKey(user))
@@ -139,7 +215,6 @@ namespace ModBot
             string sWinner = "";
             MainForm.BeginInvoke((MethodInvoker)delegate
             {
-                if (!Started) startGiveaway();
                 MainForm.Giveaway_RerollButton.Enabled = false;
                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
                 MainForm.Giveaway_CopyWinnerButton.Enabled = false;
@@ -171,15 +246,9 @@ namespace ModBot
                             {
                                 foreach (KeyValuePair<string, int> user in Irc.ActiveUsers)
                                 {
-                                    if (!ValidUsers.Contains(user.Key) && !Irc.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user.Key))
+                                    if (!ValidUsers.Contains(user.Key) && !Irc.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user.Key) && CurrentTime - user.Value <= ActiveTime && Database.checkCurrency(user.Key) >= GetMinCurrency() && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user.Key) || !MainForm.Giveaway_MustFollowCheckBox.Checked))
                                     {
-                                        if (CurrentTime - user.Value <= ActiveTime && Database.checkCurrency(user.Key) >= GetMinCurrency())
-                                        {
-                                            if (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user.Key) || !MainForm.Giveaway_MustFollowCheckBox.Checked)
-                                            {
-                                                ValidUsers.Add(user.Key);
-                                            }
-                                        }
+                                        ValidUsers.Add(user.Key);
                                     }
                                 }
                             }
@@ -193,7 +262,7 @@ namespace ModBot
                                     List<string> Delete = new List<string>();
                                     foreach (string user in Users.Keys)
                                     {
-                                        if (Irc.ActiveUsers.ContainsKey(user) && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked))
+                                        if (Irc.ActiveUsers.ContainsKey(user) && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked) && Database.checkCurrency(user) >= GetMinCurrency())
                                         {
                                             for (int i = 0; i < Users[user]; i++)
                                             {

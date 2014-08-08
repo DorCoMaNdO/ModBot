@@ -93,12 +93,12 @@ namespace ModBotUpdater
             StateLabel.Text = "Initializing download...";
             Thread thread = new Thread(() =>
             {
-                using (WebClient client = new WebClient())
+                using (WebClient w = new WebClient())
                 {
+                    w.Proxy = null;
                     try
                     {
-                        client.Proxy = null;
-                        client.DownloadProgressChanged += new DownloadProgressChangedEventHandler((object sender, DownloadProgressChangedEventArgs e) =>
+                        w.DownloadProgressChanged += new DownloadProgressChangedEventHandler((object sender, DownloadProgressChangedEventArgs e) =>
                         {
                             //label2.Text = "Downloaded " + e.BytesReceived + " of " + e.TotalBytesToReceive;
                             BeginInvoke((MethodInvoker)delegate
@@ -108,7 +108,7 @@ namespace ModBotUpdater
                                 StateLabel.Text = "Downloading...";
                             });
                         });
-                        client.DownloadFileCompleted += new AsyncCompletedEventHandler((object sender, AsyncCompletedEventArgs e) =>
+                        w.DownloadFileCompleted += new AsyncCompletedEventHandler((object sender, AsyncCompletedEventArgs e) =>
                         {
                             if (e.Error == null && !e.Cancelled)
                             {
@@ -125,7 +125,7 @@ namespace ModBotUpdater
                                 });
                             }
                         });
-                        client.DownloadFileAsync(new Uri("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + LatestVersionLabel.Text + "/ModBot.exe"), @"Updater\ModBot.exe");
+                        w.DownloadFileAsync(new Uri("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + LatestVersionLabel.Text + "/ModBot.exe"), @"Updater\ModBot.exe");
                     }
                     catch
                     {
@@ -217,6 +217,7 @@ namespace ModBotUpdater
 
         private void CheckUpdates()
         {
+            ChangelogButton.Enabled = false;
             CurrentVersionLabel.Text = "Not Found";
             if (File.Exists("ModBot.exe"))
             {
@@ -238,12 +239,13 @@ namespace ModBotUpdater
             double dFileSize = 0;
             LatestVersionLabel.Text = "Checking...";
             StateLabel.Text = "Checking for updates...";
-
-            Thread thread = new Thread(
-                () =>
+            Thread thread = new Thread(() =>
+            {
+                thread = new Thread(() =>
                 {
                     using (WebClient w = new WebClient())
                     {
+                        w.Proxy = null;
                         try
                         {
                             sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
@@ -255,72 +257,77 @@ namespace ModBotUpdater
                         }
                     }
                 });
-            thread.Start();
-            thread.Join();
+                thread.Start();
+                thread.Join();
 
-            while(dFileSize >= 1024)
-            {
-                dFileSize /= 1024;
-                if(sFileSizeSuffix == "Bytes")
+                while (dFileSize >= 1024)
                 {
-                    sFileSizeSuffix = "KBs";
-                }
-                else if (sFileSizeSuffix == "KBs")
-                {
-                    sFileSizeSuffix = "MBs";
-                }
-                else if (sFileSizeSuffix == "MBs")
-                {
-                    sFileSizeSuffix = "GBs";
-                }
-            }
-
-            LatestVersionLabel.Text = sLatestVersion;
-            if (sLatestVersion != "")
-            {
-                if (CurrentVersionLabel.Text != "Not Found")
-                {
-                    string[] sCurrent = CurrentVersionLabel.Text.Split('.');
-                    string[] sLatest = sLatestVersion.Split('.');
-                    int iCurrentMajor = Convert.ToInt32(sCurrent[0]), iCurrentMinor = Convert.ToInt32(sCurrent[1]), iCurrentBuild = Convert.ToInt32(sCurrent[2]), iCurrentRev = Convert.ToInt32(sCurrent[3]);
-                    int iLatestMajor = Convert.ToInt32(sLatest[0]), iLatestMinor = Convert.ToInt32(sLatest[1]), iLatestBuild = Convert.ToInt32(sLatest[2]), iLatestRev = Convert.ToInt32(sLatest[3]);
-                    if (iLatestMajor > iCurrentMajor || iLatestMajor == iCurrentMajor && iLatestMinor > iCurrentMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild > iCurrentBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iLatestRev > iCurrentRev)
+                    dFileSize /= 1024;
+                    if (sFileSizeSuffix == "Bytes")
                     {
-                        DownloadProgressBar.Value = 0;
-                        if (dFileSize > 0)
+                        sFileSizeSuffix = "KBs";
+                    }
+                    else if (sFileSizeSuffix == "KBs")
+                    {
+                        sFileSizeSuffix = "MBs";
+                    }
+                    else if (sFileSizeSuffix == "MBs")
+                    {
+                        sFileSizeSuffix = "GBs";
+                    }
+                }
+
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    LatestVersionLabel.Text = sLatestVersion;
+                    if (sLatestVersion != "")
+                    {
+                        if (CurrentVersionLabel.Text != "Not Found")
                         {
-                            StateLabel.Text = "Updates available... (" + dFileSize.ToString("0.00") + " " + sFileSizeSuffix + ")";
+                            string[] sCurrent = CurrentVersionLabel.Text.Split('.');
+                            string[] sLatest = sLatestVersion.Split('.');
+                            int iCurrentMajor = Convert.ToInt32(sCurrent[0]), iCurrentMinor = Convert.ToInt32(sCurrent[1]), iCurrentBuild = Convert.ToInt32(sCurrent[2]), iCurrentRev = Convert.ToInt32(sCurrent[3]);
+                            int iLatestMajor = Convert.ToInt32(sLatest[0]), iLatestMinor = Convert.ToInt32(sLatest[1]), iLatestBuild = Convert.ToInt32(sLatest[2]), iLatestRev = Convert.ToInt32(sLatest[3]);
+                            if (iLatestMajor > iCurrentMajor || iLatestMajor == iCurrentMajor && iLatestMinor > iCurrentMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild > iCurrentBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iLatestRev > iCurrentRev)
+                            {
+                                DownloadProgressBar.Value = 0;
+                                if (dFileSize > 0)
+                                {
+                                    StateLabel.Text = "Updates available... (" + dFileSize.ToString("0.00") + " " + sFileSizeSuffix + ")";
+                                }
+                                else
+                                {
+                                    StateLabel.Text = "Updates available...";
+                                }
+                            }
+                            else
+                            {
+                                StateLabel.Text = "Current version is up-to-date!";
+                            }
                         }
                         else
                         {
-                            StateLabel.Text = "Updates available...";
+                            DownloadProgressBar.Value = 0;
+                            if (dFileSize > 0)
+                            {
+                                StateLabel.Text = "Updates available... (" + dFileSize.ToString("0.00") + " " + sFileSizeSuffix + ")";
+                            }
+                            else
+                            {
+                                StateLabel.Text = "Updates available...";
+                            }
                         }
                     }
                     else
                     {
-                        StateLabel.Text = "Current version is up-to-date!";
+                        LatestVersionLabel.Text = "Error!";
+                        StateLabel.Text = "Error while checking for updates!";
                     }
-                }
-                else
-                {
-                    DownloadProgressBar.Value = 0;
-                    if (dFileSize > 0)
-                    {
-                        StateLabel.Text = "Updates available... (" + dFileSize.ToString("0.00") + " " + sFileSizeSuffix + ")";
-                    }
-                    else
-                    {
-                        StateLabel.Text = "Updates available...";
-                    }
-                }
-            }
-            else
-            {
-                LatestVersionLabel.Text = "Error!";
-                StateLabel.Text = "Error while checking for updates!";
-            }
+                });
 
-            UpdateChangelog();
+                UpdateChangelog();
+            });
+            thread.Start();
         }
 
         private void StateLabel_TextChanged(object sender, EventArgs e)
@@ -388,13 +395,14 @@ namespace ModBotUpdater
 
         public void UpdateChangelog()
         {
-            string sData = "";
-            changelog.ChangelogNotes.Text = "";
-            Thread thread = new Thread(
-                () =>
+            Thread thread = new Thread(() =>
+            {
+                string sData = "";
+                thread = new Thread(() =>
                 {
                     using (WebClient w = new WebClient())
                     {
+                        w.Proxy = null;
                         try
                         {
                             sData = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot-Changelog.txt");
@@ -404,89 +412,104 @@ namespace ModBotUpdater
                         }
                     }
                 });
-            thread.Start();
-            thread.Join();
+                thread.Start();
+                thread.Join();
 
-            string[] sCurrent = CurrentVersionLabel.Text.Split('.');
-            string[] sLatest = LatestVersionLabel.Text.Split('.');
-            int iCurrentMajor = 0, iCurrentMinor = 0, iCurrentBuild = 0, iCurrentRev = 0, iLatestMajor = 0, iLatestMinor = 0, iLatestBuild = 0, iLatestRev = 0;
-            if (CurrentVersionLabel.Text != "Not Found" && LatestVersionLabel.Text != "Error!")
-            {
-                iCurrentMajor = Convert.ToInt32(sCurrent[0]);
-                iCurrentMinor = Convert.ToInt32(sCurrent[1]);
-                iCurrentBuild = Convert.ToInt32(sCurrent[2]);
-                iCurrentRev = Convert.ToInt32(sCurrent[3]);
-                iLatestMajor = Convert.ToInt32(sLatest[0]);
-                iLatestMinor = Convert.ToInt32(sLatest[1]);
-                iLatestBuild = Convert.ToInt32(sLatest[2]);
-                iLatestRev = Convert.ToInt32(sLatest[3]);
-            }
-            sData = sData.Replace("* ", "*  ");
-            while (sData != "")
-            {
-                string sVersion = sData.Substring(sData.IndexOf("[\"") + 2, sData.IndexOf("\"]\r\n{\"") - sData.IndexOf("[\"") - 2), sChanges = sData.Substring(sData.IndexOf("\"]\r\n{\"") + 6, sData.IndexOf("\"}") - sData.IndexOf("\"]\r\n{\"") - 6);
-                string[] sLogVersion = sVersion.Split('.');
-                string sDate = "";
-                int iLogMajor = 0, iLogMinor = 0, iLogBuild = 0, iLogRev = 0;
-                iLogMajor = Convert.ToInt32(sLogVersion[0]);
-                if (sLogVersion[1] != "*")
+                BeginInvoke((MethodInvoker)delegate
                 {
-                    iLogMinor = Convert.ToInt32(sLogVersion[1]);
-                    if (sLogVersion[2] != "*")
+                    string[] sCurrent = CurrentVersionLabel.Text.Split('.');
+                    string[] sLatest = LatestVersionLabel.Text.Split('.');
+                    int iCurrentMajor = 0, iCurrentMinor = 0, iCurrentBuild = 0, iCurrentRev = 0, iLatestMajor = 0, iLatestMinor = 0, iLatestBuild = 0, iLatestRev = 0;
+                    if (CurrentVersionLabel.Text != "Not Found" && LatestVersionLabel.Text.IndexOfAny(new char[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'}) == -1)
                     {
-                        iLogBuild = Convert.ToInt32(sLogVersion[2]);
-                        sDate = new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(iLogBuild).ToLocalTime().ToString("M/dd/yyyy");
-                        if (sLogVersion[3] != "*")
-                        {
-                            iLogRev = Convert.ToInt32(sLogVersion[3]);
-                            sDate = new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(iLogBuild).AddSeconds(iLogRev * 2).ToLocalTime().ToString("M/dd/yyyy hh:mm:ss tt");
-                        }
-                        sDate = " (" + sDate + ")";
+                        iCurrentMajor = Convert.ToInt32(sCurrent[0]);
+                        iCurrentMinor = Convert.ToInt32(sCurrent[1]);
+                        iCurrentBuild = Convert.ToInt32(sCurrent[2]);
+                        iCurrentRev = Convert.ToInt32(sCurrent[3]);
+                        iLatestMajor = Convert.ToInt32(sLatest[0]);
+                        iLatestMinor = Convert.ToInt32(sLatest[1]);
+                        iLatestBuild = Convert.ToInt32(sLatest[2]);
+                        iLatestRev = Convert.ToInt32(sLatest[3]);
                     }
-                }
-                changelog.ChangelogNotes.SelectionColor = Color.Blue;
-                if (CurrentVersionLabel.Text != "Not Found" && LatestVersionLabel.Text != "Error!")
-                {
-                    if (sCurrent.Length == 4 && sLatest.Length == 4)
+
+                    sData = sData.Replace("* ", "*  ");
+
+                    changelog.ChangelogNotes.Text = "";
+
+                    while (sData != "")
                     {
-                        if (LatestVersionLabel.Text == sVersion || iCurrentMajor < iLogMajor || iCurrentMajor == iLogMajor && iCurrentMinor < iLogMinor || iCurrentMajor == iLogMajor && iCurrentMinor == iLogMinor && iCurrentBuild < iLogBuild || iCurrentMajor == iLogMajor && iCurrentMinor == iLogMinor && iCurrentBuild == iLogBuild && iCurrentRev < iLogRev)
+                        string sVersion = sData.Substring(sData.IndexOf("[\"") + 2, sData.IndexOf("\"]\r\n{\"") - sData.IndexOf("[\"") - 2), sChanges = sData.Substring(sData.IndexOf("\"]\r\n{\"") + 6, sData.IndexOf("\"}") - sData.IndexOf("\"]\r\n{\"") - 6);
+                        string[] sLogVersion = sVersion.Split('.');
+                        string sDate = "";
+                        int iLogMajor = 0, iLogMinor = 0, iLogBuild = 0, iLogRev = 0;
+                        iLogMajor = Convert.ToInt32(sLogVersion[0]);
+                        if (sLogVersion[1] != "*")
                         {
-                            changelog.ChangelogNotes.SelectionColor = Color.Red;
+                            iLogMinor = Convert.ToInt32(sLogVersion[1]);
+                            if (sLogVersion[2] != "*")
+                            {
+                                iLogBuild = Convert.ToInt32(sLogVersion[2]);
+                                sDate = new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(iLogBuild).ToLocalTime().ToString("M/dd/yyyy");
+                                if (sLogVersion[3] != "*")
+                                {
+                                    iLogRev = Convert.ToInt32(sLogVersion[3]);
+                                    sDate = new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(iLogBuild).AddSeconds(iLogRev * 2).ToLocalTime().ToString("M/dd/yyyy hh:mm:ss tt");
+                                }
+                                sDate = " (" + sDate + ")";
+                            }
                         }
-                        if (iCurrentMajor > iLatestMajor || iLatestMajor == iCurrentMajor && iCurrentMinor > iLatestMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iCurrentBuild > iLatestBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iCurrentRev > iLatestRev)
+                        changelog.ChangelogNotes.SelectionColor = Color.Blue;
+                        if (CurrentVersionLabel.Text != "Not Found" && LatestVersionLabel.Text != "Error!")
                         {
-                            changelog.ChangelogNotes.SelectionColor = Color.Blue;
+                            if (sCurrent.Length == 4 && sLatest.Length == 4)
+                            {
+                                if (LatestVersionLabel.Text == sVersion || iCurrentMajor < iLogMajor || iCurrentMajor == iLogMajor && iCurrentMinor < iLogMinor || iCurrentMajor == iLogMajor && iCurrentMinor == iLogMinor && iCurrentBuild < iLogBuild || iCurrentMajor == iLogMajor && iCurrentMinor == iLogMinor && iCurrentBuild == iLogBuild && iCurrentRev < iLogRev)
+                                {
+                                    changelog.ChangelogNotes.SelectionColor = Color.Red;
+                                }
+                                if (iCurrentMajor > iLatestMajor || iLatestMajor == iCurrentMajor && iCurrentMinor > iLatestMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iCurrentBuild > iLatestBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iCurrentRev > iLatestRev)
+                                {
+                                    changelog.ChangelogNotes.SelectionColor = Color.Blue;
+                                }
+                                if (CurrentVersionLabel.Text == sVersion || iLogMajor == iCurrentMajor && sLogVersion[1] == "*" || iLogMajor == iCurrentMajor && iLogMinor == iCurrentMinor && sLogVersion[2] == "*" || iLogMajor == iCurrentMajor && iLogMinor == iCurrentMinor && iLogBuild == iCurrentBuild && sLogVersion[3] == "*")
+                                {
+                                    changelog.ChangelogNotes.SelectionColor = Color.Green;
+                                }
+                            }
                         }
-                        if (CurrentVersionLabel.Text == sVersion || iLogMajor == iCurrentMajor && sLogVersion[1] == "*" || iLogMajor == iCurrentMajor && iLogMinor == iCurrentMinor && sLogVersion[2] == "*" || iLogMajor == iCurrentMajor && iLogMinor == iCurrentMinor && iLogBuild == iCurrentBuild && sLogVersion[3] == "*")
+                        changelog.ChangelogNotes.SelectionFont = new Font("Segoe Print", 8, FontStyle.Bold);
+                        //changelog.ChangelogNotes.SelectedText = sVersion + " " + sDate + " :\r\n";
+                        changelog.ChangelogNotes.SelectedText = sVersion;
+                        changelog.ChangelogNotes.SelectionColor = Color.Red;
+                        changelog.ChangelogNotes.SelectedText = sDate;
+                        //changelog.ChangelogNotes.SelectionColor = Color.Red;
+                        //changelog.ChangelogNotes.SelectionFont = new Font("Segoe Print", 7, FontStyle.Regular);
+                        changelog.ChangelogNotes.SelectionColor = Color.Black;
+                        changelog.ChangelogNotes.SelectedText = " :\r\n";
+                        changelog.ChangelogNotes.SelectionFont = new Font("Microsoft Sans Serif", 8);
+                        changelog.ChangelogNotes.SelectedText = sChanges;
+                        sData = sData.Substring(sData.IndexOf("\"}") + 2);
+                        if (sData != "")
                         {
-                            changelog.ChangelogNotes.SelectionColor = Color.Green;
+                            changelog.ChangelogNotes.SelectedText = "\r\n\r\n";
                         }
                     }
-                }
-                changelog.ChangelogNotes.SelectionFont = new Font("Segoe Print", 8, FontStyle.Bold);
-                //changelog.ChangelogNotes.SelectedText = sVersion + " " + sDate + " :\r\n";
-                changelog.ChangelogNotes.SelectedText = sVersion;
-                changelog.ChangelogNotes.SelectionColor = Color.Red;
-                changelog.ChangelogNotes.SelectedText = sDate;
-                //changelog.ChangelogNotes.SelectionColor = Color.Red;
-                //changelog.ChangelogNotes.SelectionFont = new Font("Segoe Print", 7, FontStyle.Regular);
-                changelog.ChangelogNotes.SelectionColor = Color.Black;
-                changelog.ChangelogNotes.SelectedText = " :\r\n";
-                changelog.ChangelogNotes.SelectionFont = new Font("Microsoft Sans Serif", 8);
-                changelog.ChangelogNotes.SelectedText = sChanges;
-                sData = sData.Substring(sData.IndexOf("\"}") + 2);
-                if (sData != "")
-                {
-                    changelog.ChangelogNotes.SelectedText = "\r\n\r\n";
-                }
-            }
-            changelog.ChangelogNotes.Select(0, 0);
-            changelog.ChangelogNotes.ScrollToCaret();
+                    changelog.ChangelogNotes.Select(0, 0);
+                    changelog.ChangelogNotes.ScrollToCaret();
+                    ChangelogButton.Enabled = true;
+                });
+            });
+            thread.Start();
         }
 
         private void ChangelogButton_Click(object sender, EventArgs e)
         {
             changelog.ShowDialog();
+        }
+
+        private void Updater_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Environment.Exit(0);
         }
     }
 }

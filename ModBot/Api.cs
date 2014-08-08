@@ -58,6 +58,7 @@ namespace ModBot
                     {
                         using (WebClient w = new WebClient())
                         {
+                            w.Proxy = null;
                             string json_data = "";
                             try
                             {
@@ -114,7 +115,7 @@ namespace ModBot
 
         public static string capName(string name)
         {
-            if(name.Length < 2)
+            if(name == null || name.Length < 2)
             {
                 return name;
             }
@@ -123,55 +124,83 @@ namespace ModBot
 
         public static bool IsFollower(string user)
         {
-            user = user.ToLower();
             bool bFollower = false;
-            Thread thread = new Thread(
-                () =>
+            using (WebClient w = new WebClient())
+            {
+                w.Proxy = null;
+                try
                 {
-                    using (WebClient w = new WebClient())
-                    {
-                        try
-                        {
-                            string sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + user + "/follows/channels/" + Irc.channel.Substring(1));
-                            bFollower = !sData.Contains("is not following");
-                        }
-                        catch
-                        {
-                        }
-                    }
-                });
-            thread.Name = "Follower check for " + user;
-            thread.Start();
-            thread.Join();
+                    string sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + user.ToLower() + "/follows/channels/" + Irc.channel.Substring(1));
+                    //bFollower = !sData.Contains("is not following");
+                    bFollower = true;
+                }
+                catch
+                {
+                }
+            }
             return bFollower;
         }
 
         public static bool IsSubscriber(string user)
         {
-            user = user.ToLower();
             bool bSubscriber = false;
             if (Irc.partnered && Irc.channeltoken != "")
             {
-                Thread thread = new Thread(
-                    () =>
+                using (WebClient w = new WebClient())
+                {
+                    w.Proxy = null;
+                    try
                     {
-                        using (WebClient w = new WebClient())
-                        {
-                            try
-                            {
-                                string sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + Irc.channel.Substring(1) + "/subscriptions/" + user + "?oauth_token=" + Irc.channeltoken);
-                                //bSubscriber = (!sData.Contains("Token invalid or missing required scope"));
-                            }
-                            catch
-                            {
-                            }
-                        }
-                    });
-                thread.Name = "Subscriber check for " + user;
-                thread.Start();
-                thread.Join();
+                        string sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + Irc.channel.Substring(1) + "/subscriptions/" + user.ToLower() + "?oauth_token=" + Irc.channeltoken);
+                        //bSubscriber = (!sData.Contains("Token invalid or missing required scope"));
+                        bSubscriber = true;
+                    }
+                    catch
+                    {
+                    }
+                }
             }
             return bSubscriber;
+        }
+
+        public static bool UpdateTitleGame(string title, string game, int delay=0)
+        {
+            using (WebClient w = new WebClient())
+            {
+                w.Proxy = null;
+                try
+                {
+                    w.Headers["Authorization"] = "OAuth " + Irc.channeltoken;
+                    w.UploadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1) + "?channel[status]=" + title + "&channel[game]=" + game + "&channel[delay]=" + delay, "PUT", "");
+                    return true;
+                }
+                catch
+                {
+                }
+            }
+            return false;
+        }
+
+        public static bool RunCommercial(int length = 30)
+        {
+            using (WebClient w = new WebClient())
+            {
+                w.Proxy = null;
+                try
+                {
+                    w.Headers["Authorization"] = "OAuth " + Irc.channeltoken;
+                    w.UploadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1) + "/commercial?length=" + length, "POST", "");
+                    return true;
+                }
+                catch (WebException e)
+                {
+                    if(e.Message.Contains("422 Unprocessable Entity"))
+                    {
+                        //invalid length
+                    }
+                }
+            }
+            return false;
         }
 
         public static List<string> checkSpreadsheetSubs()
@@ -180,31 +209,29 @@ namespace ModBot
             string sSubURL = ini.GetValue("Settings", "Subsribers_URL", "");
             if (sSubURL != "")
             {
-                Thread thread = new Thread(() =>
+                string json_data = "";
+                using (WebClient w = new WebClient())
                 {
-                    string json_data = "";
-                    using (WebClient w = new WebClient())
+                    w.Proxy = null;
+                    try
                     {
-                        try
+                        json_data = w.DownloadString(sSubURL);
+                        JObject list = JObject.Parse(json_data);
+                        foreach (JToken x in list["feed"]["entry"])
                         {
-                            json_data = w.DownloadString(sSubURL);
-                            JObject list = JObject.Parse(json_data);
-                            foreach (JToken x in list["feed"]["entry"])
-                            {
-                                lSubs.Add(Api.capName(x["title"]["$t"].ToString()));
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Api.LogError("*************Error Message (via checkSpreadsheetSubs()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                            lSubs.Add(Api.capName(x["title"]["$t"].ToString()));
                         }
                     }
-                });
-                Irc.Threads.Add(thread);
-                thread.Name = "Update subscribers from spreadsheet";
-                thread.Start();
-                thread.Join();
-                if (Irc.Threads.Contains(thread)) Irc.Threads.Remove(thread);
+                    catch (WebException)
+                    {
+                        sSubURL = "";
+                        Console.WriteLine("A web exception has occurred while checking subscribers from spreadsheet,\r\nAssumed not found.");
+                    }
+                    catch (Exception e)
+                    {
+                        Api.LogError("*************Error Message (via checkSpreadsheetSubs()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                    }
+                }
             }
             return lSubs;
         }
@@ -216,6 +243,7 @@ namespace ModBot
             {
                 using (WebClient w = new WebClient())
                 {
+                    w.Proxy = null;
                     try
                     {
                         int count = 100;

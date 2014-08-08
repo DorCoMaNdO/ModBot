@@ -37,26 +37,14 @@ namespace ModBot
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(240, 240, 240)), Controls[1].ClientRectangle.X + 1, Controls[1].ClientRectangle.Y + 1, Controls[1].ClientRectangle.Width + 2, Controls[1].ClientRectangle.Height + 2);
             }
         }
-        private void TextBox_Paint(object sender, PaintEventArgs e)
-        {
-            if (Enabled)
-            {
-                e.Graphics.DrawRectangle(new Pen(Color.White), ClientRectangle);
-            }
-            else
-            {
-                e.Graphics.DrawRectangle(new Pen(Color.FromArgb(230, 230, 230)), ClientRectangle);
-            }
-            e.Graphics.DrawString(((Control)sender).Text, new Font("Comic Sans MS", 8F), Brushes.Black, new Point(0, 0));
-        }
 
         private void UpDownButtons_Paint(object sender, PaintEventArgs e)
         {
             int height = ClientSize.Height / 2;
             ControlPaint.DrawScrollButton(e.Graphics, new Rectangle(1, -1, 16, height), ScrollButton.Up, ButtonState.Flat | ((int)buttonState.GetValue(Controls[0]) == 1 ? ButtonState.Pushed : 0));
             ControlPaint.DrawScrollButton(e.Graphics, new Rectangle(1, height -1, 16, height), ScrollButton.Down, ButtonState.Flat | ((int)buttonState.GetValue(Controls[0]) == 2 ? ButtonState.Pushed : 0));
-            e.Graphics.DrawRectangle(new Pen(Color.FromArgb(100, 100, 100)), 0, 0, 1, ClientSize.Height);
-            e.Graphics.DrawRectangle(new Pen(Color.White), -1, 0, 1, ClientSize.Height);
+            //e.Graphics.DrawRectangle(new Pen(Color.FromArgb(100, 100, 100)), 0, 0, 1, ClientSize.Height);
+            //e.Graphics.DrawRectangle(new Pen(Color.White), -1, 0, 1, ClientSize.Height);
         }
     }
 }

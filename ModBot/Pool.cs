@@ -10,7 +10,7 @@ namespace ModBot
         private static Dictionary<string, int> winners = new Dictionary<string, int>();
         private static Dictionary<string, PoolUser> bets = new Dictionary<string, PoolUser>();
         private static int maxBet, totalBets;
-        private static List<string> options;
+        public static List<string> options { get; private set; }
         public static bool Running { get; private set; }
         public static bool Locked = false;
 
@@ -155,10 +155,16 @@ namespace ModBot
             {
                 Database.addCurrency(nick, bets[nick].betAmount);
             }
-            bets.Clear();
-            winners.Clear();
+            Clear();
             Running = false;
             Locked = false;
+        }
+
+        public static void Clear()
+        {
+            if(options != null) options.Clear();
+            winners.Clear();
+            bets.Clear();
         }
 
         public static bool isInPool(string nick)

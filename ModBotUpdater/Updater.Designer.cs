@@ -43,7 +43,6 @@
             // DownloadProgressBar
             // 
             this.DownloadProgressBar.Location = new System.Drawing.Point(14, 108);
-            this.DownloadProgressBar.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.DownloadProgressBar.Name = "DownloadProgressBar";
             this.DownloadProgressBar.Size = new System.Drawing.Size(504, 23);
             this.DownloadProgressBar.TabIndex = 12;
@@ -168,6 +167,7 @@
             this.MinimizeBox = false;
             this.Name = "Updater";
             this.Text = "ModBot - Updater";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Updater_FormClosing);
             this.Controls.SetChildIndex(this.DownloadProgressBar, 0);
             this.Controls.SetChildIndex(this.label1, 0);
             this.Controls.SetChildIndex(this.CheckUpdatesButton, 0);
