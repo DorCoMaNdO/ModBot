@@ -142,6 +142,8 @@
             this.AuthenticationBrowser = new System.Windows.Forms.WebBrowser();
             this.ChannelWindowButton = new System.Windows.Forms.CheckBox();
             this.ChannelWindow = new System.Windows.Forms.Panel();
+            this.Channel_SteamID64 = new System.Windows.Forms.TextBox();
+            this.Channel_UseSteam = new System.Windows.Forms.CheckBox();
             this.UpdateTitleGameButton = new System.Windows.Forms.Button();
             this.CurrencyWindow = new System.Windows.Forms.Panel();
             this.CurrencyWindowButton = new System.Windows.Forms.CheckBox();
@@ -1535,6 +1537,8 @@
             // ChannelWindow
             // 
             this.ChannelWindow.BackColor = System.Drawing.Color.White;
+            this.ChannelWindow.Controls.Add(this.Channel_SteamID64);
+            this.ChannelWindow.Controls.Add(this.Channel_UseSteam);
             this.ChannelWindow.Controls.Add(this.UpdateTitleGameButton);
             this.ChannelWindow.Controls.Add(this.ChannelStatusLabel);
             this.ChannelWindow.Controls.Add(this.label2);
@@ -1545,6 +1549,35 @@
             this.ChannelWindow.Name = "ChannelWindow";
             this.ChannelWindow.Size = new System.Drawing.Size(814, 562);
             this.ChannelWindow.TabIndex = 63;
+            // 
+            // Channel_SteamID64
+            // 
+            this.Channel_SteamID64.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+            this.Channel_SteamID64.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            this.Channel_SteamID64.BackColor = System.Drawing.Color.White;
+            this.Channel_SteamID64.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.Channel_SteamID64.Enabled = false;
+            this.Channel_SteamID64.Location = new System.Drawing.Point(146, 106);
+            this.Channel_SteamID64.MaxLength = 32;
+            this.Channel_SteamID64.Name = "Channel_SteamID64";
+            this.Channel_SteamID64.Size = new System.Drawing.Size(137, 20);
+            this.Channel_SteamID64.TabIndex = 37;
+            this.Channel_SteamID64.Text = "SteamID64";
+            this.Channel_SteamID64.TextChanged += new System.EventHandler(this.Channel_SteamID64_TextChanged);
+            // 
+            // Channel_UseSteam
+            // 
+            this.Channel_UseSteam.AutoSize = true;
+            this.Channel_UseSteam.Enabled = false;
+            this.Channel_UseSteam.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Channel_UseSteam.Location = new System.Drawing.Point(6, 106);
+            this.Channel_UseSteam.Name = "Channel_UseSteam";
+            this.Channel_UseSteam.Size = new System.Drawing.Size(461, 17);
+            this.Channel_UseSteam.TabIndex = 36;
+            this.Channel_UseSteam.Text = "Update game from Steam                                                (Profile pr" +
+    "ivacy must be set as public)";
+            this.Channel_UseSteam.UseVisualStyleBackColor = true;
+            this.Channel_UseSteam.CheckedChanged += new System.EventHandler(this.Channel_UseSteam_CheckedChanged);
             // 
             // UpdateTitleGameButton
             // 
@@ -1922,31 +1955,31 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.SpamFilterWindow);
-            this.Controls.Add(this.panel2);
-            this.Controls.Add(this.AboutWindow);
-            this.Controls.Add(this.SettingsWindow);
-            this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
             this.Controls.Add(this.CurrencyWindow);
             this.Controls.Add(this.GiveawayWindow);
             this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.AuthenticationBrowser);
+            this.Controls.Add(this.SpamFilterWindow);
+            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.AboutWindow);
+            this.Controls.Add(this.SettingsWindow);
+            this.Controls.Add(this.DonationsWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
-            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
-            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
-            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
-            this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
+            this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
+            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
+            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
+            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
+            this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -2125,5 +2158,7 @@
         public System.Windows.Forms.Button Giveaway_OpenButton;
         public FlatNumericUpDown Giveaway_MaxTickets;
         public FlatNumericUpDown Giveaway_TicketCost;
+        public System.Windows.Forms.TextBox Channel_SteamID64;
+        public System.Windows.Forms.CheckBox Channel_UseSteam;
     }
 }

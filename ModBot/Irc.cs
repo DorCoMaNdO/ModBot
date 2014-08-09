@@ -233,6 +233,8 @@ namespace ModBot
                                                 MainForm.ChannelGameBox.ReadOnly = false;
                                                 MainForm.UpdateTitleGameButton.Enabled = true;
                                             }*/
+                                            MainForm.Channel_UseSteam.Enabled = true;
+                                            ini.SetValue("Settings", "Channel_UseSteam", (MainForm.Channel_UseSteam.Checked = (ini.GetValue("Settings", "Channel_UseSteam", "0") == "1")) ? "1" : "0");
                                         });
                                         break;
                                     }
@@ -540,6 +542,8 @@ namespace ModBot
                         MainForm.ChannelStatusLabel.ForeColor = Color.Red;
                         MainForm.DonationsWindowButton.Text = "Donations";
 
+                        MainForm.Channel_UseSteam.Enabled = false;
+
                         foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
                         {
                             if (btn != MainForm.SettingsWindowButton && btn != MainForm.AboutWindowButton)
@@ -580,6 +584,8 @@ namespace ModBot
                 MainForm.ChannelStatusLabel.Text = "DISCONNECTED";
                 MainForm.ChannelStatusLabel.ForeColor = Color.Red;
                 MainForm.DonationsWindowButton.Text = "Donations";
+
+                MainForm.Channel_UseSteam.Enabled = false;
 
                 foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
                 {
@@ -1045,9 +1051,10 @@ namespace ModBot
                 {
                     foreach (char character in temp)
                     {
-                        if (!"()*&^%$@!'\"\\/.,?[]{}+_=-<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.Contains(character.ToString().ToLower()))
+                        if (!"()*&^%$@!'\"\\/.,?[]{}+_=-<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.ToLower().Contains(character.ToString().ToLower()))
                         {
-                            if (timeoutUser(user, 30, "Using restricted character")) return;
+                            warnUser(user, 1, 30, "Using a restricted character", 0, false, true, true);
+                            return;
                         }
                     }
                 }
@@ -1390,7 +1397,7 @@ namespace ModBot
                             }
                             else if (Moderators.Contains(Api.capName(nick)))
                             {
-                                if(!warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters")) sendMessage(user + " you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid. (Warning number: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
+                                if (!warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters") && Warnings.ContainsKey(Api.capName(user))) sendMessage(user + " you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid. (Warning number: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
                             }
                         }
                     }
@@ -2347,6 +2354,7 @@ namespace ModBot
                     {
                         warningsRemoval.Change(900000, 900000);
                     }
+
                     if (!Warnings.ContainsKey(user))
                     {
                         Warnings.Add(user, add);

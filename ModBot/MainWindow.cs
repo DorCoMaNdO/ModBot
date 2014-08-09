@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.Globalization;
 using System.Threading;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace ModBot
 {
@@ -77,64 +78,48 @@ namespace ModBot
             /*thread = new Thread(() =>
             {
                 AutoCompleteStringCollection Games = new AutoCompleteStringCollection();
-                List<string> dbGames = Database.GetGames();
-                if (dbGames.Count > 0) Games.AddRange(dbGames.ToArray());
                 int max = Games.Count + 100;
                 int count = Games.Count;
                 List<string> games = new List<string>();
                 count = 0;
-                int actualcount = 0;
                 max = 43400;
                 while (count < max)
                 {
-                    thread = new Thread(() =>
+                    using (WebClient w = new WebClient())
                     {
-                        using (WebClient w = new WebClient())
+                        w.Proxy = null;
+                        try
                         {
-                            w.Proxy = null;
-                            try
+                            XElement xml = XElement.Parse(w.DownloadString("http://www.giantbomb.com/api/games/?api_key=1b38477055d29fcf3e5d5ca264ea20e25d457c31&limit=100&offset=" + count + "&sort=date_added:asc"));
+                            int total = int.Parse(xml.Element("number_of_total_results").Value);
+                            if (total > 43000) max = total;
+                            foreach (XElement game in xml.Element("results").Elements())
                             {
-                                XElement xml = XElement.Parse(w.DownloadString("http://www.giantbomb.com/api/games/?api_key=1b38477055d29fcf3e5d5ca264ea20e25d457c31&limit=100&offset=" + count + "&sort=date_added:asc"));
-                                int total = int.Parse(xml.Element("number_of_total_results").Value);
-                                if (total > 43000) max = total;
-                                foreach (XElement game in xml.Element("results").Elements())
+                                if (!games.Contains(game.Element("name").Value))
                                 {
-                                    if (!dbGames.Contains(game.Element("name").Value))
-                                    {
-                                        Database.AddGame(game.Element("name").Value.Replace("'", "''"));
-                                        Games.Add(game.Element("name").Value);
-                                    }
+                                    games.Add(game.Element("name").Value);
                                 }
-                                actualcount += 100;
-                                Console.WriteLine(actualcount);
                             }
-                            catch
-                            {
-                            }
+                            count += 100;
+                            Console.WriteLine(count);
+                            Console.WriteLine(games.Count);
                         }
-                    });
-                    thread.Start();
-                    if (count == 0)
-                    {
-                        thread.Join();
-                    }
-                    count += 100;
-                    if (count >= max)
-                    {
-                        Console.WriteLine("test");
-                        while (actualcount < max) Thread.Sleep(1000);
-                        Console.WriteLine("test2");
-                        BeginInvoke((MethodInvoker)delegate
+                        catch
                         {
-                            ChannelGameBox.AutoCompleteCustomSource = Games;
-                        });
+                        }
                     }
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        File.WriteAllLines("games.txt", games.ToArray());
+                        Games.AddRange(games.ToArray());
+                        ChannelGameBox.AutoCompleteCustomSource = Games;
+                    });
                 }
             });
             thread.Name = "Download games list";
             thread.Start();
             Threads.Add(thread);*/
-            if(File.Exists("games.txt"))
+            if (File.Exists("games.txt"))
             {
                 AutoCompleteStringCollection Games = new AutoCompleteStringCollection();
                 Games.AddRange(File.ReadAllLines("games.txt"));
@@ -237,10 +222,15 @@ namespace ModBot
             CurrentWindow = SettingsWindow;
             SettingsWindow.BringToFront();
 
+            bIgnoreUpdates = true;
+
             ini.SetValue("Settings", "BOT_Name", BotNameBox.Text = ini.GetValue("Settings", "BOT_Name", "ModBot"));
             ini.SetValue("Settings", "BOT_Password", BotPasswordBox.Text = ini.GetValue("Settings", "BOT_Password", ""));
+
             ini.SetValue("Settings", "Channel_Name", ChannelBox.Text = ini.GetValue("Settings", "Channel_Name", "ModChannel"));
             ini.SetValue("Settings", "Channel_Token", ChannelTokenBox.Text = ini.GetValue("Settings", "Channel_Token", ""));
+            ini.SetValue("Settings", "Channel_SteamID64", Channel_SteamID64.Text = ini.GetValue("Settings", "Channel_SteamID64", "SteamID64"));
+
             ini.SetValue("Settings", "Currency_Name", CurrencyNameBox.Text = ini.GetValue("Settings", "Currency_Name", "Mod Coins"));
             ini.SetValue("Settings", "Currency_Command", CurrencyCommandBox.Text = ini.GetValue("Settings", "Currency_Command", "ModCoins"));
             int variable = Convert.ToInt32(ini.GetValue("Settings", "Currency_Interval", "5"));
@@ -261,10 +251,11 @@ namespace ModBot
                 variable = 1;
             }
             ini.SetValue("Settings", "Currency_SubscriberPayout", (CurrencySubHandoutAmount.Value = variable).ToString());
+
             ini.SetValue("Settings", "Subsribers_URL", SubLinkBox.Text = ini.GetValue("Settings", "Subsribers_URL", ""));
+
             ini.SetValue("Settings", "Donations_ClientID", DonationsClientIdBox.Text = ini.GetValue("Settings", "Donations_ClientID", ""));
             ini.SetValue("Settings", "Donations_Token", DonationsTokenBox.Text = ini.GetValue("Settings", "Donations_Token", ""));
-
             ini.SetValue("Settings", "Donations_UpdateTop", (UpdateTopDonorsCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateTop", "0") == "1")) ? "1" : "0");
             ini.SetValue("Settings", "Donations_Top_Limit", (TopDonorsLimit.Value = Convert.ToInt32(ini.GetValue("Settings", "Donations_Top_Limit", "20"))).ToString());
             ini.SetValue("Settings", "Donations_UpdateRecent", (UpdateRecentDonorsCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateRecent", "0") == "1")) ? "1" : "0");
@@ -272,7 +263,6 @@ namespace ModBot
             ini.SetValue("Settings", "Donations_UpdateLast", (UpdateLastDonorCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateLast", "0") == "1")) ? "1" : "0");
 
             ini.SetValue("Settings", "Currency_DisableCommand", (Currency_DisableCommandCheckBox.Checked = (ini.GetValue("Settings", "Currency_DisableCommand", "0") == "1")) ? "1" : "0");
-
             string sCurrencyHandout = ini.GetValue("Settings", "Currency_Handout", "0");
             ini.SetValue("Settings", "Currency_Handout", sCurrencyHandout);
             if (sCurrencyHandout.Equals("0"))
@@ -291,6 +281,8 @@ namespace ModBot
 
             ini.SetValue("Settings", "Spam_CWL", (Spam_CWL.Checked = (ini.GetValue("Settings", "Spam_CWL", "0") == "1")) ? "1" : "0");
             ini.SetValue("Settings", "Spam_CWhiteList", Spam_CWLBox.Text = ini.GetValue("Settings", "Spam_CWhiteList", "abcdefghijklmnopqrstuvwxyz0123456789"));
+
+            bIgnoreUpdates = false;
 
             //string[] lines = File.ReadAllLines("modbot.txt");
             //Dictionary<string, string> dict = lines.Select(l => l.Split('=')).ToDictionary(a => a[0], a => a[1]);
@@ -747,17 +739,36 @@ namespace ModBot
                     using (WebClient w = new WebClient())
                     {
                         w.Proxy = null;
-                        string json_data = "";
                         try
                         {
-                            json_data = w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1));
-                            JObject stream = JObject.Parse(json_data);
+                            JObject stream = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1)));
+
+                            string sGame = stream["game"].ToString();
+
+                            if(Channel_UseSteam.Checked)
+                            {
+                                JObject SteamData = JObject.Parse(w.DownloadString("http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=5C18EE317A1E58DD98BCAF4872977055&steamids=" + Channel_SteamID64.Text));
+
+                                try
+                                {
+                                    if (SteamData["response"]["players"].HasValues) sGame = SteamData["response"]["players"][0]["gameextrainfo"].ToString();
+                                }
+                                catch { }
+
+                                if(stream["game"].ToString() != sGame)
+                                {
+                                    Api.UpdateTitleGame(stream["status"].ToString(), sGame);
+                                }
+                            }
+
                             BeginInvoke((MethodInvoker)delegate
                             {
                                 if (!TitleGameModified)
                                 {
                                     ChannelTitleBox.Text = stream["status"].ToString();
-                                    ChannelGameBox.Text = stream["game"].ToString();
+                                    ChannelGameBox.Text = sGame;
+
+                                    TitleGameModified = false;
 
                                     if (Irc.channeltoken != "" && Irc.DetailsConfirmed)
                                     {
@@ -771,10 +782,10 @@ namespace ModBot
                         //catch (Exception e)
                         catch
                         {
+                            //Console.WriteLine(e);
                             //Api.LogError("*************Error Message (via GrabData()): " + DateTime.Now + "*********************************\r\nUnable to connect to Twitch API to check stream data.\r\n" + e + "\r\n");
                         }
                     }
-                    TitleGameModified = false;
                 }
 
                 BeginInvoke((MethodInvoker)delegate
@@ -825,7 +836,14 @@ namespace ModBot
 
         private void Giveaway_StartButton_Click(object sender, EventArgs e)
         {
-            Giveaway.startGiveaway();
+            if (Giveaway_TypeTickets.Checked)
+            {
+                Giveaway.startGiveaway(int.Parse(Giveaway_TicketCost.Value.ToString()), int.Parse(Giveaway_MaxTickets.Value.ToString()));
+            }
+            else
+            {
+                Giveaway.startGiveaway();
+            }
         }
 
         private void Giveaway_OpenButton_Click(object sender, EventArgs e)
@@ -1443,6 +1461,19 @@ namespace ModBot
         private void Spam_CWLBox_TextChanged(object sender, EventArgs e)
         {
             ini.SetValue("Settings", "Spam_CWhiteList", Spam_CWLBox.Text);
+        }
+
+        private void Channel_UseSteam_CheckedChanged(object sender, EventArgs e)
+        {
+            Channel_SteamID64.Enabled = Channel_UseSteam.Checked;
+            long dummy;
+            if (!bIgnoreUpdates && Channel_UseSteam.Checked && (Channel_SteamID64.Text.Length < 10 || !long.TryParse(Channel_SteamID64.Text, out dummy))) System.Diagnostics.Process.Start("http://steamidconverter.com/");
+            ini.SetValue("Settings", "Channel_UseSteam", Channel_UseSteam.Checked ? "1" : "0");
+        }
+
+        private void Channel_SteamID64_TextChanged(object sender, EventArgs e)
+        {
+            ini.SetValue("Settings", "Channel_SteamID64", Channel_SteamID64.Text);
         }
     }
 }

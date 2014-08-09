@@ -281,7 +281,7 @@ namespace ModBot
                         }
 
                         Console.WriteLine("Unable to connect to Stream Tip to check the transactions.");
-                        LogError("*************Error Message (via UpdateTransactions()): " + DateTime.Now + "*********************************\r\nUnable to connect to Stream Dontaions to check the transactions.\r\n" + e + "\r\n");
+                        LogError("*************Error Message (via UpdateTransactions()): " + DateTime.Now + "*********************************\r\nUnable to connect to Stream Tip to check the transactions.\r\n" + e + "\r\n");
                     }
                 }
             }

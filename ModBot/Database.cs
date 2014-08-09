@@ -39,11 +39,6 @@ namespace ModBot
                 {
                     query.ExecuteNonQuery();
                 }
-
-                /*using (SQLiteCommand query = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'games' (id INTEGER PRIMARY KEY, name TEXT);", DB))
-                {
-                    query.ExecuteNonQuery();
-                }*/
             }
         }
 
@@ -127,32 +122,6 @@ namespace ModBot
 
             Console.WriteLine("Database set.\r\n");
         }
-
-        /*public static List<string> GetGames()
-        {
-            List<string> Games = new List<string>();
-            using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM 'games';", DB))
-            {
-                using (SQLiteDataReader r = query.ExecuteReader())
-                {
-                    while (r.Read())
-                    {
-                        if (Games.Contains(r["name"].ToString())) continue;
-                        Games.Add(r["name"].ToString());
-                    }
-                }
-            }
-            //File.WriteAllLines("games.txt", Games.ToArray());
-            return Games;
-        }
-
-        public static void AddGame(string name)
-        {
-            using (SQLiteCommand query = new SQLiteCommand("INSERT INTO 'games' (name) VALUES ('" + name + "');", DB))
-            {
-                query.ExecuteNonQuery();
-            }
-        }*/
 
         public static void newUser(string user, bool bCheckDisplayName = true)
         {
