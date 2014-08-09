@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollowCheckBox = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -247,6 +247,8 @@
             // 
             // ChannelGameBox
             // 
+            this.ChannelGameBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+            this.ChannelGameBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.ChannelGameBox.BackColor = System.Drawing.Color.White;
             this.ChannelGameBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ChannelGameBox.Location = new System.Drawing.Point(6, 80);
@@ -1274,8 +1276,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle1;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1863,7 +1865,7 @@
             this.Spam_CWLBox.Name = "Spam_CWLBox";
             this.Spam_CWLBox.Size = new System.Drawing.Size(232, 20);
             this.Spam_CWLBox.TabIndex = 68;
-            this.Spam_CWLBox.Text = "abcdefghijklmnopqrstuvwxyz";
+            this.Spam_CWLBox.Text = "abcdefghijklmnopqrstuvwxyz0123456789";
             this.Spam_CWLBox.TextChanged += new System.EventHandler(this.Spam_CWLBox_TextChanged);
             // 
             // label22
@@ -1920,9 +1922,6 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.GiveawayWindow);
-            this.Controls.Add(this.AuthenticationLabel);
-            this.Controls.Add(this.AuthenticationBrowser);
             this.Controls.Add(this.SpamFilterWindow);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.AboutWindow);
@@ -1930,11 +1929,17 @@
             this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
             this.Controls.Add(this.CurrencyWindow);
+            this.Controls.Add(this.GiveawayWindow);
+            this.Controls.Add(this.AuthenticationLabel);
+            this.Controls.Add(this.AuthenticationBrowser);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
+            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
+            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.CurrencyWindow, 0);
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
@@ -1942,9 +1947,6 @@
             this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
-            this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
-            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
-            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);

@@ -61,7 +61,7 @@ namespace ModBot
                                     }
                                 }
                                 // Thanks to Illarvan for giving me some space on his server!
-                                string data = w.DownloadString("http://ddoguild.co.uk/modbot/streams/?channel=" + Irc.channel.Substring(1) + "&bot=" + Irc.nick + "&hash=" + Hash + "&version=" + Assembly.GetExecutingAssembly().GetName().Version + "&viewers=" + iViewers + "&date=" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(Assembly.GetExecutingAssembly().GetName().Version.Build).AddSeconds(Assembly.GetExecutingAssembly().GetName().Version.Revision * 2).ToString("M/dd/yyyy hh:mm:ss tt") + "&status=" + (Irc.g_bIsStreaming ? "2" : "1"));
+                                string data = w.DownloadString("http://ddoguild.co.uk/modbot/streams/?channel=" + Irc.channel.Substring(1) + "&bot=" + Irc.nick + "&hash=" + Hash + "&version=" + Assembly.GetExecutingAssembly().GetName().Version + "&viewers=" + iViewers + "&date=" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(Assembly.GetExecutingAssembly().GetName().Version.Build).AddSeconds(Assembly.GetExecutingAssembly().GetName().Version.Revision * 2).ToString("M/dd/yyyy hh:mm:ss tt") + "&status=" + (Irc.IsStreaming ? "2" : "1"));
                             }
                             catch
                             {
@@ -73,6 +73,73 @@ namespace ModBot
             thread.Name = "Status reporting";
             thread.Start();
             Threads.Add(thread);
+
+            /*thread = new Thread(() =>
+            {
+                AutoCompleteStringCollection Games = new AutoCompleteStringCollection();
+                List<string> dbGames = Database.GetGames();
+                if (dbGames.Count > 0) Games.AddRange(dbGames.ToArray());
+                int max = Games.Count + 100;
+                int count = Games.Count;
+                List<string> games = new List<string>();
+                count = 0;
+                int actualcount = 0;
+                max = 43400;
+                while (count < max)
+                {
+                    thread = new Thread(() =>
+                    {
+                        using (WebClient w = new WebClient())
+                        {
+                            w.Proxy = null;
+                            try
+                            {
+                                XElement xml = XElement.Parse(w.DownloadString("http://www.giantbomb.com/api/games/?api_key=1b38477055d29fcf3e5d5ca264ea20e25d457c31&limit=100&offset=" + count + "&sort=date_added:asc"));
+                                int total = int.Parse(xml.Element("number_of_total_results").Value);
+                                if (total > 43000) max = total;
+                                foreach (XElement game in xml.Element("results").Elements())
+                                {
+                                    if (!dbGames.Contains(game.Element("name").Value))
+                                    {
+                                        Database.AddGame(game.Element("name").Value.Replace("'", "''"));
+                                        Games.Add(game.Element("name").Value);
+                                    }
+                                }
+                                actualcount += 100;
+                                Console.WriteLine(actualcount);
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    });
+                    thread.Start();
+                    if (count == 0)
+                    {
+                        thread.Join();
+                    }
+                    count += 100;
+                    if (count >= max)
+                    {
+                        Console.WriteLine("test");
+                        while (actualcount < max) Thread.Sleep(1000);
+                        Console.WriteLine("test2");
+                        BeginInvoke((MethodInvoker)delegate
+                        {
+                            ChannelGameBox.AutoCompleteCustomSource = Games;
+                        });
+                    }
+                }
+            });
+            thread.Name = "Download games list";
+            thread.Start();
+            Threads.Add(thread);*/
+            if(File.Exists("games.txt"))
+            {
+                AutoCompleteStringCollection Games = new AutoCompleteStringCollection();
+                Games.AddRange(File.ReadAllLines("games.txt"));
+                ChannelGameBox.AutoCompleteCustomSource = Games;
+            }
 
             CenterSpacer(ConnectionLabel, ConnectionSpacer);
             CenterSpacer(CurrencyLabel, CurrencySpacer);
@@ -223,7 +290,7 @@ namespace ModBot
             ini.SetValue("Settings", "Currency_HandoutTime", (Currency_HandoutLastActive.Value = Convert.ToInt32(ini.GetValue("Settings", "Currency_HandoutTime", "5"))).ToString());
 
             ini.SetValue("Settings", "Spam_CWL", (Spam_CWL.Checked = (ini.GetValue("Settings", "Spam_CWL", "0") == "1")) ? "1" : "0");
-            ini.SetValue("Settings", "Spam_CWhiteList", Spam_CWLBox.Text = ini.GetValue("Settings", "Spam_CWhiteList", "abcdefghijklmnopqrstuvwxyz"));
+            ini.SetValue("Settings", "Spam_CWhiteList", Spam_CWLBox.Text = ini.GetValue("Settings", "Spam_CWhiteList", "abcdefghijklmnopqrstuvwxyz0123456789"));
 
             //string[] lines = File.ReadAllLines("modbot.txt");
             //Dictionary<string, string> dict = lines.Select(l => l.Split('=')).ToDictionary(a => a[0], a => a[1]);
@@ -665,7 +732,7 @@ namespace ModBot
                 int iStatus = 0;
                 if (Irc.irc.Connected)
                 {
-                    if (Irc.g_bIsStreaming)
+                    if (Irc.IsStreaming)
                     {
                         iStatus = 2;
                     }
@@ -737,9 +804,10 @@ namespace ModBot
                     //g_bLoaded = true;
                 });
 
-                if (Irc.g_bResourceKeeper)
+                Thread.Sleep(1000);
+                if (Irc.ResourceKeeper)
                 {
-                    Thread.Sleep(30000);
+                    Thread.Sleep(29000);
                 }
             }
         }
@@ -1360,6 +1428,64 @@ namespace ModBot
         private void TitleGame_Modified(object sender, EventArgs e)
         {
             TitleGameModified = true;
+            if ((TextBox)sender == ChannelGameBox)
+            {
+                //if (ChannelGameBox.Text.Length == 3)
+                /*Console.WriteLine("Test");
+                bool Refresh = false;
+                if (ChannelGameBox.Text.Length > 0)
+                {
+                    if (ChannelGameBox.AutoCompleteCustomSource.Count == 0) Refresh = true;
+                    if (!Refresh)
+                    {
+                        foreach (string game in ChannelGameBox.AutoCompleteCustomSource)
+                        {
+                            Console.WriteLine(ChannelGameBox.Text[0].ToString().ToLower() + " " + game[0].ToString().ToLower());
+                            if (ChannelGameBox.Text[0].ToString().ToLower() != game[0].ToString().ToLower())
+                            {
+                                Console.WriteLine("Refresh");
+                                Refresh = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (Refresh)
+                {
+                Console.WriteLine("Refreshing...");*/
+                new Thread(() =>
+                {
+                    using (WebClient w = new WebClient())
+                    {
+                        w.Proxy = null;
+                        try
+                        {
+                            JObject json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/search/games?q=" + ChannelGameBox.Text[0] + "&type=suggest"));
+                            List<string> Games = new List<string>();
+                            foreach (JToken game in json["games"])
+                            {
+                                if (!Games.Contains(game["name"].ToString())) Games.Add(game["name"].ToString());
+                            }
+                            BeginInvoke((MethodInvoker)delegate
+                            {
+                                //ChannelGameBox.AutoCompleteCustomSource = Games;
+                                ChannelGameBox.AutoCompleteCustomSource.AddRange(Games.ToArray());
+                                //ChannelGameBox.AutoCompleteMode = AutoCompleteMode.Suggest;
+                                //ChannelGameBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                            });
+                        }
+                        catch
+                        {
+                        }
+                    }
+                }).Start();
+                //}
+                /*else if(ChannelGameBox.Text.Length < 3)
+                {
+                    ChannelGameBox.AutoCompleteMode = AutoCompleteMode.None;
+                    ChannelGameBox.AutoCompleteSource = AutoCompleteSource.None;
+                }*/
+            }
         }
 
         private void DonateImage_Click(object sender, EventArgs e)
@@ -1375,7 +1501,6 @@ namespace ModBot
         private void Spam_CWLBox_TextChanged(object sender, EventArgs e)
         {
             ini.SetValue("Settings", "Spam_CWhiteList", Spam_CWLBox.Text);
-            //"abcdefghijklmnopqrstuvwxyz"
         }
     }
 }

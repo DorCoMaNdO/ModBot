@@ -45,8 +45,8 @@ namespace ModBot
         public static bool greetingOn;
         public static int g_iLastCurrencyDisabledAnnounce, g_iLastTop5Announce;
         public static int g_iStreamStartTime = 0;
-        public static bool g_bIsStreaming;
-        public static bool g_bResourceKeeper;
+        public static bool IsStreaming;
+        public static bool ResourceKeeper;
         public static MainWindow MainForm = Program.MainForm;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
         public static Dictionary<string, int> Warnings = new Dictionary<string, int>();
@@ -328,7 +328,7 @@ namespace ModBot
                 MainForm.Giveaway_MinCurrencyCheckBox.Text = "Must have at least                       " + currencyName;
             });
 
-            ini.SetValue("Settings", "ResourceKeeper", (g_bResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
+            ini.SetValue("Settings", "ResourceKeeper", (ResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
 
             /*if (donationkey == "")
             {
@@ -347,7 +347,7 @@ namespace ModBot
 
             if (Database.DB == null) OnInitialize(InitializationStep.DatabaseSetup);
 
-            Database.Initialize();
+            Database.CreateTable();
 
             //Database.newUser(admin);
             Database.setUserLevel(admin, 4);
@@ -525,13 +525,6 @@ namespace ModBot
 
                     Pool.cancel();
 
-                    if (Database.DB != null)
-                    {
-                        Database.DB.Close();
-                        Database.DB.Dispose();
-                        Database.DB = null;
-                    }
-
                     if (irc != null && irc.Connected)
                     {
                         irc.Close();
@@ -633,15 +626,6 @@ namespace ModBot
                 //Console.WriteLine("Threads list clear.\r\n");
             }
 
-            if (Database.DB != null)
-            {
-                Console.WriteLine("Closing database...");
-                Database.DB.Close();
-                Database.DB.Dispose();
-                Database.DB = null;
-                Console.WriteLine("Database closed.\r\n");
-            }
-
             if (irc != null && irc.Connected)
             {
                 Console.WriteLine("Closing connection...");
@@ -700,7 +684,7 @@ namespace ModBot
                 while (true)
                 {
                     Thread.Sleep(60000);
-                    if (irc.Connected && Running && g_bIsStreaming)
+                    if (irc.Connected && Running && IsStreaming)
                     {
                         new Thread(() =>
                         {
@@ -807,7 +791,7 @@ namespace ModBot
                             JObject stream = JObject.Parse(json_data);
                             if (stream["stream"].HasValues)
                             {
-                                if (!g_bIsStreaming)
+                                if (!IsStreaming)
                                 {
                                     g_iStreamStartTime = Api.GetUnixTimeNow();
                                 }
@@ -839,10 +823,11 @@ namespace ModBot
                             }*/
                         }
                     }
-                    g_bIsStreaming = bIsStreaming;
-                    if (g_bResourceKeeper)
+                    IsStreaming = bIsStreaming;
+                    Thread.Sleep(1000);
+                    if (ResourceKeeper)
                     {
-                        Thread.Sleep(30000);
+                        Thread.Sleep(29000);
                     }
                 }
             });
