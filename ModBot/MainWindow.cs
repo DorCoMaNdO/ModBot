@@ -1428,64 +1428,6 @@ namespace ModBot
         private void TitleGame_Modified(object sender, EventArgs e)
         {
             TitleGameModified = true;
-            if ((TextBox)sender == ChannelGameBox)
-            {
-                //if (ChannelGameBox.Text.Length == 3)
-                /*Console.WriteLine("Test");
-                bool Refresh = false;
-                if (ChannelGameBox.Text.Length > 0)
-                {
-                    if (ChannelGameBox.AutoCompleteCustomSource.Count == 0) Refresh = true;
-                    if (!Refresh)
-                    {
-                        foreach (string game in ChannelGameBox.AutoCompleteCustomSource)
-                        {
-                            Console.WriteLine(ChannelGameBox.Text[0].ToString().ToLower() + " " + game[0].ToString().ToLower());
-                            if (ChannelGameBox.Text[0].ToString().ToLower() != game[0].ToString().ToLower())
-                            {
-                                Console.WriteLine("Refresh");
-                                Refresh = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (Refresh)
-                {
-                Console.WriteLine("Refreshing...");*/
-                new Thread(() =>
-                {
-                    using (WebClient w = new WebClient())
-                    {
-                        w.Proxy = null;
-                        try
-                        {
-                            JObject json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/search/games?q=" + ChannelGameBox.Text[0] + "&type=suggest"));
-                            List<string> Games = new List<string>();
-                            foreach (JToken game in json["games"])
-                            {
-                                if (!Games.Contains(game["name"].ToString())) Games.Add(game["name"].ToString());
-                            }
-                            BeginInvoke((MethodInvoker)delegate
-                            {
-                                //ChannelGameBox.AutoCompleteCustomSource = Games;
-                                ChannelGameBox.AutoCompleteCustomSource.AddRange(Games.ToArray());
-                                //ChannelGameBox.AutoCompleteMode = AutoCompleteMode.Suggest;
-                                //ChannelGameBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
-                            });
-                        }
-                        catch
-                        {
-                        }
-                    }
-                }).Start();
-                //}
-                /*else if(ChannelGameBox.Text.Length < 3)
-                {
-                    ChannelGameBox.AutoCompleteMode = AutoCompleteMode.None;
-                    ChannelGameBox.AutoCompleteSource = AutoCompleteSource.None;
-                }*/
-            }
         }
 
         private void DonateImage_Click(object sender, EventArgs e)
