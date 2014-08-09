@@ -64,7 +64,7 @@ namespace ModBot
 
         public static void Initialize()
         {
-            MainForm = Program.MainForm;
+            Api.MainForm = MainForm = Program.MainForm;
             ActiveUsers.Clear();
             Warnings.Clear();
             usersToLookup.Clear();

@@ -10,7 +10,7 @@ namespace ModBot
 {
     public static class Api
     {
-        private static MainWindow MainForm = Program.MainForm;
+        public static MainWindow MainForm = Program.MainForm;
         public static Dictionary<string, Thread> dCheckingDisplayName = new Dictionary<string, Thread>();
         private static iniUtil ini = Program.ini;
         private static StreamWriter errorLog = new StreamWriter("Error_Log.txt", true);
