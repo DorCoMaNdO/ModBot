@@ -1051,9 +1051,9 @@ namespace ModBot
                 {
                     foreach (char character in temp)
                     {
-                        if (!"()*&^%$@!'\"\\/.,?[]{}+_=-<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.ToLower().Contains(character.ToString().ToLower()))
+                        if (!"()*&^%$#@!'\"\\/.,?[]{}+_=-<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.ToLower().Contains(character.ToString().ToLower()))
                         {
-                            warnUser(user, 1, 30, "Using a restricted character", 0, false, true, true);
+                            warnUser(user, 1, 30, "Using a restricted character", 0, false, true, true, 6);
                             return;
                         }
                     }
@@ -1383,7 +1383,7 @@ namespace ModBot
                         }
                         else
                         {
-                            warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false);
+                            warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false, 3);
                         }
                     }
                     else
@@ -1397,14 +1397,14 @@ namespace ModBot
                             }
                             else if (Moderators.Contains(Api.capName(nick)))
                             {
-                                if (!warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters") && Warnings.ContainsKey(Api.capName(user))) sendMessage(user + " you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid. (Warning number: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
+                                if (!warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters", 3, true, true, 6) && Warnings.ContainsKey(Api.capName(user))) sendMessage(user + " you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid. (Warning number: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
                             }
                         }
                     }
                 }
                 else
                 {
-                    warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false);
+                    warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false, 3);
                 }
             }
         }
@@ -1627,11 +1627,15 @@ namespace ModBot
                                     Pool.CreatePool(maxBet, Options);
                                     sendMessage("New Betting Pool opened!  Max bet = " + maxBet + " " + currencyName);
                                     string temp = "Betting open for: ";
-                                    for (int i = 0; i < Options.Count; i++)
+                                    for (int i = 0; i < Pool.options.Count; i++)
                                     {
-                                        temp += "(" + (i + 1).ToString() + ") " + Options[i] + " ";
+                                        temp += "(" + (i + 1).ToString() + ") " + Pool.options[i] + " - " + Pool.getNumberOfBets(Pool.options[i]) + " bets (" + Pool.getTotalBetsOn(Pool.options[i]) + " " + currencyName + " bet)";
+                                        if (i + 1 < Pool.options.Count)
+                                        {
+                                            temp += ", ";
+                                        }
                                     }
-                                    sendMessage(temp);
+                                    sendMessage(temp + ".");
                                     sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currencyName + " on option 1, \"!bet 25 option2name\" to bet 25 " + currencyName + " on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\"");
                                 }
                                 else
@@ -1671,7 +1675,7 @@ namespace ModBot
                                     temp += ", ";
                                 }
                             }
-                            sendMessage(temp);
+                            sendMessage(temp + ".");
                         }
                         else
                         {
@@ -1796,13 +1800,13 @@ namespace ModBot
                             string temp = "Betting open for: ";
                             for (int i = 0; i < Pool.options.Count; i++)
                             {
-                                temp += "(" + (i + 1).ToString() + ") " + Pool.options[i];
-                                if(i + 1 < Pool.options.Count)
+                                temp += "(" + (i + 1).ToString() + ") " + Pool.options[i] + " - " + Pool.getNumberOfBets(Pool.options[i]) + " bets (" + Pool.getTotalBetsOn(Pool.options[i]) + " " + currencyName + " bet)";
+                                if (i + 1 < Pool.options.Count)
                                 {
                                     temp += ", ";
                                 }
                             }
-                            sendMessage(temp);
+                            sendMessage(temp + ".");
                             sendMessage("Bet by typing \"!bet 50 option1name\" to bet 50 " + currencyName + " on option 1, \"bet 25 option2name\" to bet 25 " + currencyName + " on option 2, etc. You can also bet with \"!bet 10 #OptionNumber\".");
                         }
                         else
@@ -1816,7 +1820,7 @@ namespace ModBot
                                     temp += ", ";
                                 }
                             }
-                            sendMessage(temp);
+                            sendMessage(temp + ".");
                         }
                     }
                     else if (!Pool.Locked && int.TryParse(args[0], out betAmount) && args.Length >= 2)
@@ -2343,7 +2347,7 @@ namespace ModBot
             }
         }
 
-        private static bool warnUser(string user, int add = 1, int rate = 5, string reason = "", int max = 3, bool announcewarns = true, bool console = true, bool chat = true)
+        private static bool warnUser(string user, int add = 1, int lengthrate = 5, string reason = "", int max = 3, bool announcewarns = true, bool console = true, bool chat = true, int limit = 0)
         {
             string name = Api.GetDisplayName(user = Api.capName(user));
             if (!Moderators.Contains(user) && !IgnoredUsers.Contains(user) && Database.getUserLevel(user) == 0)
@@ -2365,7 +2369,9 @@ namespace ModBot
                     }
                     if (Warnings[user] > max)
                     {
-                        timeoutUser(name, Warnings[user] * rate, (reason != "" ? reason + " " : "") + (announcewarns ? "after " + max + " warnings." : ""), console, chat);
+                        int multiplier = Warnings[user];
+                        if (limit > 0 && multiplier > limit) multiplier = limit;
+                        timeoutUser(name, multiplier * lengthrate, (reason != "" ? reason + " " : "") + (announcewarns ? "after " + max + " warnings." : ""), console, chat);
                         return true;
                     }
                 }
