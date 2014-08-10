@@ -29,15 +29,15 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
-            this.Giveaway_MustFollowCheckBox = new System.Windows.Forms.CheckBox();
+            this.Giveaway_MustFollow = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
             this.ChannelTitleBox = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.ChannelGameBox = new System.Windows.Forms.TextBox();
-            this.Giveaway_MinCurrencyCheckBox = new System.Windows.Forms.CheckBox();
-            this.Giveaway_MinCurrency = new ModBot.FlatNumericUpDown();
+            this.Giveaway_MinCurrency = new System.Windows.Forms.CheckBox();
+            this.Giveaway_MinCurrencyBox = new ModBot.FlatNumericUpDown();
             this.Giveaway_StartButton = new System.Windows.Forms.Button();
             this.Giveaway_RerollButton = new System.Windows.Forms.Button();
             this.Giveaway_StopButton = new System.Windows.Forms.Button();
@@ -129,6 +129,12 @@
             this.UpdateLastDonorCheckBox = new System.Windows.Forms.CheckBox();
             this.AboutWindowButton = new System.Windows.Forms.CheckBox();
             this.AboutWindow = new System.Windows.Forms.Panel();
+            this.About_Users = new System.Windows.Forms.DataGridView();
+            this.Channel = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Status = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Version = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Viewers = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Updated = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.DonateImage = new System.Windows.Forms.PictureBox();
             this.SupportLinkLabel = new System.Windows.Forms.LinkLabel();
             this.EmailLinkLabel = new System.Windows.Forms.LinkLabel();
@@ -149,6 +155,11 @@
             this.CurrencyWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindow = new System.Windows.Forms.Panel();
+            this.Giveaway_MustWatchMinutes = new ModBot.FlatNumericUpDown();
+            this.Giveaway_MustWatchHours = new ModBot.FlatNumericUpDown();
+            this.Giveaway_MustWatchDays = new ModBot.FlatNumericUpDown();
+            this.Giveaway_MustWatch = new System.Windows.Forms.CheckBox();
+            this.Giveaway_MustSubscribe = new System.Windows.Forms.CheckBox();
             this.Giveaway_MaxTickets = new ModBot.FlatNumericUpDown();
             this.Giveaway_TicketCost = new ModBot.FlatNumericUpDown();
             this.Giveaway_CancelButton = new System.Windows.Forms.Button();
@@ -169,7 +180,8 @@
             this.Spam_CWL = new System.Windows.Forms.CheckBox();
             this.Spam_CWLLabel = new System.Windows.Forms.Label();
             this.Spam_CWLSpacer = new System.Windows.Forms.GroupBox();
-            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrency)).BeginInit();
+            this.About_UsersLabel = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrencyBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_ActiveUserTime)).BeginInit();
             this.Giveaway_SettingsPresents.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Currency_HandoutLastActive)).BeginInit();
@@ -182,11 +194,15 @@
             ((System.ComponentModel.ISupportInitialize)(this.Donations_List)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.TopDonorsLimit)).BeginInit();
             this.AboutWindow.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.About_Users)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.DonateImage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.AboutImage)).BeginInit();
             this.ChannelWindow.SuspendLayout();
             this.CurrencyWindow.SuspendLayout();
             this.GiveawayWindow.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchMinutes)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchHours)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchDays)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MaxTickets)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_TicketCost)).BeginInit();
             this.SpamFilterWindow.SuspendLayout();
@@ -203,17 +219,17 @@
             this.ChannelStatusLabel.Text = "DISCONNECTED";
             this.ChannelStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // Giveaway_MustFollowCheckBox
+            // Giveaway_MustFollow
             // 
-            this.Giveaway_MustFollowCheckBox.AutoSize = true;
-            this.Giveaway_MustFollowCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_MustFollowCheckBox.Location = new System.Drawing.Point(6, 145);
-            this.Giveaway_MustFollowCheckBox.Name = "Giveaway_MustFollowCheckBox";
-            this.Giveaway_MustFollowCheckBox.Size = new System.Drawing.Size(109, 17);
-            this.Giveaway_MustFollowCheckBox.TabIndex = 14;
-            this.Giveaway_MustFollowCheckBox.Text = "Must be a follower";
-            this.Giveaway_MustFollowCheckBox.UseVisualStyleBackColor = true;
-            this.Giveaway_MustFollowCheckBox.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
+            this.Giveaway_MustFollow.AutoSize = true;
+            this.Giveaway_MustFollow.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_MustFollow.Location = new System.Drawing.Point(6, 145);
+            this.Giveaway_MustFollow.Name = "Giveaway_MustFollow";
+            this.Giveaway_MustFollow.Size = new System.Drawing.Size(109, 17);
+            this.Giveaway_MustFollow.TabIndex = 14;
+            this.Giveaway_MustFollow.Text = "Must be a follower";
+            this.Giveaway_MustFollow.UseVisualStyleBackColor = true;
+            this.Giveaway_MustFollow.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // label2
             // 
@@ -261,41 +277,41 @@
             this.ChannelGameBox.Text = "Loading...";
             this.ChannelGameBox.TextChanged += new System.EventHandler(this.TitleGame_Modified);
             // 
-            // Giveaway_MinCurrencyCheckBox
-            // 
-            this.Giveaway_MinCurrencyCheckBox.AutoSize = true;
-            this.Giveaway_MinCurrencyCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_MinCurrencyCheckBox.Location = new System.Drawing.Point(6, 168);
-            this.Giveaway_MinCurrencyCheckBox.Name = "Giveaway_MinCurrencyCheckBox";
-            this.Giveaway_MinCurrencyCheckBox.Size = new System.Drawing.Size(239, 17);
-            this.Giveaway_MinCurrencyCheckBox.TabIndex = 20;
-            this.Giveaway_MinCurrencyCheckBox.Text = "Must have at least                       CURRENCY";
-            this.Giveaway_MinCurrencyCheckBox.UseVisualStyleBackColor = true;
-            this.Giveaway_MinCurrencyCheckBox.CheckedChanged += new System.EventHandler(this.Giveaway_MinCurrencyCheckBox_CheckedChanged);
-            // 
             // Giveaway_MinCurrency
             // 
-            this.Giveaway_MinCurrency.Enabled = false;
-            this.Giveaway_MinCurrency.Location = new System.Drawing.Point(113, 168);
-            this.Giveaway_MinCurrency.Maximum = new decimal(new int[] {
+            this.Giveaway_MinCurrency.AutoSize = true;
+            this.Giveaway_MinCurrency.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_MinCurrency.Location = new System.Drawing.Point(6, 168);
+            this.Giveaway_MinCurrency.Name = "Giveaway_MinCurrency";
+            this.Giveaway_MinCurrency.Size = new System.Drawing.Size(239, 17);
+            this.Giveaway_MinCurrency.TabIndex = 20;
+            this.Giveaway_MinCurrency.Text = "Must have at least                       CURRENCY";
+            this.Giveaway_MinCurrency.UseVisualStyleBackColor = true;
+            this.Giveaway_MinCurrency.CheckedChanged += new System.EventHandler(this.Giveaway_MinCurrencyCheckBox_CheckedChanged);
+            // 
+            // Giveaway_MinCurrencyBox
+            // 
+            this.Giveaway_MinCurrencyBox.Enabled = false;
+            this.Giveaway_MinCurrencyBox.Location = new System.Drawing.Point(113, 168);
+            this.Giveaway_MinCurrencyBox.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
-            this.Giveaway_MinCurrency.Minimum = new decimal(new int[] {
+            this.Giveaway_MinCurrencyBox.Minimum = new decimal(new int[] {
             1,
             0,
             0,
             0});
-            this.Giveaway_MinCurrency.Name = "Giveaway_MinCurrency";
-            this.Giveaway_MinCurrency.Size = new System.Drawing.Size(62, 20);
-            this.Giveaway_MinCurrency.TabIndex = 21;
-            this.Giveaway_MinCurrency.Value = new decimal(new int[] {
+            this.Giveaway_MinCurrencyBox.Name = "Giveaway_MinCurrencyBox";
+            this.Giveaway_MinCurrencyBox.Size = new System.Drawing.Size(62, 20);
+            this.Giveaway_MinCurrencyBox.TabIndex = 21;
+            this.Giveaway_MinCurrencyBox.Value = new decimal(new int[] {
             1,
             0,
             0,
             0});
-            this.Giveaway_MinCurrency.ValueChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
+            this.Giveaway_MinCurrencyBox.ValueChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // Giveaway_StartButton
             // 
@@ -441,7 +457,7 @@
             // 
             this.Giveaway_AutoBanWinnerCheckBox.AutoSize = true;
             this.Giveaway_AutoBanWinnerCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_AutoBanWinnerCheckBox.Location = new System.Drawing.Point(6, 191);
+            this.Giveaway_AutoBanWinnerCheckBox.Location = new System.Drawing.Point(6, 237);
             this.Giveaway_AutoBanWinnerCheckBox.Name = "Giveaway_AutoBanWinnerCheckBox";
             this.Giveaway_AutoBanWinnerCheckBox.Size = new System.Drawing.Size(140, 17);
             this.Giveaway_AutoBanWinnerCheckBox.TabIndex = 34;
@@ -1278,8 +1294,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle1;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1388,6 +1404,8 @@
             // AboutWindow
             // 
             this.AboutWindow.BackColor = System.Drawing.Color.White;
+            this.AboutWindow.Controls.Add(this.About_UsersLabel);
+            this.AboutWindow.Controls.Add(this.About_Users);
             this.AboutWindow.Controls.Add(this.DonateImage);
             this.AboutWindow.Controls.Add(this.SupportLinkLabel);
             this.AboutWindow.Controls.Add(this.EmailLinkLabel);
@@ -1402,11 +1420,68 @@
             this.AboutWindow.Size = new System.Drawing.Size(814, 562);
             this.AboutWindow.TabIndex = 61;
             // 
+            // About_Users
+            // 
+            this.About_Users.AllowUserToAddRows = false;
+            this.About_Users.AllowUserToDeleteRows = false;
+            this.About_Users.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            this.About_Users.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.About_Users.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+            this.About_Users.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.About_Users.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Channel,
+            this.Status,
+            this.Version,
+            this.Viewers,
+            this.Updated});
+            this.About_Users.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke;
+            this.About_Users.Location = new System.Drawing.Point(0, 343);
+            this.About_Users.MultiSelect = false;
+            this.About_Users.Name = "About_Users";
+            this.About_Users.RowHeadersVisible = false;
+            this.About_Users.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+            this.About_Users.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.About_Users.Size = new System.Drawing.Size(814, 219);
+            this.About_Users.TabIndex = 61;
+            this.About_Users.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.About_Users_SortCompare);
+            // 
+            // Channel
+            // 
+            this.Channel.HeaderText = "Channel";
+            this.Channel.Name = "Channel";
+            this.Channel.ReadOnly = true;
+            this.Channel.Width = 300;
+            // 
+            // Status
+            // 
+            this.Status.HeaderText = "Status";
+            this.Status.Name = "Status";
+            this.Status.ReadOnly = true;
+            // 
+            // Version
+            // 
+            this.Version.HeaderText = "Version";
+            this.Version.Name = "Version";
+            this.Version.ReadOnly = true;
+            // 
+            // Viewers
+            // 
+            this.Viewers.HeaderText = "Viewers";
+            this.Viewers.Name = "Viewers";
+            this.Viewers.ReadOnly = true;
+            // 
+            // Updated
+            // 
+            this.Updated.HeaderText = "Updated";
+            this.Updated.Name = "Updated";
+            this.Updated.ReadOnly = true;
+            this.Updated.Width = 196;
+            // 
             // DonateImage
             // 
             this.DonateImage.Cursor = System.Windows.Forms.Cursors.Hand;
             this.DonateImage.Image = global::ModBot.Properties.Resources.DonateImage;
-            this.DonateImage.Location = new System.Drawing.Point(88, 306);
+            this.DonateImage.Location = new System.Drawing.Point(101, 281);
             this.DonateImage.Name = "DonateImage";
             this.DonateImage.Size = new System.Drawing.Size(74, 21);
             this.DonateImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
@@ -1648,6 +1723,11 @@
             // GiveawayWindow
             // 
             this.GiveawayWindow.BackColor = System.Drawing.Color.White;
+            this.GiveawayWindow.Controls.Add(this.Giveaway_MustWatchMinutes);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_MustWatchHours);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_MustWatchDays);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_MustWatch);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_MustSubscribe);
             this.GiveawayWindow.Controls.Add(this.Giveaway_MaxTickets);
             this.GiveawayWindow.Controls.Add(this.Giveaway_TicketCost);
             this.GiveawayWindow.Controls.Add(this.Giveaway_CancelButton);
@@ -1659,11 +1739,11 @@
             this.GiveawayWindow.Controls.Add(this.GiveawayRulesSpacer);
             this.GiveawayWindow.Controls.Add(this.Giveaway_TypeTickets);
             this.GiveawayWindow.Controls.Add(this.Giveaway_TypeKeyword);
-            this.GiveawayWindow.Controls.Add(this.Giveaway_MinCurrency);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_MinCurrencyBox);
             this.GiveawayWindow.Controls.Add(this.Giveaway_SettingsPresents);
             this.GiveawayWindow.Controls.Add(this.Giveaway_WinTimeLabel);
             this.GiveawayWindow.Controls.Add(this.Giveaway_AddBanTextBox);
-            this.GiveawayWindow.Controls.Add(this.Giveaway_MustFollowCheckBox);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_MustFollow);
             this.GiveawayWindow.Controls.Add(this.Giveaway_WinnerChat);
             this.GiveawayWindow.Controls.Add(this.Giveaway_WinnerTimerLabel);
             this.GiveawayWindow.Controls.Add(this.Giveaway_StartButton);
@@ -1681,12 +1761,85 @@
             this.GiveawayWindow.Controls.Add(this.Giveaway_WinnerLabel);
             this.GiveawayWindow.Controls.Add(this.GiveawayTypeLabel);
             this.GiveawayWindow.Controls.Add(this.GiveawayTypeSpacer);
-            this.GiveawayWindow.Controls.Add(this.Giveaway_MinCurrencyCheckBox);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_MinCurrency);
             this.GiveawayWindow.Controls.Add(this.Giveaway_TypeActive);
             this.GiveawayWindow.Location = new System.Drawing.Point(108, 30);
             this.GiveawayWindow.Name = "GiveawayWindow";
             this.GiveawayWindow.Size = new System.Drawing.Size(814, 562);
             this.GiveawayWindow.TabIndex = 63;
+            // 
+            // Giveaway_MustWatchMinutes
+            // 
+            this.Giveaway_MustWatchMinutes.Enabled = false;
+            this.Giveaway_MustWatchMinutes.Location = new System.Drawing.Point(318, 211);
+            this.Giveaway_MustWatchMinutes.Maximum = new decimal(new int[] {
+            59,
+            0,
+            0,
+            0});
+            this.Giveaway_MustWatchMinutes.Name = "Giveaway_MustWatchMinutes";
+            this.Giveaway_MustWatchMinutes.Size = new System.Drawing.Size(32, 20);
+            this.Giveaway_MustWatchMinutes.TabIndex = 64;
+            this.Giveaway_MustWatchMinutes.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.Giveaway_MustWatchMinutes.ValueChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
+            // 
+            // Giveaway_MustWatchHours
+            // 
+            this.Giveaway_MustWatchHours.Enabled = false;
+            this.Giveaway_MustWatchHours.Location = new System.Drawing.Point(232, 211);
+            this.Giveaway_MustWatchHours.Maximum = new decimal(new int[] {
+            23,
+            0,
+            0,
+            0});
+            this.Giveaway_MustWatchHours.Name = "Giveaway_MustWatchHours";
+            this.Giveaway_MustWatchHours.Size = new System.Drawing.Size(32, 20);
+            this.Giveaway_MustWatchHours.TabIndex = 63;
+            this.Giveaway_MustWatchHours.ValueChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
+            // 
+            // Giveaway_MustWatchDays
+            // 
+            this.Giveaway_MustWatchDays.Enabled = false;
+            this.Giveaway_MustWatchDays.Location = new System.Drawing.Point(157, 211);
+            this.Giveaway_MustWatchDays.Maximum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.Giveaway_MustWatchDays.Name = "Giveaway_MustWatchDays";
+            this.Giveaway_MustWatchDays.Size = new System.Drawing.Size(44, 20);
+            this.Giveaway_MustWatchDays.TabIndex = 62;
+            this.Giveaway_MustWatchDays.ValueChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
+            // 
+            // Giveaway_MustWatch
+            // 
+            this.Giveaway_MustWatch.AutoSize = true;
+            this.Giveaway_MustWatch.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_MustWatch.Location = new System.Drawing.Point(6, 214);
+            this.Giveaway_MustWatch.Name = "Giveaway_MustWatch";
+            this.Giveaway_MustWatch.Size = new System.Drawing.Size(390, 17);
+            this.Giveaway_MustWatch.TabIndex = 61;
+            this.Giveaway_MustWatch.Text = "Has watched the stream for                 days,             hours and           " +
+    "  minutes";
+            this.Giveaway_MustWatch.UseVisualStyleBackColor = true;
+            this.Giveaway_MustWatch.CheckedChanged += new System.EventHandler(this.Giveaway_MustWatch_CheckedChanged);
+            // 
+            // Giveaway_MustSubscribe
+            // 
+            this.Giveaway_MustSubscribe.AutoSize = true;
+            this.Giveaway_MustSubscribe.Enabled = false;
+            this.Giveaway_MustSubscribe.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_MustSubscribe.Location = new System.Drawing.Point(6, 191);
+            this.Giveaway_MustSubscribe.Name = "Giveaway_MustSubscribe";
+            this.Giveaway_MustSubscribe.Size = new System.Drawing.Size(121, 17);
+            this.Giveaway_MustSubscribe.TabIndex = 60;
+            this.Giveaway_MustSubscribe.Text = "Must be a subscriber";
+            this.Giveaway_MustSubscribe.UseVisualStyleBackColor = true;
+            this.Giveaway_MustSubscribe.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // Giveaway_MaxTickets
             // 
@@ -1943,6 +2096,15 @@
             this.Spam_CWLSpacer.TabIndex = 63;
             this.Spam_CWLSpacer.TabStop = false;
             // 
+            // About_UsersLabel
+            // 
+            this.About_UsersLabel.AutoSize = true;
+            this.About_UsersLabel.Location = new System.Drawing.Point(3, 329);
+            this.About_UsersLabel.Name = "About_UsersLabel";
+            this.About_UsersLabel.Size = new System.Drawing.Size(64, 13);
+            this.About_UsersLabel.TabIndex = 62;
+            this.About_UsersLabel.Text = "Other users:";
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1955,8 +2117,6 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.ChannelWindow);
-            this.Controls.Add(this.CurrencyWindow);
             this.Controls.Add(this.GiveawayWindow);
             this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.AuthenticationBrowser);
@@ -1965,11 +2125,15 @@
             this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
+            this.Controls.Add(this.ChannelWindow);
+            this.Controls.Add(this.CurrencyWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
+            this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.AboutWindow, 0);
@@ -1978,8 +2142,6 @@
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
             this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
             this.Controls.SetChildIndex(this.GiveawayWindow, 0);
-            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
-            this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -1987,7 +2149,7 @@
             this.Controls.SetChildIndex(this.CurrencyWindowButton, 0);
             this.Controls.SetChildIndex(this.GiveawayWindowButton, 0);
             this.Controls.SetChildIndex(this.SpamFilterWindowButton, 0);
-            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrency)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrencyBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_ActiveUserTime)).EndInit();
             this.Giveaway_SettingsPresents.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.Currency_HandoutLastActive)).EndInit();
@@ -2003,6 +2165,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.TopDonorsLimit)).EndInit();
             this.AboutWindow.ResumeLayout(false);
             this.AboutWindow.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.About_Users)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.DonateImage)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.AboutImage)).EndInit();
             this.ChannelWindow.ResumeLayout(false);
@@ -2011,6 +2174,9 @@
             this.CurrencyWindow.PerformLayout();
             this.GiveawayWindow.ResumeLayout(false);
             this.GiveawayWindow.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchMinutes)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchHours)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchDays)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MaxTickets)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_TicketCost)).EndInit();
             this.SpamFilterWindow.ResumeLayout(false);
@@ -2022,13 +2188,13 @@
         #endregion
 
         public System.Windows.Forms.Label ChannelStatusLabel;
-        public System.Windows.Forms.CheckBox Giveaway_MustFollowCheckBox;
+        public System.Windows.Forms.CheckBox Giveaway_MustFollow;
         private System.Windows.Forms.Label label2;
         public System.Windows.Forms.TextBox ChannelTitleBox;
         private System.Windows.Forms.Label label3;
         public System.Windows.Forms.TextBox ChannelGameBox;
-        public System.Windows.Forms.CheckBox Giveaway_MinCurrencyCheckBox;
-        public FlatNumericUpDown Giveaway_MinCurrency;
+        public System.Windows.Forms.CheckBox Giveaway_MinCurrency;
+        public FlatNumericUpDown Giveaway_MinCurrencyBox;
         public System.Windows.Forms.Button Giveaway_StartButton;
         public System.Windows.Forms.Button Giveaway_RerollButton;
         public System.Windows.Forms.Button Giveaway_StopButton;
@@ -2160,5 +2326,17 @@
         public FlatNumericUpDown Giveaway_TicketCost;
         public System.Windows.Forms.TextBox Channel_SteamID64;
         public System.Windows.Forms.CheckBox Channel_UseSteam;
+        public FlatNumericUpDown Giveaway_MustWatchMinutes;
+        public FlatNumericUpDown Giveaway_MustWatchHours;
+        public FlatNumericUpDown Giveaway_MustWatchDays;
+        public System.Windows.Forms.CheckBox Giveaway_MustWatch;
+        public System.Windows.Forms.CheckBox Giveaway_MustSubscribe;
+        public System.Windows.Forms.DataGridView About_Users;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Channel;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Status;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Version;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Viewers;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Updated;
+        private System.Windows.Forms.Label About_UsersLabel;
     }
 }

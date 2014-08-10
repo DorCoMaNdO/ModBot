@@ -63,22 +63,75 @@ namespace ModBot
                 Started = true;
                 Open = true;
 
+                string msg = "";
+                if (MainForm.Giveaway_TypeActive.Checked)
+                {
+                    msg = " who sent a message in the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes";
+                }
+                if (MainForm.Giveaway_MustSubscribe.Checked)
+                {
+                    if (msg != "")
+                    {
+                        if (!MainForm.Giveaway_MustFollow.Checked && !MainForm.Giveaway_MustWatch.Checked && !MainForm.Giveaway_MinCurrency.Checked) msg += " and"; else msg += ",";
+                    }
+                    else
+                    {
+                        msg += " who";
+                    }
+                    msg += " subscribes to the stream";
+                }
+                if (MainForm.Giveaway_MustFollow.Checked)
+                {
+                    if (msg != "")
+                    {
+                        if (!MainForm.Giveaway_MustWatch.Checked && !MainForm.Giveaway_MinCurrency.Checked) msg += " and"; else msg += ",";
+                    }
+                    else
+                    {
+                        msg += " who";
+                    }
+                    msg += " follows the stream";
+                }
+                if (MainForm.Giveaway_MustWatch.Checked)
+                {
+                    if (msg != "")
+                    {
+                        if (!MainForm.Giveaway_MinCurrency.Checked) msg += " and"; else msg += ",";
+                    }
+                    else
+                    {
+                        msg += " who";
+                    }
+                    msg += " watched the stream for " + MainForm.Giveaway_MustWatchDays.Value + " days, " + MainForm.Giveaway_MustWatchHours.Value + " hours and " + MainForm.Giveaway_MustWatchMinutes.Value + " minutes";
+                }
+                if (MainForm.Giveaway_MinCurrency.Checked)
+                {
+                    if (msg != "")
+                    {
+                        msg += " and";
+                    }
+                    else
+                    {
+                        msg += " who";
+                    }
+                    msg += " has " + MainForm.Giveaway_MinCurrencyBox.Value + " " + Irc.currencyName;
+                }
                 if (MainForm.Giveaway_TypeTickets.Checked)
                 {
                     MainForm.Giveaway_CancelButton.Enabled = true;
 
-                    Irc.sendMessage("A giveaway has started! Ticket cost: " + ticketcost + ", max. tickets: " + maxtickets + ". Anyone " + (MainForm.Giveaway_MustFollowCheckBox.Checked ? " who follows the stream" : "") + " can join!");
+                    Irc.sendMessage("A giveaway has started! Ticket cost: " + ticketcost + ", max. tickets: " + maxtickets + ". Anyone" + msg + " can join!");
                     Irc.sendMessage("Join by using \"!ticket AMOUNT\".");
                 }
                 else if (MainForm.Giveaway_TypeKeyword.Checked)
                 {
-                    Irc.sendMessage("A giveaway has started! Join by using \"!ticket\". Anyone " + (MainForm.Giveaway_MustFollowCheckBox.Checked ? MainForm.Giveaway_MinCurrencyCheckBox.Checked ? " who follows the stream, and have " + MainForm.Giveaway_MinCurrency.Value + " " + Irc.currencyName : " who follows the stream" : "") + " can join!");
+                    Irc.sendMessage("A giveaway has started! Join by using \"!ticket\". Anyone" + msg + " can join!");
                 }
                 else
                 {
                     closeGiveaway(false);
 
-                    Irc.sendMessage("A giveaway has started! Anyone who sent a message in the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes" + (MainForm.Giveaway_MustFollowCheckBox.Checked ? MainForm.Giveaway_MinCurrencyCheckBox.Checked ? " follows the stream, and has " + MainForm.Giveaway_MinCurrency.Value + " " + Irc.currencyName : " and follows the stream" : "") + " qualifies!");
+                    Irc.sendMessage("A giveaway has started! Anyone" + msg + " qualifies!");
                 }
             });
         }
@@ -176,7 +229,7 @@ namespace ModBot
         public static bool BuyTickets(string user, int tickets=1)
         {
             user = Api.capName(user);
-            if (Started && (MainForm.Giveaway_TypeKeyword.Checked || MainForm.Giveaway_TypeTickets.Checked) && Open && tickets <= MaxTickets && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked) && Database.checkCurrency(user) >= GetMinCurrency())
+            if (Started && (MainForm.Giveaway_TypeKeyword.Checked || MainForm.Giveaway_TypeTickets.Checked) && Open && tickets <= MaxTickets && CheckUser(user))
             {
                 int paid = 0;
                 if (Users.ContainsKey(user))
@@ -203,11 +256,16 @@ namespace ModBot
 
         private static int GetMinCurrency()
         {
-            if (MainForm.Giveaway_MinCurrencyCheckBox.Checked)
+            if (MainForm.Giveaway_MinCurrency.Checked)
             {
-                return Convert.ToInt32(MainForm.Giveaway_MinCurrency.Value);
+                return Convert.ToInt32(MainForm.Giveaway_MinCurrencyBox.Value);
             }
             return 0;
+        }
+
+        private static bool CheckUser(string user)
+        {
+            return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (MainForm.Giveaway_MustFollow.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollow.Checked) && (MainForm.Giveaway_MustSubscribe.Checked && Api.IsSubscriber(user) || !MainForm.Giveaway_MustSubscribe.Checked) && (MainForm.Giveaway_MustWatch.Checked && Api.CompareTimeWatched(user) >= 0 || !MainForm.Giveaway_MustWatch.Checked));
         }
 
         public static string getWinner()
@@ -244,11 +302,11 @@ namespace ModBot
                             int ActiveTime = Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) * 60, CurrentTime = Api.GetUnixTimeNow();
                             lock (Irc.ActiveUsers)
                             {
-                                foreach (KeyValuePair<string, int> user in Irc.ActiveUsers)
+                                foreach (string user in Irc.ActiveUsers.Keys)
                                 {
-                                    if (!ValidUsers.Contains(user.Key) && !Irc.IgnoredUsers.Any(c => c.Equals(user.Key.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user.Key) && CurrentTime - user.Value <= ActiveTime && Database.checkCurrency(user.Key) >= GetMinCurrency() && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user.Key) || !MainForm.Giveaway_MustFollowCheckBox.Checked))
+                                    if (!ValidUsers.Contains(user) && CurrentTime - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user))
                                     {
-                                        ValidUsers.Add(user.Key);
+                                        ValidUsers.Add(user);
                                     }
                                 }
                             }
@@ -262,7 +320,7 @@ namespace ModBot
                                     List<string> Delete = new List<string>();
                                     foreach (string user in Users.Keys)
                                     {
-                                        if (Irc.ActiveUsers.ContainsKey(user) && !Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && (MainForm.Giveaway_MustFollowCheckBox.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollowCheckBox.Checked) && Database.checkCurrency(user) >= GetMinCurrency())
+                                        if (Irc.ActiveUsers.ContainsKey(user) && CheckUser(user))
                                         {
                                             for (int i = 0; i < Users[user]; i++)
                                             {
@@ -309,6 +367,7 @@ namespace ModBot
                             {
                                 //string WinnerLabel = "Winner : ";
                                 string WinnerLabel = "";
+                                if (Api.IsSubscriber(sWinner)) WinnerLabel += "Subscribing | ";
                                 if (Api.IsFollower(sWinner)) WinnerLabel += "Following | ";
                                 WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currencyName + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + Chance.ToString("0.00") + "%";
                                 MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel;

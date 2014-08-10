@@ -93,19 +93,6 @@ namespace ModBot
                     dCheckingDisplayName[user].Join();
                 }
             }
-            /*else
-            {
-                if(bWait)
-                {
-                    for(int i = 0; i < 20; i++)
-                    {
-                        if (!g_dDisplayNames.ContainsKey(user))
-                        {
-                            Thread.Sleep(100);
-                        }
-                    }
-                }
-            }*/
             if (Database.getDisplayName(user) == "")
             {
                 return capName(user);
@@ -286,6 +273,11 @@ namespace ModBot
                 }
             }
             return Transactions;
+        }
+
+        public static int CompareTimeWatched(string user)
+        {
+            return TimeSpan.Compare(Database.getTimeWatched(user), new TimeSpan((int)MainForm.Giveaway_MustWatchDays.Value, (int)MainForm.Giveaway_MustWatchHours.Value, (int)MainForm.Giveaway_MustWatchMinutes.Value, 0));
         }
 
         public static void LogError(string error)

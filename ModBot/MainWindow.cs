@@ -45,13 +45,12 @@ namespace ModBot
 
                 while (true)
                 {
-                    Thread.Sleep(60000);
-                    if (Irc.DetailsConfirmed)
+                    using (WebClient w = new WebClient())
                     {
-                        using (WebClient w = new WebClient())
+                        w.Proxy = null;
+                        try
                         {
-                            w.Proxy = null;
-                            try
+                            if (Irc.DetailsConfirmed)
                             {
                                 int iViewers = Irc.ActiveUsers.Count;
                                 foreach (string user in Irc.ActiveUsers.Keys)
@@ -62,13 +61,68 @@ namespace ModBot
                                     }
                                 }
                                 // Thanks to Illarvan for giving me some space on his server!
-                                string data = w.DownloadString("http://ddoguild.co.uk/modbot/streams/?channel=" + Irc.channel.Substring(1) + "&bot=" + Irc.nick + "&hash=" + Hash + "&version=" + Assembly.GetExecutingAssembly().GetName().Version + "&viewers=" + iViewers + "&date=" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(Assembly.GetExecutingAssembly().GetName().Version.Build).AddSeconds(Assembly.GetExecutingAssembly().GetName().Version.Revision * 2).ToString("M/dd/yyyy hh:mm:ss tt") + "&status=" + (Irc.IsStreaming ? "2" : "1"));
+                                w.DownloadString("http://ddoguild.co.uk/modbot/streams/?channel=" + Irc.channel.Substring(1) + "&bot=" + Irc.nick + "&hash=" + Hash + "&version=" + Assembly.GetExecutingAssembly().GetName().Version + "&viewers=" + iViewers + "&date=" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(Assembly.GetExecutingAssembly().GetName().Version.Build).AddSeconds(Assembly.GetExecutingAssembly().GetName().Version.Revision * 2).ToString("M/dd/yyyy hh:mm:ss tt") + "&status=" + (Irc.IsStreaming ? "2" : "1"));
                             }
-                            catch
+
+                            List<string> channels = w.DownloadString("http://ddoguild.co.uk/modbot/streams/list.php").Split(Environment.NewLine.ToCharArray()).ToList();
+                            List<Tuple<string, string, string, int, string>> Channels = new List<Tuple<string, string, string, int, string>>();
+                            foreach (string channel in channels)
                             {
+                                if (channel != "")
+                                {
+                                    JObject json = JObject.Parse(channel);
+                                    int status = (int)json["Status"], updated = (int)json["Time"];
+                                    string sStatus = "Disconnected";
+                                    if (Api.GetUnixTimeNow() - updated < 300)
+                                    {
+                                        if (status == 2)
+                                        {
+                                            sStatus = "On air";
+                                        }
+                                        else
+                                        {
+                                            sStatus = "Off air";
+                                        }
+                                    }
+                                    //Channels.Add(new Tuple<string, string, string, int, string>(JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/users/" + json["Channel"].ToString()))["display_name"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToString()));
+                                    Channels.Add(new Tuple<string, string, string, int, string>(json["Channel"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToString()));
+                                }
                             }
+                            BeginInvoke((MethodInvoker)delegate
+                            {
+                                if (About_Users.Rows.Count == 0) About_Users.Sort(About_Users.Columns["Status"], System.ComponentModel.ListSortDirection.Ascending);
+                                foreach (Tuple<string, string, string, int, string> channel in Channels)
+                                {
+                                    string name = channel.Item1;
+                                    bool Found = false;
+                                    foreach (DataGridViewRow row in About_Users.Rows)
+                                    {
+                                        if (row.Cells["Channel"].Value.ToString() == name)
+                                        {
+                                            row.Cells["Status"].Value = channel.Item2;
+                                            row.Cells["Version"].Value = channel.Item3;
+                                            row.Cells["Viewers"].Value = channel.Item4;
+                                            row.Cells["Updated"].Value = channel.Item5;
+                                            Found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!Found)
+                                    {
+                                        About_Users.Rows.Add(name, channel.Item2, channel.Item3, channel.Item4, channel.Item5);
+                                    }
+                                }
+
+                                About_UsersLabel.Text = "Other users (" + About_Users.Rows.Count + " total):";
+
+                                About_Users.Sort(About_Users.SortedColumn, About_Users.SortOrder == SortOrder.Ascending ? System.ComponentModel.ListSortDirection.Ascending : System.ComponentModel.ListSortDirection.Descending);
+                            });
+                        }
+                        catch
+                        {
                         }
                     }
+                    Thread.Sleep(60000);
                 }
             });
             thread.Name = "Status reporting";
@@ -424,33 +478,48 @@ namespace ModBot
                         if (!section.Equals("Settings"))
                         {
                             Dictionary<string, string> dSectionSettings = new Dictionary<string, string>();
-                            string sGiveawayType = ini.GetValue(section, "Giveaway_Type", "0");
-                            ini.SetValue(section, "Giveaway_Type", sGiveawayType);
-                            dSectionSettings.Add("Giveaway_Type", sGiveawayType);
-                            string sGiveawayTicketCost = ini.GetValue(section, "Giveaway_TicketCost", "5");
-                            ini.SetValue(section, "Giveaway_TicketCost", sGiveawayTicketCost);
-                            dSectionSettings.Add("Giveaway_TicketCost", sGiveawayTicketCost);
-                            string sGiveawayMaxTickets = ini.GetValue(section, "Giveaway_MaxTickets", "10");
-                            ini.SetValue(section, "Giveaway_MaxTickets", sGiveawayMaxTickets);
-                            dSectionSettings.Add("Giveaway_MaxTickets", sGiveawayMaxTickets);
-                            string sMinCurrencyChecked = ini.GetValue(section, "Giveaway_MinCurrencyChecked", "0");
-                            ini.SetValue(section, "Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
-                            dSectionSettings.Add("Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
-                            string sMustFollow = ini.GetValue(section, "Giveaway_MustFollow", "0");
-                            ini.SetValue(section, "Giveaway_MustFollow", sMustFollow);
-                            dSectionSettings.Add("Giveaway_MustFollow", sMustFollow);
-                            string sMinCurrency = ini.GetValue(section, "Giveaway_MinCurrency", "1");
-                            ini.SetValue(section, "Giveaway_MinCurrency", sMinCurrency);
-                            dSectionSettings.Add("Giveaway_MinCurrency", sMinCurrency);
-                            string sActiveUserTime = ini.GetValue(section, "Giveaway_ActiveUserTime", "5");
-                            ini.SetValue(section, "Giveaway_ActiveUserTime", sActiveUserTime);
-                            dSectionSettings.Add("Giveaway_ActiveUserTime", sActiveUserTime);
-                            string sAutoBanWinnerChecked = ini.GetValue(section, "Giveaway_AutoBanWinner", "0");
-                            ini.SetValue(section, "Giveaway_AutoBanWinner", sAutoBanWinnerChecked);
-                            dSectionSettings.Add("Giveaway_AutoBanWinner", sAutoBanWinnerChecked);
-                            string sBanList = ini.GetValue(section, "Giveaway_BanList", "");
-                            ini.SetValue(section, "Giveaway_BanList", sBanList);
-                            dSectionSettings.Add("Giveaway_BanList", sBanList);
+                            string sVariable = ini.GetValue(section, "Giveaway_Type", "0");
+                            ini.SetValue(section, "Giveaway_Type", sVariable);
+                            dSectionSettings.Add("Giveaway_Type", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_TicketCost", "5");
+                            ini.SetValue(section, "Giveaway_TicketCost", sVariable);
+                            dSectionSettings.Add("Giveaway_TicketCost", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_MaxTickets", "10");
+                            ini.SetValue(section, "Giveaway_MaxTickets", sVariable);
+                            dSectionSettings.Add("Giveaway_MaxTickets", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_MinCurrencyChecked", "0");
+                            ini.SetValue(section, "Giveaway_MinCurrencyChecked", sVariable);
+                            dSectionSettings.Add("Giveaway_MinCurrencyChecked", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_MustFollow", "0");
+                            ini.SetValue(section, "Giveaway_MustFollow", sVariable);
+                            dSectionSettings.Add("Giveaway_MustFollow", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_MustSubscribe", "0");
+                            ini.SetValue(section, "Giveaway_MustSubscribe", sVariable);
+                            dSectionSettings.Add("Giveaway_MustSubscribe", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_MustWatch", "0");
+                            ini.SetValue(section, "Giveaway_MustWatch", sVariable);
+                            dSectionSettings.Add("Giveaway_MustWatch", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_MustWatchDays", "0");
+                            ini.SetValue(section, "Giveaway_MustWatchDays", sVariable);
+                            dSectionSettings.Add("Giveaway_MustWatchDays", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_MustWatchHours", "0");
+                            ini.SetValue(section, "Giveaway_MustWatchHours", sVariable);
+                            dSectionSettings.Add("Giveaway_MustWatchHours", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_MustWatchMinutes", "1");
+                            ini.SetValue(section, "Giveaway_MustWatchMinutes", sVariable);
+                            dSectionSettings.Add("Giveaway_MustWatchMinutes", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_MinCurrency", "1");
+                            ini.SetValue(section, "Giveaway_MinCurrency", sVariable);
+                            dSectionSettings.Add("Giveaway_MinCurrency", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_ActiveUserTime", "5");
+                            ini.SetValue(section, "Giveaway_ActiveUserTime", sVariable);
+                            dSectionSettings.Add("Giveaway_ActiveUserTime", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_AutoBanWinner", "0");
+                            ini.SetValue(section, "Giveaway_AutoBanWinner", sVariable);
+                            dSectionSettings.Add("Giveaway_AutoBanWinner", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_BanList", "");
+                            ini.SetValue(section, "Giveaway_BanList", sVariable);
+                            dSectionSettings.Add("Giveaway_BanList", sVariable);
 
                             /*foreach (KeyValuePair<string, string> kv in dSectionSettings)
                             {
@@ -528,15 +597,35 @@ namespace ModBot
                                 }
                                 else if (KeyValue.Key.Equals("Giveaway_MinCurrencyChecked"))
                                 {
-                                    Giveaway_MinCurrencyCheckBox.Checked = (KeyValue.Value == "1");
+                                    Giveaway_MinCurrency.Checked = (KeyValue.Value == "1");
                                 }
                                 else if (KeyValue.Key.Equals("Giveaway_MustFollow"))
                                 {
-                                    Giveaway_MustFollowCheckBox.Checked = (KeyValue.Value == "1");
+                                    Giveaway_MustFollow.Checked = (KeyValue.Value == "1");
+                                }
+                                else if (KeyValue.Key.Equals("Giveaway_MustSubscribe") && Irc.partnered)
+                                {
+                                    Giveaway_MustSubscribe.Checked = (KeyValue.Value == "1");
+                                }
+                                else if (KeyValue.Key.Equals("Giveaway_MustWatch"))
+                                {
+                                    Giveaway_MustWatch.Checked = (KeyValue.Value == "1");
+                                }
+                                else if (KeyValue.Key.Equals("Giveaway_MustWatchDays"))
+                                {
+                                    Giveaway_MustWatchDays.Value = Convert.ToInt32(KeyValue.Value);
+                                }
+                                else if (KeyValue.Key.Equals("Giveaway_MustWatchHours"))
+                                {
+                                    Giveaway_MustWatchHours.Value = Convert.ToInt32(KeyValue.Value);
+                                }
+                                else if (KeyValue.Key.Equals("Giveaway_MustWatchMinutes"))
+                                {
+                                    Giveaway_MustWatchMinutes.Value = Convert.ToInt32(KeyValue.Value);
                                 }
                                 else if (KeyValue.Key.Equals("Giveaway_MinCurrency"))
                                 {
-                                    Giveaway_MinCurrency.Value = Convert.ToInt32(KeyValue.Value);
+                                    Giveaway_MinCurrencyBox.Value = Convert.ToInt32(KeyValue.Value);
                                 }
                                 else if (KeyValue.Key.Equals("Giveaway_ActiveUserTime"))
                                 {
@@ -567,28 +656,6 @@ namespace ModBot
                 {
                     Giveaway_SettingsPresents.TabPages.Add("Default");
                     iSettingsPresent = 0;
-                    Dictionary<string, string> dSectionSettings = new Dictionary<string, string>();
-                    string sMinCurrencyChecked = ini.GetValue("Default", "Giveaway_MinCurrencyChecked", "0");
-                    ini.SetValue("Default", "Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
-                    dSectionSettings.Add("Giveaway_MinCurrencyChecked", sMinCurrencyChecked);
-                    string sMustFollow = ini.GetValue("Default", "Giveaway_MustFollow", "0");
-                    ini.SetValue("Default", "Giveaway_MustFollow", sMustFollow);
-                    dSectionSettings.Add("Giveaway_MustFollow", sMustFollow);
-                    string sMinCurrency = ini.GetValue("Default", "Giveaway_MinCurrency", "1");
-                    ini.SetValue("Default", "Giveaway_MinCurrency", sMinCurrency);
-                    dSectionSettings.Add("Giveaway_MinCurrency", sMinCurrency);
-                    string sActiveUserTime = ini.GetValue("Default", "Giveaway_ActiveUserTime", "5");
-                    ini.SetValue("Default", "Giveaway_ActiveUserTime", sActiveUserTime);
-                    dSectionSettings.Add("Giveaway_ActiveUserTime", sActiveUserTime);
-                    string sAutoBanWinnerChecked = ini.GetValue("Default", "Giveaway_AutoBanWinner", "0");
-                    ini.SetValue("Default", "Giveaway_AutoBanWinner", sAutoBanWinnerChecked);
-                    dSectionSettings.Add("Giveaway_AutoBanWinner", sAutoBanWinnerChecked);
-                    string sBanList = ini.GetValue("Default", "Giveaway_BanList", "");
-                    ini.SetValue("Default", "Giveaway_BanList", sBanList);
-                    dSectionSettings.Add("Giveaway_BanList", sBanList);
-
-                    dSettings.Add("Default", dSectionSettings);
-
                     SaveSettings();
                 }
                 bIgnoreUpdates = false;
@@ -825,7 +892,7 @@ namespace ModBot
 
         private void Giveaway_MinCurrencyCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            Giveaway_MinCurrency.Enabled = Giveaway_MinCurrencyCheckBox.Checked;
+            Giveaway_MinCurrencyBox.Enabled = Giveaway_MinCurrency.Checked;
             SaveSettings();
         }
 
@@ -869,7 +936,8 @@ namespace ModBot
         private void Giveaway_AnnounceWinnerButton_Click(object sender, EventArgs e)
         {
             TimeSpan t = Database.getTimeWatched(Giveaway_WinnerLabel.Text);
-            Irc.sendMessage(Giveaway_WinnerLabel.Text + " has won the giveaway! (" + (Api.IsFollower(Giveaway_WinnerLabel.Text) ? "Currently follows the channel | " : "") + "Has " + Database.checkCurrency(Giveaway_WinnerLabel.Text) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+            string winner = Giveaway_WinnerLabel.Text;
+            Irc.sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
         }
 
         private void Giveaway_BanButton_Click(object sender, EventArgs e)
@@ -965,9 +1033,14 @@ namespace ModBot
 
                         ini.SetValue(Present, "Giveaway_TicketCost", Giveaway_TicketCost.Value.ToString());
                         ini.SetValue(Present, "Giveaway_MaxTickets", Giveaway_MaxTickets.Value.ToString());
-                        ini.SetValue(Present, "Giveaway_MustFollow", Giveaway_MustFollowCheckBox.Checked ? "1" : "0");
-                        ini.SetValue(Present, "Giveaway_MinCurrencyChecked", Giveaway_MinCurrencyCheckBox.Checked ? "1" : "0");
-                        ini.SetValue(Present, "Giveaway_MinCurrency", Giveaway_MinCurrency.Value.ToString());
+                        ini.SetValue(Present, "Giveaway_MustFollow", Giveaway_MustFollow.Checked ? "1" : "0");
+                        ini.SetValue(Present, "Giveaway_MustSubscribe", Giveaway_MustSubscribe.Checked ? "1" : "0");
+                        ini.SetValue(Present, "Giveaway_MustWatch", Giveaway_MustWatch.Checked ? "1" : "0");
+                        ini.SetValue(Present, "Giveaway_MustWatchDays", Giveaway_MustWatchDays.Value.ToString());
+                        ini.SetValue(Present, "Giveaway_MustWatchHours", Giveaway_MustWatchHours.Value.ToString());
+                        ini.SetValue(Present, "Giveaway_MustWatchMinutes", Giveaway_MustWatchMinutes.Value.ToString());
+                        ini.SetValue(Present, "Giveaway_MinCurrencyChecked", Giveaway_MinCurrency.Checked ? "1" : "0");
+                        ini.SetValue(Present, "Giveaway_MinCurrency", Giveaway_MinCurrencyBox.Value.ToString());
                         ini.SetValue(Present, "Giveaway_ActiveUserTime", Giveaway_ActiveUserTime.Value.ToString());
                         ini.SetValue(Present, "Giveaway_AutoBanWinner", Giveaway_AutoBanWinnerCheckBox.Checked ? "1" : "0");
                         string items = "";
@@ -1333,8 +1406,8 @@ namespace ModBot
 
         private void Giveaway_TypeTickets_CheckedChanged(object sender, EventArgs e)
         {
-            if (Giveaway_TypeTickets.Checked) Giveaway_MinCurrencyCheckBox.Checked = false;
-            Giveaway_MinCurrencyCheckBox.Enabled = Giveaway_MinCurrency.Enabled = !Giveaway_TypeTickets.Checked;
+            if (Giveaway_TypeTickets.Checked) Giveaway_MinCurrency.Checked = false;
+            Giveaway_MinCurrency.Enabled = Giveaway_MinCurrencyBox.Enabled = !Giveaway_TypeTickets.Checked;
             Giveaway_TicketCost.Enabled = Giveaway_MaxTickets.Enabled = Giveaway_TypeTickets.Checked;
             SaveSettings();
         }
@@ -1474,6 +1547,95 @@ namespace ModBot
         private void Channel_SteamID64_TextChanged(object sender, EventArgs e)
         {
             ini.SetValue("Settings", "Channel_SteamID64", Channel_SteamID64.Text);
+        }
+
+        private void About_Users_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
+        {
+            if (e.Column.Name == "Viewers")
+            {
+                e.SortResult = (int.Parse(e.CellValue1.ToString())).CompareTo(int.Parse(e.CellValue2.ToString()));
+                if (e.SortResult == 0)
+                {
+                    e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()));
+                    if (e.SortResult == 0)
+                    {
+                        string sVer1 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString(), sVer2 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString();
+                        e.SortResult = sVer1.CompareTo(sVer2);
+                        if (e.SortResult != 0)
+                        {
+                            string[] cell1 = sVer1.Split('.');
+                            string[] cell2 = sVer2.Split('.');
+                            int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
+                            int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
+                            e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
+                        }
+                    }
+                }
+                e.Handled = true;
+            }
+            else if (e.Column.Name == "Updated")
+            {
+                e.SortResult = Convert.ToDateTime(e.CellValue1.ToString()).CompareTo(Convert.ToDateTime(e.CellValue2.ToString()));
+                if (e.SortResult == 0)
+                {
+                    string sVer1 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString(), sVer2 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString();
+                    e.SortResult = sVer1.CompareTo(sVer2);
+                    if (e.SortResult != 0)
+                    {
+                        string[] cell1 = sVer1.Split('.');
+                        string[] cell2 = sVer2.Split('.');
+                        int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
+                        int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
+                        e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
+                    }
+                }
+                e.Handled = true;
+            }
+            else if (e.Column.Name == "Version")
+            {
+                e.SortResult = e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
+                if (e.SortResult != 0)
+                {
+                    string[] cell1 = e.CellValue1.ToString().Split('.');
+                    string[] cell2 = e.CellValue2.ToString().Split('.');
+                    int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
+                    int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
+                    e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
+                }
+                e.Handled = true;
+            }
+            else if (e.Column.Name == "Status")
+            {
+                e.SortResult = e.CellValue2.ToString().CompareTo(e.CellValue1.ToString());
+                if (e.SortResult == 0)
+                {
+                    e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                    if (e.SortResult == 0)
+                    {
+                        e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
+                        if (e.SortResult == 0)
+                        {
+                            string sVer1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString(), sVer2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString();
+                            e.SortResult = sVer1.CompareTo(sVer2);
+                            if (e.SortResult != 0)
+                            {
+                                string[] cell1 = sVer1.Split('.');
+                                string[] cell2 = sVer2.Split('.');
+                                int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
+                                int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
+                                e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
+                            }
+                        }
+                    }
+                }
+                e.Handled = true;
+            }
+        }
+
+        private void Giveaway_MustWatch_CheckedChanged(object sender, EventArgs e)
+        {
+            Giveaway_MustWatchDays.Enabled = Giveaway_MustWatchHours.Enabled = Giveaway_MustWatchMinutes.Enabled = Giveaway_TypeActive.Checked;
+            SaveSettings();
         }
     }
 }
