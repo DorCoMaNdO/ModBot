@@ -377,6 +377,8 @@ namespace ModBot
                 Commands.Add("!btag", Command_BTag);
                 Commands.Add("!battletag", Command_BTag);
                 Commands.Add("!modbot", Command_ModBot);
+                Commands.Add("!botinfo", Command_BotInfo);
+                Commands.Add("!bot", Command_BotInfo);
 
                 Console.WriteLine("Commands registered.\r\n");
                 CommandsRegistered = true;
@@ -2189,6 +2191,15 @@ namespace ModBot
                     }
                 }
             }
+            else
+            {
+                Command_BotInfo(user, cmd, args);
+            }
+        }
+
+        private static void Command_BotInfo(string user, string cmd, string[] args)
+        {
+            sendMessage("This channel is using CoMaNdO's modified version of ModBot (v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + "), downloadable from http://modbot.wordpress.com/!");
         }
 
         /*private static void handleMessage(string message)
