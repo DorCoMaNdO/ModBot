@@ -1020,7 +1020,7 @@ namespace ModBot
                         Console.WriteLine("Everything should be set and ready!\r\nModBot is good to go!\r\n");
                         return;
                     }
-                    else if (temp.StartsWith("You have banned"))
+                    else if (temp.StartsWith("You have banned") || temp.StartsWith("Your message was not sent"))
                     {
                         return;
                     }
