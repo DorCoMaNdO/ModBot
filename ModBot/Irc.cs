@@ -1383,7 +1383,7 @@ namespace ModBot
                         }
                         else
                         {
-                            warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false, 3);
+                            warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false, true, true, 3);
                         }
                     }
                     else
@@ -1397,14 +1397,14 @@ namespace ModBot
                             }
                             else if (Moderators.Contains(Api.capName(nick)))
                             {
-                                if (!warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters", 3, true, true, 6) && Warnings.ContainsKey(Api.capName(user))) sendMessage(user + " you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid. (Warning number: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
+                                if (!warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters", 3, true, true, true, 6) && Warnings.ContainsKey(Api.capName(user))) sendMessage(user + " you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid. (Warning number: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
                             }
                         }
                     }
                 }
                 else
                 {
-                    warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false, 3);
+                    warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false, true, true, 3);
                 }
             }
         }
