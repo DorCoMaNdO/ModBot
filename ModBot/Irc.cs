@@ -2354,12 +2354,22 @@ namespace ModBot
                                 }
                             }*/
 
-                            string[] sUsers = (stream["moderators"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["staff"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["admins"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["viewers"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "")).Split(',');
+                            List<string> lUsers = (stream["moderators"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["staff"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["admins"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["viewers"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "")).Split(',').ToList();
                             lock (ActiveUsers)
                             {
-                                foreach (string sUser in sUsers)
+                                List<string> Delete = new List<string>();
+                                foreach(string sUser in ActiveUsers.Keys)
                                 {
-                                    Api.GetDisplayName(sUser);
+                                    string user = Api.capName(sUser);
+                                    if (!lUsers.Contains(user)) Delete.Add(user);
+                                }
+                                foreach (string sUser in Delete)
+                                {
+                                    removeUserFromList(sUser);
+                                }
+                                foreach (string sUser in lUsers)
+                                {
+                                    Api.GetDisplayName(sUser); 
                                     string user = Api.capName(sUser);
                                     if (sUser != "" && !ActiveUsers.ContainsKey(user))
                                     {
