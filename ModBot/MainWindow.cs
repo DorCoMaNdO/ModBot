@@ -997,7 +997,7 @@ namespace ModBot
         private void Currency_DisableCommandCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             SaveSettings();
-            Irc.g_iLastCurrencyDisabledAnnounce = 0;
+            Irc.LastCurrencyDisabledAnnounce = 0;
         }
 
         public void SaveSettings(int SettingsPresent=-2)
@@ -1553,7 +1553,7 @@ namespace ModBot
         {
             if (e.Column.Name == "Viewers")
             {
-                e.SortResult = (int.Parse(e.CellValue1.ToString())).CompareTo(int.Parse(e.CellValue2.ToString()));
+                e.SortResult = (int.Parse(e.CellValue2.ToString())).CompareTo(int.Parse(e.CellValue1.ToString()));
                 if (e.SortResult == 0)
                 {
                     e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()));
@@ -1569,16 +1569,20 @@ namespace ModBot
                             int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
                             e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
                         }
+                        else
+                        {
+                            e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
+                        }
                     }
                 }
                 e.Handled = true;
             }
             else if (e.Column.Name == "Updated")
             {
-                e.SortResult = Convert.ToDateTime(e.CellValue1.ToString()).CompareTo(Convert.ToDateTime(e.CellValue2.ToString()));
+                e.SortResult = Convert.ToDateTime(e.CellValue2.ToString()).CompareTo(Convert.ToDateTime(e.CellValue1.ToString()));
                 if (e.SortResult == 0)
                 {
-                    string sVer1 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString(), sVer2 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString();
+                    string sVer1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString(), sVer2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString();
                     e.SortResult = sVer1.CompareTo(sVer2);
                     if (e.SortResult != 0)
                     {
@@ -1587,6 +1591,14 @@ namespace ModBot
                         int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
                         int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
                         e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
+                    }
+                    else
+                    {
+                        e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
+                        if (e.SortResult == 0)
+                        {
+                            e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                        }
                     }
                 }
                 e.Handled = true;
@@ -1601,6 +1613,18 @@ namespace ModBot
                     int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
                     int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
                     e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
+                }
+                else
+                {
+                    e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
+                    if (e.SortResult == 0)
+                    {
+                        e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                        if (e.SortResult == 0)
+                        {
+                            e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
+                        }
+                    }
                 }
                 e.Handled = true;
             }

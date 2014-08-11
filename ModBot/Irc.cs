@@ -37,26 +37,16 @@ namespace ModBot
         public static TcpClient irc;
         public static StreamReader read;
         public static StreamWriter write;
-        public static string nick, password, channel, currency, currencyName, admin, donation_clientid, donation_token, channeltoken;
-        public static bool partnered;
-        public static int interval, payout, subpayout;
-        public static bool auctionOpen;
-        public static string greeting;
-        public static bool greetingOn;
-        public static int g_iLastCurrencyDisabledAnnounce, g_iLastTop5Announce;
-        public static int g_iStreamStartTime = 0;
-        public static bool IsStreaming;
-        public static bool ResourceKeeper;
         public static MainWindow MainForm = Program.MainForm;
-        public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>();
-        public static Dictionary<string, int> Warnings = new Dictionary<string, int>();
-        public static List<string> IgnoredUsers = new List<string>();
+        public static string nick, password, channel, currency, currencyName, admin, donation_clientid, donation_token, channeltoken;
+        public static int interval, payout, subpayout, StreamStartTime;
+        public static bool partnered, IsStreaming, ResourceKeeper, IsModerator, DetailsConfirmed, CommandsRegistered;
+        public static bool auctionOpen, greetingOn;
+        public static string greeting;
+        public static int LastCurrencyDisabledAnnounce, LastUsedTop5, LastUsedBotInfo;
+        public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>(), Warnings = new Dictionary<string, int>();
+        public static List<string> IgnoredUsers = new List<string>(), Moderators = new List<string>(), usersToLookup = new List<string>();
         public static Timer currencyQueue, auctionLoop, giveawayQueue, warningsRemoval;
-        public static List<string> usersToLookup = new List<string>();
-        public static bool DetailsConfirmed;
-        private static bool CommandsRegistered;
-        public static List<string> Moderators = new List<string>();
-        public static bool IsModerator;
         public static List<Thread> Threads = new List<Thread>();
         private static StreamWriter log = new StreamWriter("CommandLog.log", true);
 
@@ -382,6 +372,8 @@ namespace ModBot
                 Commands.Add("!btag", Command_BTag);
                 Commands.Add("!battletag", Command_BTag);
                 Commands.Add("!modbot", Command_ModBot);
+                Commands.Add("!warn", Command_Warn);
+                Commands.Add("!warnings", Command_Warnings);
                 Commands.Add("!botinfo", Command_BotInfo);
                 Commands.Add("!bot", Command_BotInfo);
 
@@ -709,7 +701,7 @@ namespace ModBot
                                 {
                                     Database.addTimeWatched(user, 1);
                                     TimeSpan t = Database.getTimeWatched(user);
-                                    if (t.TotalMinutes % interval == 0 && (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
+                                    if (t.TotalMinutes % interval == 0 && (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= StreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
                                     {
                                         int old = Database.checkCurrency(user);
                                         while (old == Database.checkCurrency(user))
@@ -726,44 +718,6 @@ namespace ModBot
                                         }
                                     }
                                 }
-
-                                /*if (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked)
-                                {
-                                    Console.WriteLine("Handout type : 0");
-                                }
-                                if (MainForm.Currency_HandoutActiveStream.Checked)
-                                {
-                                    Console.WriteLine("Handout type : 1");
-                                }
-                                if (MainForm.Currency_HandoutActiveTime.Checked)
-                                {
-                                    Console.WriteLine("Handout type : 2");
-                                }
-                                foreach (string user in ActiveUsers.Keys)
-                                {
-                                    Console.Write("\r\n" + user);
-                                    Database.addTimeWatched(user, 1);
-                                    TimeSpan t = Database.getTimeWatched(user);
-                                    if (t.TotalMinutes % interval == 0)
-                                    {
-                                        Console.Write(" should get points");
-                                    }
-                                    if (t.TotalMinutes % interval == 0 && (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= g_iStreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
-                                    {
-                                        Console.Write(", passed the checks");
-                                        int old = Database.checkCurrency(user);
-                                        if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Api.IsSubscriber(user))
-                                        {
-                                            Database.addCurrency(user, subpayout);
-                                            Console.Write(", got a point, old amount : " + old + ", new amount : " + Database.checkCurrency(user));
-                                        }
-                                        else
-                                        {
-                                            Database.addCurrency(user, payout);
-                                            Console.Write(", got a point, old amount : " + old + ", new amount : " + Database.checkCurrency(user));
-                                        }
-                                    }
-                                }*/
                             }
                         }).Start();
                     }
@@ -806,7 +760,7 @@ namespace ModBot
                             {
                                 if (!IsStreaming)
                                 {
-                                    g_iStreamStartTime = Api.GetUnixTimeNow();
+                                    StreamStartTime = Api.GetUnixTimeNow();
                                 }
                                 bIsStreaming = true;
                             }
@@ -1387,6 +1341,26 @@ namespace ModBot
                             {
                                 giveawayQueue.Change(5000, Timeout.Infinite);
                             }
+                            else if (Moderators.Contains(Api.capName(nick)))
+                            {
+                                if (warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters.", 3, true, true, true, 6) == 1&& Warnings.ContainsKey(Api.capName(user)))
+                                {
+                                    string msg = "you don't answer the requirements!";
+                                    if (MainForm.Giveaway_MustFollow.Checked && !Api.IsFollower(user))
+                                    {
+                                        msg = "you don't follow the channel!";
+                                    }
+                                    else if (MainForm.Giveaway_MustSubscribe.Checked && !Api.IsSubscriber(user))
+                                    {
+                                        msg = "you are not subscribed to the channel!";
+                                    }
+                                    else if (MainForm.Giveaway_MustWatch.Checked && Api.CompareTimeWatched(user) == -1)
+                                    {
+                                        msg = "you haven't watched the stream for long enough!";
+                                    }
+                                    sendMessage(user + " " + msg + " (Warning: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
+                                }
+                            }
                         }
                         else
                         {
@@ -1404,7 +1378,7 @@ namespace ModBot
                             }
                             else if (Moderators.Contains(Api.capName(nick)))
                             {
-                                if (!warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters", 3, true, true, true, 6) && Warnings.ContainsKey(Api.capName(user)))
+                                if (warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters.", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
                                 {
                                     string msg = "you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid.";
                                     if(tickets < 1 || tickets > Giveaway.MaxTickets)
@@ -1427,7 +1401,7 @@ namespace ModBot
                                     {
                                         msg = "you haven't watched the stream for long enough!";
                                     }
-                                    sendMessage(user + " " + msg + " (Warning number: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
+                                    sendMessage(user + " " + msg + " (Warning: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
                                 }
                             }
                         }
@@ -1448,9 +1422,9 @@ namespace ModBot
                 {
                     if (args[0].Equals("top5"))
                     {
-                        if (!MainForm.Currency_DisableCommandCheckBox.Checked && Api.GetUnixTimeNow() - g_iLastTop5Announce > 600 || Database.getUserLevel(user) >= 1)
+                        if (!MainForm.Currency_DisableCommandCheckBox.Checked && Api.GetUnixTimeNow() - LastUsedTop5 > 600 || Database.getUserLevel(user) >= 1)
                         {
-                            g_iLastTop5Announce = Api.GetUnixTimeNow();
+                            LastUsedTop5 = Api.GetUnixTimeNow();
                             int max = 5;
                             Dictionary<string, int> TopPoints = new Dictionary<string, int>();
                             //"SELECT * FROM table ORDER BY amount DESC LIMIT 5;"
@@ -1627,9 +1601,9 @@ namespace ModBot
             }
             else
             {
-                if (MainForm.Currency_DisableCommandCheckBox.Checked && Database.getUserLevel(user) == 0 && Api.GetUnixTimeNow() - g_iLastCurrencyDisabledAnnounce > 600)
+                if (MainForm.Currency_DisableCommandCheckBox.Checked && Database.getUserLevel(user) == 0 && Api.GetUnixTimeNow() - LastCurrencyDisabledAnnounce > 600)
                 {
-                    g_iLastCurrencyDisabledAnnounce = Api.GetUnixTimeNow();
+                    LastCurrencyDisabledAnnounce = Api.GetUnixTimeNow();
                     sendMessage("The !" + currency + " command is disabled, you may politely ask a mod to check your " + currencyName + " for you.");
                 }
                 if (!MainForm.Currency_DisableCommandCheckBox.Checked || Database.getUserLevel(user) >= 1)
@@ -2226,9 +2200,72 @@ namespace ModBot
             }
         }
 
+        private static void Command_Warn(string user, string command, string[] args)
+        {
+            if (Database.getUserLevel(user) > 0 && args.Length > 0)
+            {
+                int max = 3, arg = 1, interval = 10;
+                string name = Api.capName(args[0]), reason = "";
+                if (args.Length > 1 && int.TryParse(args[0], out max))
+                {
+                    arg = 2;
+                    if (args.Length > 2 && int.TryParse(args[1], out interval))
+                    {
+                        name = Api.capName(args[2]);
+                        arg = 3;
+                    }
+                    else
+                    {
+                        name = Api.capName(args[1]);
+                        interval = 10;
+                    }
+                }
+                else
+                {
+                    max = 3;
+                    arg = 1;
+                }
+
+                for (int i = arg; i < args.Length; i++)
+                {
+                    reason += args[i] + " ";
+                }
+
+                if (warnUser(name, 1, interval, reason, max) == 1)
+                {
+                    sendMessage(Api.GetDisplayName(name) + " you have been warned by " + user + (reason != "" ? " for " + reason : "") + " (Warning: " + Warnings[name] + "/" + max + ")", user + " has warned " + name + (reason != "" ? " for " + reason : ""));
+                }
+            }
+        }
+
+        private static void Command_Warnings(string user, string command, string[] args)
+        {
+            if(Database.getUserLevel(user) > 0)
+            {
+                string name = Api.capName(user);
+                if(args.Length > 0)
+                {
+                    name = Api.capName(args[0]);
+                }
+
+                if(Warnings.ContainsKey(name))
+                {
+                    sendMessage(Api.GetDisplayName(name) + " has " + Warnings[name] + " warnings.");
+                }
+                else
+                {
+                    sendMessage(Api.GetDisplayName(name) + " has no warnings.");
+                }
+            }
+        }
+
         private static void Command_BotInfo(string user, string cmd, string[] args)
         {
-            sendMessage("This channel is using CoMaNdO's modified version of ModBot (v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + "), downloadable from http://modbot.wordpress.com/!");
+            if (Api.GetUnixTimeNow() - LastUsedBotInfo >= 300)
+            {
+                LastUsedBotInfo = Api.GetUnixTimeNow();
+                sendMessage("This channel is using CoMaNdO's modified version of ModBot (v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + "), downloadable from http://modbot.wordpress.com/ :)");
+            }
         }
 
         /*private static void handleMessage(string message)
@@ -2387,10 +2424,10 @@ namespace ModBot
             }
         }
 
-        private static bool warnUser(string user, int add = 1, int lengthrate = 5, string reason = "", int max = 3, bool announcewarns = true, bool console = true, bool chat = true, int limit = 0)
+        private static int warnUser(string user, int add = 1, int lengthrate = 5, string reason = "", int max = 3, bool announcewarns = true, bool console = true, bool chat = true, int limit = 0)
         {
             string name = Api.GetDisplayName(user = Api.capName(user));
-            if (!Moderators.Contains(user) && !IgnoredUsers.Contains(user) && Database.getUserLevel(user) == 0)
+            if (ActiveUsers.ContainsKey(user) && !Moderators.Contains(user) && !IgnoredUsers.Contains(user) && Database.getUserLevel(user) == 0)
             {
                 lock (Warnings)
                 {
@@ -2412,18 +2449,19 @@ namespace ModBot
                         int multiplier = Warnings[user];
                         if (limit > 0 && multiplier > limit) multiplier = limit;
                         timeoutUser(name, multiplier * lengthrate, (reason != "" ? reason + " " : "") + (announcewarns ? "after " + max + " warnings." : ""), console, chat);
-                        return true;
+
+                        return 2;
                     }
+                    return 1;
                 }
             }
-            return false;
+            return 0;
         }
 
         public static bool timeoutUser(string user, int interval=10, string reason="", bool console = true, bool chat = true)
         {
             user = user.ToLower();
-            if (!IsModerator || Moderators.Contains(Api.capName(user)) || IgnoredUsers.Contains(user) || Database.getUserLevel(user) > 0) return false;
-
+            if (!ActiveUsers.ContainsKey(Api.capName(user)) || Moderators.Contains(Api.capName(user)) || IgnoredUsers.Contains(user) || Database.getUserLevel(user) > 0 || !IsModerator) return false;
             //sendRaw("PRIVMSG " + channel + " :/timeout " + user + " " + interval);
             sendMessage("/timeout " + user + " " + interval, "", false, false);
             user = Api.GetDisplayName(user);
