@@ -451,14 +451,14 @@ namespace ModBot
                 //Console.WriteLine("Getting Settings");
                 bIgnoreUpdates = true;
                 Dictionary<Control, bool> dState = new Dictionary<Control, bool>();
-                foreach (Control ctrl in GiveawayWindow.Controls)
+                /*foreach (Control ctrl in GiveawayWindow.Controls)
                 {
                     if (!dState.ContainsKey(ctrl))
                     {
                         dState.Add(ctrl, ctrl.Enabled);
                         ctrl.Enabled = false;
                     }
-                }
+                }*/
                 bool bRecreateSections = false;
                 foreach (string section in ini.GetSectionNames())
                 {
@@ -890,12 +890,6 @@ namespace ModBot
             }
         }
 
-        private void Giveaway_MinCurrencyCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            Giveaway_MinCurrencyBox.Enabled = Giveaway_MinCurrency.Checked;
-            SaveSettings();
-        }
-
         private void Giveaway_RerollButton_Click(object sender, EventArgs e)
         {
             Giveaway.getWinner();
@@ -940,14 +934,6 @@ namespace ModBot
             Irc.sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
         }
 
-        private void Giveaway_BanButton_Click(object sender, EventArgs e)
-        {
-            Giveaway_BanListListBox.Items.Add(Giveaway_AddBanTextBox.Text);
-            Giveaway_AddBanTextBox.Text = "";
-            Giveaway_BanButton.Enabled = false;
-            SaveSettings();
-        }
-
         private void Giveaway_AddBanTextBox_TextChanged(object sender, EventArgs e)
         {
             if (Giveaway_AddBanTextBox.Text == "" || Giveaway_AddBanTextBox.Text.Length < 5 || Giveaway_AddBanTextBox.Text.Contains(" ") || Giveaway_AddBanTextBox.Text.Contains(".") || Giveaway_AddBanTextBox.Text.Contains(",") || Giveaway_AddBanTextBox.Text.Contains("\"") || Giveaway_AddBanTextBox.Text.Contains("'") || Irc.IgnoredUsers.Any(user => user.ToLower() == Giveaway_AddBanTextBox.Text.ToLower()) || Giveaway_BanListListBox.Items.Contains(Giveaway_AddBanTextBox.Text))
@@ -965,25 +951,6 @@ namespace ModBot
             if(Giveaway_BanListListBox.SelectedIndex >= 0) Giveaway_UnbanButton.Enabled = true;
         }
 
-        private void Giveaway_UnbanButton_Click(object sender, EventArgs e)
-        {
-            int iOldIndex = Giveaway_BanListListBox.SelectedIndex;
-            Giveaway_BanListListBox.Items.RemoveAt(iOldIndex);
-            Giveaway_UnbanButton.Enabled = false;
-            SaveSettings();
-            if(Giveaway_BanListListBox.Items.Count > 0)
-            {
-                if (iOldIndex > Giveaway_BanListListBox.Items.Count - 1)
-                {
-                    Giveaway_BanListListBox.SelectedIndex = Giveaway_BanListListBox.Items.Count-1;
-                }
-                else
-                {
-                    Giveaway_BanListListBox.SelectedIndex = iOldIndex;
-                }
-            }
-        }
-
         private void Giveaway_CopyWinnerButton_Click(object sender, EventArgs e)
         {
             System.Windows.Forms.Clipboard.SetText(Giveaway_WinnerLabel.Text);
@@ -991,13 +958,91 @@ namespace ModBot
 
         private void Giveaway_Settings_Changed(object sender, EventArgs e)
         {
+            Control ctrl = (Control)sender;
+            if (ctrl == Giveaway_UnbanButton)
+            {
+                int iOldIndex = Giveaway_BanListListBox.SelectedIndex;
+                Giveaway_BanListListBox.Items.RemoveAt(iOldIndex);
+                Giveaway_UnbanButton.Enabled = false;
+                if (Giveaway_BanListListBox.Items.Count > 0)
+                {
+                    if (iOldIndex > Giveaway_BanListListBox.Items.Count - 1)
+                    {
+                        Giveaway_BanListListBox.SelectedIndex = Giveaway_BanListListBox.Items.Count - 1;
+                    }
+                    else
+                    {
+                        Giveaway_BanListListBox.SelectedIndex = iOldIndex;
+                    }
+                }
+            }
+            else if (ctrl == Giveaway_BanButton)
+            {
+                Giveaway_BanListListBox.Items.Add(Giveaway_AddBanTextBox.Text);
+                Giveaway_AddBanTextBox.Text = "";
+                Giveaway_BanButton.Enabled = false;
+            }
+            else if (ctrl == Giveaway_MinCurrency)
+            {
+                Giveaway_MinCurrencyBox.Enabled = Giveaway_MinCurrency.Checked;
+            }
+            else if (ctrl == Giveaway_TypeActive)
+            {
+                Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
+            }
+            else if (ctrl == Giveaway_TypeTickets)
+            {
+                if (Giveaway_TypeTickets.Checked) Giveaway_MinCurrency.Checked = false;
+                Giveaway_MinCurrency.Enabled = !Giveaway_TypeTickets.Checked;
+                Giveaway_TicketCost.Enabled = Giveaway_MaxTickets.Enabled = Giveaway_TypeTickets.Checked;
+            }
+            else if (ctrl == Giveaway_MustWatch)
+            {
+                Giveaway_MustWatchDays.Enabled = Giveaway_MustWatchHours.Enabled = Giveaway_MustWatchMinutes.Enabled = Giveaway_MustWatch.Checked;
+            }
+            else if (ctrl == Giveaway_MustWatchHours)
+            {
+                if (Giveaway_MustWatchHours.Value == -1)
+                {
+                    if(Giveaway_MustWatchDays.Value > 0)
+                    {
+                        Giveaway_MustWatchHours.Value = 23;
+                        Giveaway_MustWatchDays.Value--;
+                    }
+                }
+                else if (Giveaway_MustWatchHours.Value == 24)
+                {
+                    Giveaway_MustWatchHours.Value = 0;
+                    Giveaway_MustWatchDays.Value++;
+                }
+            }
+            else if (ctrl == Giveaway_MustWatchMinutes)
+            {
+                if(Giveaway_MustWatchMinutes.Value == -1)
+                {
+                    if(Giveaway_MustWatchHours.Value > 0 || Giveaway_MustWatchDays.Value > 0)
+                    {
+                        Giveaway_MustWatchMinutes.Value = 59;
+                        Giveaway_MustWatchHours.Value--;
+                    }
+                    else
+                    {
+                        Giveaway_MustWatchMinutes.Value = 0;
+                    }
+                }
+                else if (Giveaway_MustWatchMinutes.Value == 60)
+                {
+                    Giveaway_MustWatchMinutes.Value = 0;
+                    Giveaway_MustWatchHours.Value++;
+                }
+            }
             SaveSettings();
         }
 
         private void Currency_DisableCommandCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            SaveSettings();
             Irc.LastCurrencyDisabledAnnounce = 0;
+            ini.SetValue("Settings", "Currency_DisableCommand", Currency_DisableCommandCheckBox.Checked ? "1" : "0");
         }
 
         public void SaveSettings(int SettingsPresent=-2)
@@ -1388,20 +1433,6 @@ namespace ModBot
             ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "")) == "");
         }
 
-        private void Giveaway_TypeActive_CheckedChanged(object sender, EventArgs e)
-        {
-            Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
-            SaveSettings();
-        }
-
-        private void Giveaway_TypeTickets_CheckedChanged(object sender, EventArgs e)
-        {
-            if (Giveaway_TypeTickets.Checked) Giveaway_MinCurrency.Checked = false;
-            Giveaway_MinCurrency.Enabled = !Giveaway_TypeTickets.Checked;
-            Giveaway_TicketCost.Enabled = Giveaway_MaxTickets.Enabled = Giveaway_TypeTickets.Checked;
-            SaveSettings();
-        }
-
         private void GenerateToken_Request(object sender, EventArgs e)
         {
             foreach (Control ctrl in SettingsWindow.Controls)
@@ -1645,12 +1676,6 @@ namespace ModBot
                 }
                 e.Handled = true;
             }
-        }
-
-        private void Giveaway_MustWatch_CheckedChanged(object sender, EventArgs e)
-        {
-            Giveaway_MustWatchDays.Enabled = Giveaway_MustWatchHours.Enabled = Giveaway_MustWatchMinutes.Enabled = Giveaway_MustWatch.Checked;
-            SaveSettings();
         }
     }
 }
