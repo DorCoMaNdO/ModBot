@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollow = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -858,6 +858,7 @@
             this.CurrencyCommandBox.Size = new System.Drawing.Size(398, 20);
             this.CurrencyCommandBox.TabIndex = 86;
             this.CurrencyCommandBox.Text = "ModCoins";
+            this.CurrencyCommandBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
             // 
             // SettingsErrorLabel
             // 
@@ -1294,8 +1295,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle3;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -2117,7 +2118,6 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
@@ -2127,11 +2127,13 @@
             this.Controls.Add(this.AuthenticationBrowser);
             this.Controls.Add(this.SpamFilterWindow);
             this.Controls.Add(this.panel2);
+            this.Controls.Add(this.AboutWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
@@ -2141,7 +2143,6 @@
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
-            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);

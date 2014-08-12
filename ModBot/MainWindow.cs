@@ -1385,17 +1385,7 @@ namespace ModBot
 
         private void ConnectionDetailsChanged(object sender, EventArgs e)
         {
-            //ConnectButton.Enabled = !(BotNameBox.Text.Length < 5 || !BotPasswordBox.Text.StartsWith("oauth:") || ChannelBox.Text.Length < 5 || CurrencyNameBox.Text.Length < 5);
-            ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 5 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Password field is empty.\r\n" : "Password must be an oauth token.\r\n") : "") + (ChannelBox.Text.Length < 5 ? "Channel name too short or the field is empty.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty." : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty." : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces." : "")) == "");
-            /*ConnectButton.Enabled = (new Func<bool>(() =>
-            {
-                if (BotNameBox.Text.Length < 5 || !BotPasswordBox.Text.StartsWith("oauth:") || ChannelBox.Text.Length < 5 || CurrencyNameBox.Text.Length < 5)
-                {
-                    SettingsErrorLabel.Text = (BotNameBox.Text.Length < 5 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Password field is empty.\r\n" : "Password must be an oauth token.\r\n") : "") + (ChannelBox.Text.Length < 5 ? "Channel name too short or the field is empty.\r\n" : "");
-                    return false;
-                }
-                return true;
-            }) == new Func<bool>(() => { return true; }));*/
+            ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 5 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 5 ? "Channel name too short or the field is empty.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "")) == "");
         }
 
         private void Giveaway_TypeActive_CheckedChanged(object sender, EventArgs e)
@@ -1501,6 +1491,7 @@ namespace ModBot
                     AuthenticationBrowser.Size = new Size(814, 562);
                     AuthenticationBrowser.Navigated += new WebBrowserNavigatedEventHandler(this.AuthenticationBrowser_Navigated);
                     AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
+                    Controls.Add(AuthenticationBrowser);
                 }
             }
         }
