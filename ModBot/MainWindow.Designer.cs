@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollow = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -1295,8 +1295,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle8;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1658,6 +1658,7 @@
             // UpdateTitleGameButton
             // 
             this.UpdateTitleGameButton.BackColor = System.Drawing.Color.White;
+            this.UpdateTitleGameButton.Enabled = false;
             this.UpdateTitleGameButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.UpdateTitleGameButton.Location = new System.Drawing.Point(665, 41);
             this.UpdateTitleGameButton.Name = "UpdateTitleGameButton";
@@ -2118,31 +2119,31 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
+            this.Controls.Add(this.SettingsWindow);
+            this.Controls.Add(this.DonationsWindow);
+            this.Controls.Add(this.ChannelWindow);
+            this.Controls.Add(this.CurrencyWindow);
             this.Controls.Add(this.GiveawayWindow);
             this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.AuthenticationBrowser);
             this.Controls.Add(this.SpamFilterWindow);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.AboutWindow);
-            this.Controls.Add(this.SettingsWindow);
-            this.Controls.Add(this.DonationsWindow);
-            this.Controls.Add(this.ChannelWindow);
-            this.Controls.Add(this.CurrencyWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
-            this.Controls.SetChildIndex(this.ChannelWindow, 0);
-            this.Controls.SetChildIndex(this.DonationsWindow, 0);
-            this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
             this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
             this.Controls.SetChildIndex(this.GiveawayWindow, 0);
+            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
+            this.Controls.SetChildIndex(this.ChannelWindow, 0);
+            this.Controls.SetChildIndex(this.DonationsWindow, 0);
+            this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);

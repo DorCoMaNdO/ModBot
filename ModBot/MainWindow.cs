@@ -1385,7 +1385,7 @@ namespace ModBot
 
         private void ConnectionDetailsChanged(object sender, EventArgs e)
         {
-            ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 5 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 5 ? "Channel name too short or the field is empty.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "")) == "");
+            ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "")) == "");
         }
 
         private void Giveaway_TypeActive_CheckedChanged(object sender, EventArgs e)
