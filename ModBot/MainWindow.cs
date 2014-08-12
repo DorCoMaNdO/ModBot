@@ -1397,7 +1397,7 @@ namespace ModBot
         private void Giveaway_TypeTickets_CheckedChanged(object sender, EventArgs e)
         {
             if (Giveaway_TypeTickets.Checked) Giveaway_MinCurrency.Checked = false;
-            Giveaway_MinCurrency.Enabled = Giveaway_MinCurrencyBox.Enabled = !Giveaway_TypeTickets.Checked;
+            Giveaway_MinCurrency.Enabled = !Giveaway_TypeTickets.Checked;
             Giveaway_TicketCost.Enabled = Giveaway_MaxTickets.Enabled = Giveaway_TypeTickets.Checked;
             SaveSettings();
         }
@@ -1649,7 +1649,7 @@ namespace ModBot
 
         private void Giveaway_MustWatch_CheckedChanged(object sender, EventArgs e)
         {
-            Giveaway_MustWatchDays.Enabled = Giveaway_MustWatchHours.Enabled = Giveaway_MustWatchMinutes.Enabled = Giveaway_TypeActive.Checked;
+            Giveaway_MustWatchDays.Enabled = Giveaway_MustWatchHours.Enabled = Giveaway_MustWatchMinutes.Enabled = Giveaway_MustWatch.Checked;
             SaveSettings();
         }
     }
