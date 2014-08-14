@@ -27,11 +27,14 @@ namespace ModBot
         private List<Thread> Threads = new List<Thread>();
         private string AuthenticationScopes;
         private bool TitleGameModified;
+        private string[] args;
 
         public MainWindow(string[] args)
         {
             InitializeComponent();
             Text = "ModBot v" + (VersionLabel.Text = "Version: " + Assembly.GetExecutingAssembly().GetName().Version.ToString()).Substring(9);
+
+            this.args = args;
 
             Thread thread = new Thread(() =>
             {
@@ -348,8 +351,6 @@ namespace ModBot
 
             bIgnoreUpdates = false;
 
-            if (args.Contains("-connect") && ConnectButton.Enabled) ConnectButton.PerformClick();
-
             //string[] lines = File.ReadAllLines("modbot.txt");
             //Dictionary<string, string> dict = lines.Select(l => l.Split('=')).ToDictionary(a => a[0], a => a[1]);
             //iniUtil ini = new iniUtil(@"C:\program files (x86)\myapp\myapp.ini");
@@ -411,13 +412,13 @@ namespace ModBot
                     bool bUpdateNote = false, bNote = false;
                     while (!bUpdateNote)
                     {
+                        Thread.Sleep(60000);
                         bNote = false;
                         if (IsActivated)
                         {
                             bUpdateNote = bNote = true;
                         }
                         Program.Updates.CheckUpdate(true, bNote);
-                        Thread.Sleep(60000);
                     }
                 }
                 catch(Exception)
@@ -427,6 +428,8 @@ namespace ModBot
             Threads.Add(thread);
             thread.Name = "Update checking";
             thread.Start();
+
+            if (args.Contains("-connect") && ConnectButton.Enabled) ConnectButton.PerformClick();
         }
 
         private void CenterSpacer(Label label, GroupBox spacer, bool hideleft = false, bool hideright = false)

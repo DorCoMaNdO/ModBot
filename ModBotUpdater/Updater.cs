@@ -13,23 +13,14 @@ namespace ModBotUpdater
 {
     public partial class Updater : CustomForm
     {
-        Changelog changelog = new Changelog();
-        bool ForceUpdate, CloseWhenDone, StartModBot, ModBotConnect;
+        private Changelog changelog = new Changelog();
+        private List<string> args;
         public Updater(List<string> args)
         {
             InitializeComponent();
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
 
-            if (args.Contains("-force") && UpdateButton.Enabled)
-            {
-                ForceUpdate = true;
-                if(args.Contains("-close"))
-                {
-                    CloseWhenDone = true;
-                    StartModBot = args.Contains("-modbot");
-                    ModBotConnect = args.Contains("-modbotconnect");
-                }
-            }
+            this.args = args;
 
             CheckUpdates();
         }
@@ -208,8 +199,18 @@ namespace ModBotUpdater
                     }
                 }
 
-                if (StartModBot) Process.Start("ModBot.exe", ModBotConnect ? "-connect" : "");
-                if (CloseWhenDone) Close();
+                if (args.Contains("-modbot"))
+                {
+                    args.Remove("-modbot");
+                    string arg = "";
+                    if (args.Contains("-modbotconnect"))
+                    {
+                        args.Remove("-modbotconnect");
+                        arg = "-connect";
+                    }
+                    Process.Start("ModBot.exe", arg);
+                    if (args.Contains("-close")) Close();
+                }
 
                 UpdateChangelog();
             }
@@ -335,8 +336,9 @@ namespace ModBotUpdater
                     }
                 });
 
-                if (ForceUpdate)
+                if (args.Contains("-force"))
                 {
+                    args.Remove("-force");
                     startDownload();
                     return;
                 }
