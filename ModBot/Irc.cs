@@ -350,6 +350,8 @@ namespace ModBot
             Database.setUserLevel(admin, 4);
 
             Connect();
+
+            //YouTube.PlaySong();
         }
 
         private static void RegisterCommands()
@@ -364,16 +366,28 @@ namespace ModBot
                 Commands.Add("!giveaway", Command_Giveaway);
                 Commands.Add("!ticket", Command_Tickets);
                 Commands.Add("!tickets", Command_Tickets);
+
                 Commands.Add("!" + currency, Command_Currency);
+
                 Commands.Add("!gamble", Command_Gamble);
                 Commands.Add("!bet", Command_Bet);
+
                 Commands.Add("!auction", Command_Auction);
                 Commands.Add("!bid", Command_Bid);
+
                 Commands.Add("!btag", Command_BTag);
                 Commands.Add("!battletag", Command_BTag);
+
                 Commands.Add("!modbot", Command_ModBot);
+
                 Commands.Add("!warn", Command_Warn);
                 Commands.Add("!warnings", Command_Warnings);
+
+                /*Commands.Add("!songrequest", Command_SongRequest);
+                Commands.Add("!testsong", Command_TestSong);
+                Commands.Add("!skipsong", Command_SkipSong);
+                Commands.Add("!stopsong", Command_StopSong);*/
+
                 Commands.Add("!botinfo", Command_BotInfo);
                 Commands.Add("!bot", Command_BotInfo);
 
@@ -872,6 +886,7 @@ namespace ModBot
             //Listen();
             thread = new Thread(() =>
             {
+                Thread.Sleep(10);
                 Console.WriteLine("Attempting to listen to input...");
                 int attempt = 0;
                 while (attempt < 5)
@@ -2259,6 +2274,43 @@ namespace ModBot
             }
         }
 
+        private static void Command_SongRequest(string user, string cmd, string[] args)
+        {
+            if (args.Length > 0)
+            {
+                YouTube.Song song = YouTube.GetSong(args[0]);
+                song.requester = user;
+                int response = YouTube.AddSong(song);
+                if (response == 1)
+                {
+                    sendMessage(user + ", the song \"" + song.title + "\" (Duration: " + song.duration + ") has been added to the queue.");
+                }
+                else if (response == 0)
+                {
+                    sendMessage(user + ", the song you requested is too long.");
+                }
+                else if (response == -1)
+                {
+                    sendMessage(user + ", the song you requested is invalid.");
+                }
+            }
+        }
+
+        private static void Command_TestSong(string user, string cmd, string[] args)
+        {
+            YouTube.PlaySong();
+        }
+
+        private static void Command_SkipSong(string user, string cmd, string[] args)
+        {
+            YouTube.VoteSkip(user);
+        }
+
+        private static void Command_StopSong(string user, string cmd, string[] args)
+        {
+            YouTube.StopSong();
+        }
+
         private static void Command_BotInfo(string user, string cmd, string[] args)
         {
             if (Api.GetUnixTimeNow() - LastUsedBotInfo >= 300)
@@ -2267,20 +2319,6 @@ namespace ModBot
                 sendMessage("This channel is using CoMaNdO's modified version of ModBot (v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + "), downloadable from http://modbot.wordpress.com/ :)");
             }
         }
-
-        /*private static void handleMessage(string message)
-        {
-            if (Commands.CheckCommand(user, message, true)) return;
-
-            //string[] msg = message.Split(' ');
-
-            //if (msg[0].Equals("!restart") && db.getUserLevel(user) == 3)
-            //{
-            //    irc.Close();
-            //    //Flush();
-            //    Connect();
-            //}
-        }*/
 
         private static void addUserToList(string user)
         {

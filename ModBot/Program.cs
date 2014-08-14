@@ -32,15 +32,15 @@ namespace ModBot
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             EmbeddedAssembly.Load("ModBot.Resources.System.Data.SQLite.dll", "System.Data.SQLite.dll");
             EmbeddedAssembly.Load("ModBot.Resources.Newtonsoft.Json.dll", "Newtonsoft.Json.dll");
             EmbeddedAssembly.Load("ModBot.Resources.MySql.Data.dll", "MySql.Data.dll");
 
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, e) =>
             {
-                return EmbeddedAssembly.Get(args.Name);
+                return EmbeddedAssembly.Get(e.Name);
             };
 
             /*string originalTitle = Console.Title;
@@ -73,7 +73,7 @@ namespace ModBot
             Updates.ExtractUpdater();
             Updates.CheckUpdate();
             Database.Initialize();
-            Application.Run(MainForm = new MainWindow());
+            Application.Run(MainForm = new MainWindow(args));
         }
 
         public static void FocusConsole()
@@ -93,7 +93,7 @@ namespace ModBot
 
         public static class Updates
         {
-            public static bool CheckUpdate(bool bConsole=true, bool bMessageBox=true)
+            public static bool CheckUpdate(bool bConsole = true, bool bMessageBox = true)
             {
                 if (File.Exists("ModBotUpdater.exe"))
                 {
@@ -124,7 +124,7 @@ namespace ModBot
                                             {
                                                 ExtractUpdater();
                                             }
-                                            Process.Start("ModBotUpdater.exe", "-force");
+                                            Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed ? " -modbotconnect" : ""));
                                             Environment.Exit(0);
                                         }
                                     }

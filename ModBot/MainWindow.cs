@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Threading;
 using System.Reflection;
 using System.Xml.Linq;
+using System.Diagnostics;
 
 namespace ModBot
 {
@@ -27,7 +28,7 @@ namespace ModBot
         private string AuthenticationScopes;
         private bool TitleGameModified;
 
-        public MainWindow()
+        public MainWindow(string[] args)
         {
             InitializeComponent();
             Text = "ModBot v" + (VersionLabel.Text = "Version: " + Assembly.GetExecutingAssembly().GetName().Version.ToString()).Substring(9);
@@ -85,7 +86,7 @@ namespace ModBot
                                         }
                                     }
                                     //Channels.Add(new Tuple<string, string, string, int, string>(JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/users/" + json["Channel"].ToString()))["display_name"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToString()));
-                                    Channels.Add(new Tuple<string, string, string, int, string>(json["Channel"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToString()));
+                                    Channels.Add(new Tuple<string, string, string, int, string>(json["Channel"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToLocalTime().ToString()));
                                 }
                             }
                             BeginInvoke((MethodInvoker)delegate
@@ -128,6 +129,15 @@ namespace ModBot
             thread.Name = "Status reporting";
             thread.Start();
             Threads.Add(thread);
+
+            /*new Thread(() =>
+            {
+                while(true)
+                {
+                    Console.WriteLine(YouTubePlayer.IsPlaying() + " " + YouTubePlayer.Playing);
+                    Thread.Sleep(1000);
+                }
+            }).Start();*/
 
             /*thread = new Thread(() =>
             {
@@ -337,6 +347,8 @@ namespace ModBot
             ini.SetValue("Settings", "Spam_CWhiteList", Spam_CWLBox.Text = ini.GetValue("Settings", "Spam_CWhiteList", "abcdefghijklmnopqrstuvwxyz0123456789"));
 
             bIgnoreUpdates = false;
+
+            if (args.Contains("-connect") && ConnectButton.Enabled) ConnectButton.PerformClick();
 
             //string[] lines = File.ReadAllLines("modbot.txt");
             //Dictionary<string, string> dict = lines.Select(l => l.Split('=')).ToDictionary(a => a[0], a => a[1]);
@@ -1343,18 +1355,18 @@ namespace ModBot
 
         private void WebsiteLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            System.Diagnostics.Process.Start("https://sourceforge.net/projects/twitchmodbot/");
-            System.Diagnostics.Process.Start("http://modbot.wordpress.com/");
+            Process.Start("https://sourceforge.net/projects/twitchmodbot/");
+            Process.Start("http://modbot.wordpress.com/");
         }
 
         private void SupportLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            System.Diagnostics.Process.Start("http://modbot.wordpress.com/about/");
+            Process.Start("http://modbot.wordpress.com/about/");
         }
 
         private void EmailLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            System.Diagnostics.Process.Start("mailto:DorCoMaNdO@gmail.com");
+            Process.Start("mailto:DorCoMaNdO@gmail.com");
         }
 
         private void Donations_List_CellValueChanged(object sender, DataGridViewCellEventArgs e)
@@ -1545,7 +1557,7 @@ namespace ModBot
 
         private void DonateImage_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4GJUF2L9KUKP8");
+            Process.Start("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4GJUF2L9KUKP8");
         }
 
         private void Spam_CWL_CheckedChanged(object sender, EventArgs e)
@@ -1562,7 +1574,7 @@ namespace ModBot
         {
             Channel_SteamID64.Enabled = Channel_UseSteam.Checked;
             long dummy;
-            if (!bIgnoreUpdates && Channel_UseSteam.Checked && (Channel_SteamID64.Text.Length < 10 || !long.TryParse(Channel_SteamID64.Text, out dummy))) System.Diagnostics.Process.Start("http://steamidconverter.com/");
+            if (!bIgnoreUpdates && Channel_UseSteam.Checked && (Channel_SteamID64.Text.Length < 10 || !long.TryParse(Channel_SteamID64.Text, out dummy))) Process.Start("http://steamidconverter.com/");
             ini.SetValue("Settings", "Channel_UseSteam", Channel_UseSteam.Checked ? "1" : "0");
         }
 

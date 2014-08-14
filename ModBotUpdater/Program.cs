@@ -17,7 +17,7 @@ namespace ModBotUpdater
             System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Updater(args));
+            Application.Run(new Updater(args.ToList()));
         }
     }
 }

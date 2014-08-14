@@ -181,6 +181,7 @@
             this.Spam_CWL = new System.Windows.Forms.CheckBox();
             this.Spam_CWLLabel = new System.Windows.Forms.Label();
             this.Spam_CWLSpacer = new System.Windows.Forms.GroupBox();
+            this.SongRequestPlayer = new System.Windows.Forms.WebBrowser();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrencyBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_ActiveUserTime)).BeginInit();
             this.Giveaway_SettingsPresents.SuspendLayout();
@@ -2117,6 +2118,18 @@
             this.Spam_CWLSpacer.TabIndex = 63;
             this.Spam_CWLSpacer.TabStop = false;
             // 
+            // SongRequestPlayer
+            // 
+            this.SongRequestPlayer.Location = new System.Drawing.Point(108, 30);
+            this.SongRequestPlayer.MinimumSize = new System.Drawing.Size(20, 20);
+            this.SongRequestPlayer.Name = "SongRequestPlayer";
+            this.SongRequestPlayer.ScriptErrorsSuppressed = true;
+            this.SongRequestPlayer.ScrollBarsEnabled = false;
+            this.SongRequestPlayer.Size = new System.Drawing.Size(814, 562);
+            this.SongRequestPlayer.TabIndex = 69;
+            this.SongRequestPlayer.Visible = false;
+            this.SongRequestPlayer.WebBrowserShortcutsEnabled = false;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -2129,31 +2142,33 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.GiveawayWindow);
-            this.Controls.Add(this.AuthenticationLabel);
-            this.Controls.Add(this.AuthenticationBrowser);
-            this.Controls.Add(this.SpamFilterWindow);
-            this.Controls.Add(this.panel2);
             this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
             this.Controls.Add(this.CurrencyWindow);
+            this.Controls.Add(this.GiveawayWindow);
+            this.Controls.Add(this.AuthenticationLabel);
+            this.Controls.Add(this.AuthenticationBrowser);
+            this.Controls.Add(this.SpamFilterWindow);
+            this.Controls.Add(this.SongRequestPlayer);
+            this.Controls.Add(this.panel2);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.Controls.SetChildIndex(this.panel2, 0);
+            this.Controls.SetChildIndex(this.SongRequestPlayer, 0);
+            this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
+            this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
+            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
+            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.CurrencyWindow, 0);
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.AboutWindow, 0);
-            this.Controls.SetChildIndex(this.panel2, 0);
-            this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
-            this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
-            this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
-            this.Controls.SetChildIndex(this.GiveawayWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -2350,5 +2365,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Viewers;
         private System.Windows.Forms.DataGridViewTextBoxColumn Updated;
         private System.Windows.Forms.Label About_UsersLabel;
+        public System.Windows.Forms.WebBrowser SongRequestPlayer;
     }
 }

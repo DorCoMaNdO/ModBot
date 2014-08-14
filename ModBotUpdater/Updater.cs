@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -13,19 +14,24 @@ namespace ModBotUpdater
     public partial class Updater : CustomForm
     {
         Changelog changelog = new Changelog();
-        public Updater(string[] args)
+        bool ForceUpdate, CloseWhenDone, StartModBot, ModBotConnect;
+        public Updater(List<string> args)
         {
             InitializeComponent();
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
-            CheckUpdates();
-            foreach(string arg in args)
+
+            if (args.Contains("-force") && UpdateButton.Enabled)
             {
-                if (arg == "-force" && UpdateButton.Enabled)
+                ForceUpdate = true;
+                if(args.Contains("-close"))
                 {
-                    startDownload();
-                    break;
+                    CloseWhenDone = true;
+                    StartModBot = args.Contains("-modbot");
+                    ModBotConnect = args.Contains("-modbotconnect");
                 }
             }
+
+            CheckUpdates();
         }
 
         private bool IsFileLocked(string FileLocation)
@@ -170,13 +176,13 @@ namespace ModBotUpdater
                 }
 
                 StateLabel.Text = "Moving updated version...";
-                using (Stream inStream = File.Open(@"Updater\ModBot.exe", FileMode.Open))
+                using (Stream inStream = File.Open(@"Updater\ModBot.exe", FileMode.Open)) // ToDo: report progress without lagging the UI
                 {
                     using (Stream outStream = File.Create("ModBot.exe"))
                     {
                         while (inStream.Position < inStream.Length)
                         {
-                            DownloadProgressBar.Value = int.Parse(Math.Truncate(double.Parse(inStream.Position.ToString()) / double.Parse(inStream.Length.ToString()) * 100).ToString()); ;
+                            DownloadProgressBar.Value = int.Parse(Math.Truncate(double.Parse(inStream.Position.ToString()) / double.Parse(inStream.Length.ToString()) * 100).ToString());
                             outStream.WriteByte((byte)inStream.ReadByte());
                         }
                     }
@@ -201,6 +207,10 @@ namespace ModBotUpdater
                         StateLabel.Text = "Done updating and up-to-date!";
                     }
                 }
+
+                if (StartModBot) Process.Start("ModBot.exe", ModBotConnect ? "-connect" : "");
+                if (CloseWhenDone) Close();
+
                 UpdateChangelog();
             }
         }
@@ -324,6 +334,12 @@ namespace ModBotUpdater
                         StateLabel.Text = "Error while checking for updates!";
                     }
                 });
+
+                if (ForceUpdate)
+                {
+                    startDownload();
+                    return;
+                }
 
                 UpdateChangelog();
             });
