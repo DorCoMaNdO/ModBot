@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Drawing;
-using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace ModBot
@@ -66,7 +63,7 @@ namespace ModBot
                 string msg = "";
                 if (MainForm.Giveaway_TypeActive.Checked)
                 {
-                    msg = " who sent a message in the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes";
+                    msg = " who sent a message or joined in the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes";
                 }
                 if (MainForm.Giveaway_MustSubscribe.Checked)
                 {
@@ -149,6 +146,10 @@ namespace ModBot
             });
             if (announce)
             {
+                if (!MainForm.Giveaway_TypeActive.Checked)
+                {
+                    Irc.giveawayQueue.Change(0, Timeout.Infinite);
+                }
                 Irc.sendMessage("Entries to the giveaway are now closed.");
             }
         }
@@ -396,7 +397,10 @@ namespace ModBot
                     }
                     catch
                     {
-                        Console.WriteLine("Error while rolling, retrying");
+                        MainForm.BeginInvoke((MethodInvoker)delegate
+                        {
+                            Console.WriteLine(MainForm.Giveaway_WinnerLabel.Text = "Error while rolling, retrying...");
+                        });
                         continue;
                     }
 

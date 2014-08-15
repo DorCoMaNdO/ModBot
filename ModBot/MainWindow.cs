@@ -1,17 +1,15 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
-using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Windows.Forms;
-using System.Globalization;
-using System.Threading;
 using System.Reflection;
-using System.Xml.Linq;
-using System.Diagnostics;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace ModBot
 {
@@ -27,14 +25,11 @@ namespace ModBot
         private List<Thread> Threads = new List<Thread>();
         private string AuthenticationScopes;
         private bool TitleGameModified;
-        private string[] args;
 
-        public MainWindow(string[] args)
+        public MainWindow()
         {
             InitializeComponent();
             Text = "ModBot v" + (VersionLabel.Text = "Version: " + Assembly.GetExecutingAssembly().GetName().Version.ToString()).Substring(9);
-
-            this.args = args;
 
             Thread thread = new Thread(() =>
             {
@@ -329,7 +324,7 @@ namespace ModBot
             ini.SetValue("Settings", "Donations_Recent_Limit", (RecentDonorsLimit.Value = Convert.ToInt32(ini.GetValue("Settings", "Donations_Recent_Limit", "5"))).ToString());
             ini.SetValue("Settings", "Donations_UpdateLast", (UpdateLastDonorCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateLast", "0") == "1")) ? "1" : "0");
 
-            ini.SetValue("Settings", "Currency_DisableCommand", (Currency_DisableCommandCheckBox.Checked = (ini.GetValue("Settings", "Currency_DisableCommand", "0") == "1")) ? "1" : "0");
+            ini.SetValue("Settings", "Currency_DisableCommand", (Currency_DisableCommand.Checked = (ini.GetValue("Settings", "Currency_DisableCommand", "0") == "1")) ? "1" : "0");
             string sCurrencyHandout = ini.GetValue("Settings", "Currency_Handout", "0");
             ini.SetValue("Settings", "Currency_Handout", sCurrencyHandout);
             if (sCurrencyHandout.Equals("0"))
@@ -349,7 +344,11 @@ namespace ModBot
             ini.SetValue("Settings", "Spam_CWL", (Spam_CWL.Checked = (ini.GetValue("Settings", "Spam_CWL", "0") == "1")) ? "1" : "0");
             ini.SetValue("Settings", "Spam_CWhiteList", Spam_CWLBox.Text = ini.GetValue("Settings", "Spam_CWhiteList", "abcdefghijklmnopqrstuvwxyz0123456789"));
 
+            ini.SetValue("Settings", "Misc_ShowConsole", (Misc_ShowConsole.Checked = (ini.GetValue("Settings", "Misc_ShowConsole", "1") == "1")) ? "1" : "0");
+
             bIgnoreUpdates = false;
+
+            SongRequestPlayer.Navigated += YouTube.SongRequestPlayer_Navigated;
 
             //string[] lines = File.ReadAllLines("modbot.txt");
             //Dictionary<string, string> dict = lines.Select(l => l.Split('=')).ToDictionary(a => a[0], a => a[1]);
@@ -429,7 +428,7 @@ namespace ModBot
             thread.Name = "Update checking";
             thread.Start();
 
-            if (args.Contains("-connect") && ConnectButton.Enabled) ConnectButton.PerformClick();
+            if (Program.args.Contains("-connect") && ConnectButton.Enabled) ConnectButton.PerformClick();
         }
 
         private void CenterSpacer(Label label, GroupBox spacer, bool hideleft = false, bool hideright = false)
@@ -1054,12 +1053,6 @@ namespace ModBot
             SaveSettings();
         }
 
-        private void Currency_DisableCommandCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            Irc.LastCurrencyDisabledAnnounce = 0;
-            ini.SetValue("Settings", "Currency_DisableCommand", Currency_DisableCommandCheckBox.Checked ? "1" : "0");
-        }
-
         public void SaveSettings(int SettingsPresent=-2)
         {
             if (SettingsPresent == -2)
@@ -1402,23 +1395,6 @@ namespace ModBot
             }
         }
 
-        private void UpdateTopDonorsCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            ini.SetValue("Settings", "Donations_UpdateTop", UpdateTopDonorsCheckBox.Checked ? "1" : "0");
-            TopDonorsLimit.Enabled = UpdateTopDonorsCheckBox.Checked;
-        }
-
-        private void UpdateRecentDonorsCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            ini.SetValue("Settings", "Donations_UpdateRecent", UpdateRecentDonorsCheckBox.Checked ? "1" : "0");
-            RecentDonorsLimit.Enabled = UpdateRecentDonorsCheckBox.Checked;
-        }
-
-        private void UpdateLastDonorCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            ini.SetValue("Settings", "Donations_UpdateLast", UpdateLastDonorCheckBox.Checked ? "1" : "0");
-        }
-
         private void RecentDonorsLimit_ValueChanged(object sender, EventArgs e)
         {
             ini.SetValue("Settings", "Donations_Recent_Limit", RecentDonorsLimit.Value.ToString());
@@ -1563,22 +1539,9 @@ namespace ModBot
             Process.Start("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4GJUF2L9KUKP8");
         }
 
-        private void Spam_CWL_CheckedChanged(object sender, EventArgs e)
-        {
-            ini.SetValue("Settings", "Spam_CWL", Spam_CWL.Checked ? "1" : "0");
-        }
-
         private void Spam_CWLBox_TextChanged(object sender, EventArgs e)
         {
             ini.SetValue("Settings", "Spam_CWhiteList", Spam_CWLBox.Text);
-        }
-
-        private void Channel_UseSteam_CheckedChanged(object sender, EventArgs e)
-        {
-            Channel_SteamID64.Enabled = Channel_UseSteam.Checked;
-            long dummy;
-            if (!bIgnoreUpdates && Channel_UseSteam.Checked && (Channel_SteamID64.Text.Length < 10 || !long.TryParse(Channel_SteamID64.Text, out dummy))) Process.Start("http://steamidconverter.com/");
-            ini.SetValue("Settings", "Channel_UseSteam", Channel_UseSteam.Checked ? "1" : "0");
         }
 
         private void Channel_SteamID64_TextChanged(object sender, EventArgs e)
@@ -1691,6 +1654,41 @@ namespace ModBot
                 }
                 e.Handled = true;
             }
+        }
+
+        private void Settings_CheckedChanged(object sender, EventArgs e)
+        {
+            CheckBox cb = (CheckBox)sender;
+            if (cb == Currency_DisableCommand)
+            {
+                Irc.LastCurrencyDisabledAnnounce = 0;
+            }
+            else if (cb == UpdateTopDonorsCheckBox)
+            {
+                TopDonorsLimit.Enabled = UpdateTopDonorsCheckBox.Checked;
+            }
+            else if (cb == UpdateRecentDonorsCheckBox)
+            {
+                RecentDonorsLimit.Enabled = UpdateRecentDonorsCheckBox.Checked;
+            }
+            else if (cb == Channel_UseSteam)
+            {
+                Channel_SteamID64.Enabled = Channel_UseSteam.Checked;
+                long dummy;
+                if (!bIgnoreUpdates && Channel_UseSteam.Checked && (Channel_SteamID64.Text.Length < 10 || !long.TryParse(Channel_SteamID64.Text, out dummy))) Process.Start("http://steamidconverter.com/");
+            }
+            else if (cb == Misc_ShowConsole)
+            {
+                if (Misc_ShowConsole.Checked)
+                {
+                    Program.ShowConsole();
+                }
+                else
+                {
+                    Program.HideConsole();
+                }
+            }
+            ini.SetValue("Settings", cb.Name, cb.Checked ? "1" : "0");
         }
     }
 }

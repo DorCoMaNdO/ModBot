@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace ModBot
@@ -14,6 +14,7 @@ namespace ModBot
     {
         public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini", "\r\n[Default]");
         public static MainWindow MainForm;
+        public static List<string> args = new List<string>();
         //private static FileStream stream = null;
 
         [DllImport("user32.dll")]
@@ -23,10 +24,62 @@ namespace ModBot
         [DllImport("kernel32.dll", ExactSpelling = true)]
         static extern IntPtr GetConsoleWindow();
 
-        /*[DllImport("user32.dll", EntryPoint = "FindWindow", SetLastError = true)]
-        public static extern IntPtr FindWindowByCaption(IntPtr zeroOnly, string lpWindowName);
+        [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-        public static IntPtr handle;*/
+        [DllImport("user32.dll")]
+        static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+        [DllImport("user32.dll")]
+        static extern bool DeleteMenu(IntPtr hMenu, uint uPosition, uint uFlags);
+
+        /*[DllImport("kernel32.dll")]
+        private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
+
+        private delegate bool EventHandler(CtrlType sig);
+        static EventHandler _handler;
+
+        [DllImport("kernel32.dll")]
+        static extern bool AllocConsole();
+
+        [DllImport("kernel32.dll")]
+        static extern bool FreeConsole();
+
+        [DllImport("kernel32.dll")]
+        static extern void ExitThread(int dwExitCode);
+
+        [DllImport("kernel32.dll")]
+        static extern bool AttachConsole(uint dwProcessId);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+        enum CtrlType
+        {
+            CTRL_C_EVENT = 0,
+            CTRL_BREAK_EVENT = 1,
+            CTRL_CLOSE_EVENT = 2,
+            CTRL_LOGOFF_EVENT = 5,
+            CTRL_SHUTDOWN_EVENT = 6
+        }
+
+        private static bool Handler(CtrlType sig)
+        {
+            Console.WriteLine(sig);
+            //Thread.Sleep(Timeout.Infinite);
+            ExitThread(0);
+            if (MessageBox.Show(MainForm.DisconnectButton.Enabled ? "ModBot is currently active! Are you sure you want to close it?" : "Are you sure you want to close ModBot?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.No)
+            {
+                FreeConsole();
+                AllocConsole();
+                ExitThread(0);
+                uint pid;
+                GetWindowThreadProcessId(GetConsoleWindow(), out pid);
+                AttachConsole(pid);
+                Console.WriteLine("test");
+            }
+            return false;
+        }*/
 
         /// <summary>
         /// The main entry point for the application.
@@ -34,6 +87,13 @@ namespace ModBot
         [STAThread]
         static void Main(string[] args)
         {
+            HideConsole();
+
+            //_handler += new EventHandler(Handler);
+            //SetConsoleCtrlHandler(_handler, true);
+
+            DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), 0xF060, 0x00000000);
+
             EmbeddedAssembly.Load("ModBot.Resources.System.Data.SQLite.dll", "System.Data.SQLite.dll");
             EmbeddedAssembly.Load("ModBot.Resources.Newtonsoft.Json.dll", "Newtonsoft.Json.dll");
             EmbeddedAssembly.Load("ModBot.Resources.MySql.Data.dll", "MySql.Data.dll");
@@ -58,6 +118,8 @@ namespace ModBot
 
             ServicePointManager.DefaultConnectionLimit = int.MaxValue;
 
+            foreach (string arg in args) Program.args.Add(arg);
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
@@ -73,7 +135,17 @@ namespace ModBot
             Updates.ExtractUpdater();
             Updates.CheckUpdate();
             Database.Initialize();
-            Application.Run(MainForm = new MainWindow(args));
+            Application.Run(MainForm = new MainWindow());
+        }
+
+        public static void HideConsole()
+        {
+            ShowWindow(GetConsoleWindow(), 0);
+        }
+
+        public static void ShowConsole()
+        {
+            ShowWindow(GetConsoleWindow(), 1);
         }
 
         public static void FocusConsole()
@@ -112,10 +184,13 @@ namespace ModBot
                                 int iLatestMajor = Convert.ToInt32(sLatest[0]), iLatestMinor = Convert.ToInt32(sLatest[1]), iLatestBuild = Convert.ToInt32(sLatest[2]), iLatestRev = Convert.ToInt32(sLatest[3]);
                                 if (iLatestMajor > iCurrentMajor || iLatestMajor == iCurrentMajor && iLatestMinor > iCurrentMinor || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild > iCurrentBuild || iLatestMajor == iCurrentMajor && iLatestMinor == iCurrentMinor && iLatestBuild == iCurrentBuild && iLatestRev > iCurrentRev)
                                 {
+                                    bool Update = args.Contains("-autoupdate");
+
                                     if (bConsole)
                                     {
                                         Console.WriteLine("\r\n********************************************************************************\r\nAn update to ModBot is available, please use the updater to update!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\n\r\n********************************************************************************\r\n");
                                     }
+
                                     if (bMessageBox)
                                     {
                                         if (MessageBox.Show("An update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
@@ -124,10 +199,16 @@ namespace ModBot
                                             {
                                                 ExtractUpdater();
                                             }
-                                            Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed ? " -modbotconnect" : ""));
-                                            Environment.Exit(0);
+                                            Update = true;
                                         }
                                     }
+
+                                    if(Update)
+                                    {
+                                        Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed ? " -modbotconnect" : "") + (args.Contains("-autoupdate") ? " -modbotupdate" : ""));
+                                        Environment.Exit(0);
+                                    }
+
                                     return true;
                                 }
                             }

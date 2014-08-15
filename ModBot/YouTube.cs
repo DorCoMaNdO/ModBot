@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
 
 namespace ModBot
@@ -211,6 +210,29 @@ namespace ModBot
 
         private static void NextSong(object state)
         {
+            /*Program.MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                foreach (System.Windows.Forms.HtmlElement elem in Program.MainForm.SongRequestPlayer.Document.All)
+                {
+                    Console.WriteLine(elem.Id);
+                    if (elem.Id == "musicPlayer")
+                    {
+                        Console.WriteLine("JACKPOT");
+                        elem.InvokeMember("javascript:pauseVideo()");
+                        elem.InvokeMember("javascript:pauseVideo();");
+                        elem.InvokeMember("javascript:player.pauseVideo()");
+                        elem.InvokeMember("javascript:player.pauseVideo();");
+                        elem.InvokeMember("javascript:musicPlayer.pauseVideo()");
+                        elem.InvokeMember("javascript:musicPlayer.pauseVideo();");
+                        Program.MainForm.SongRequestPlayer.Navigate("javascript:pauseVideo()");
+                        Program.MainForm.SongRequestPlayer.Navigate("javascript:pauseVideo();");
+                        Program.MainForm.SongRequestPlayer.Navigate("javascript:player.pauseVideo()");
+                        Program.MainForm.SongRequestPlayer.Navigate("javascript:player.pauseVideo();");
+                        Program.MainForm.SongRequestPlayer.Navigate("javascript:musicPlayer.pauseVideo()");
+                        Program.MainForm.SongRequestPlayer.Navigate("javascript:musicPlayer.pauseVideo();");
+                    }
+                }
+            });*/
             ReorderQueue();
             PlaySong();
         }
@@ -219,6 +241,34 @@ namespace ModBot
         {
             EstimatedEnding = (TimeStarted = Api.GetUnixTimeNow()) + (int)CurrentSong.duration.TotalSeconds + 1;
             NextSongTimer.Change((int)CurrentSong.duration.TotalSeconds * 1000 + 1000, Timeout.Infinite);
+            /*NextSongTimer.Change(5000, Timeout.Infinite);
+            bool found = false;
+            foreach (System.Windows.Forms.HtmlElement elem in Program.MainForm.SongRequestPlayer.Document.All)
+            {
+                Console.WriteLine(elem.Id);
+                if (elem.Id == "musicPlayer")
+                {
+                    found = true;
+                    Console.WriteLine("JACKPOT");
+                    elem.InvokeMember("javascript:pauseVideo()");
+                    elem.InvokeMember("javascript:pauseVideo();");
+                    elem.InvokeMember("javascript:player.pauseVideo()");
+                    elem.InvokeMember("javascript:player.pauseVideo();");
+                    elem.InvokeMember("javascript:musicPlayer.pauseVideo()");
+                    elem.InvokeMember("javascript:musicPlayer.pauseVideo();");
+                    Program.MainForm.SongRequestPlayer.Navigate("javascript:pauseVideo()");
+                    Program.MainForm.SongRequestPlayer.Navigate("javascript:pauseVideo();");
+                    Program.MainForm.SongRequestPlayer.Navigate("javascript:player.pauseVideo()");
+                    Program.MainForm.SongRequestPlayer.Navigate("javascript:player.pauseVideo();");
+                    Program.MainForm.SongRequestPlayer.Navigate("javascript:musicPlayer.pauseVideo()");
+                    Program.MainForm.SongRequestPlayer.Navigate("javascript:musicPlayer.pauseVideo();");
+                }
+            }
+            if (!found)
+            {
+                Program.MainForm.SongRequestPlayer.Document.Write("<iframe id=\"musicPlayer\" type=\"text/html\" width=\"640\" height=\"360\" src=\"https://www.youtube.com/apiplayer?video_id=" + CurrentSong.id + "&version=3&autoplay=1&enablejsapi=1&feature=player_embedded&controls=0&modestbranding=1&rel=0&showinfo=0&autohide=1&color=white&playerapiid=musicPlayer&iv_load_policy=3\" frameborder=\"0\" allowfullscreen>");
+                Program.MainForm.SongRequestPlayer.Refresh();
+            }*/
             Irc.sendMessage("[Song Request]: Now playing - " + CurrentSong.title + (CurrentSong.requester != "" ? ", requested by " + CurrentSong.requester : ""));
         }
 

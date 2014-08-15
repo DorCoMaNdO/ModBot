@@ -1,16 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
+using System.Drawing;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Net;
 using System.Net.Sockets;
-using System.IO;
 using System.Threading;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Collections.Concurrent;
-using System.Drawing;
-using System.Data.SQLite;
 
 namespace ModBot
 {
@@ -55,12 +52,15 @@ namespace ModBot
         public static void Initialize()
         {
             Api.MainForm = MainForm = Program.MainForm;
+
             ActiveUsers.Clear();
             Warnings.Clear();
             usersToLookup.Clear();
             Moderators.Clear();
             DetailsConfirmed = false;
             IsModerator = false;
+
+            Program.FocusConsole();
 
             if (donation_clientid == "" || donation_token == "")
             {
@@ -77,14 +77,13 @@ namespace ModBot
             {
                 foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
                 {
-                    if (ctrl.GetType() != typeof(System.Windows.Forms.Label))
+                    if (ctrl.GetType() != typeof(System.Windows.Forms.Label) && ctrl != MainForm.Misc_ShowConsole)
                     {
                         ctrl.Enabled = false;
                     }
                 }
             });
 
-            Program.FocusConsole();
 
             Console.WriteLine("Validating bot's access token...");
 
@@ -545,6 +544,8 @@ namespace ModBot
                         irc.Close();
                     }
 
+                    IsStreaming = false;
+
                     MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                     {
                         MainForm.CurrencyWindowButton.Text = "Currency";
@@ -587,6 +588,7 @@ namespace ModBot
 
             DetailsConfirmed = false;
             IsModerator = false;
+            IsStreaming = false;
 
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
@@ -923,7 +925,7 @@ namespace ModBot
                             }
                             else
                             {
-                                Console.WriteLine("Failed to listen to input... Please try restarting the bot... If this issue keeps occouring, please email your Error_log.txt file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
+                                Console.WriteLine("Failed to listen to input... Please try reconnecting... If this issue keeps occouring, please email your Error_log.txt file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
                             }
                             Api.LogError("*************Error Message (via Listen()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                         }
@@ -932,7 +934,7 @@ namespace ModBot
                 }
                 Running = false;
                 //MainForm.Hide();
-                Console.WriteLine("The attempts were unsuccessful... In order get ModBot back to function please restart it...");
+                Console.WriteLine("The attempts were unsuccessful... Try reconnecting again later...");
                 System.Windows.Forms.MessageBox.Show("ModBot has encountered an error, more information available in the console...", "ModBot", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
             });
             Threads.Add(thread);
@@ -972,166 +974,169 @@ namespace ModBot
 
         private static void parseMessage(string message)
         {
-            //Console.WriteLine(message);
-            string[] msg = message.Split(' ');
-            string user;
-
-            if (msg[0].Equals("PING"))
+            new Thread(() =>
             {
-                sendRaw("PONG " + msg[1]);
-                //Console.WriteLine("PONG " + msg[1]);
-            }
-            else if (msg[1].Equals("PRIVMSG"))
-            {
-                user = getUser(message);
-                addUserToList(user);
                 //Console.WriteLine(message);
-                string temp = message.Substring(message.IndexOf(":", 1) + 1);
-                if (user == "Jtv")
+                string[] msg = message.Split(' ');
+                string user;
+
+                if (msg[0].Equals("PING"))
                 {
-                    if (temp.StartsWith("HISTORYEND"))
+                    sendRaw("PONG " + msg[1]);
+                    //Console.WriteLine("PONG " + msg[1]);
+                }
+                else if (msg[1].Equals("PRIVMSG"))
+                {
+                    user = getUser(message);
+                    addUserToList(user);
+                    //Console.WriteLine(message);
+                    string temp = message.Substring(message.IndexOf(":", 1) + 1);
+                    if (user == "Jtv")
                     {
-                        Console.WriteLine("Everything should be set and ready!\r\nModBot is good to go!\r\n");
-                        return;
-                    }
-                    else if (temp.StartsWith("You have banned") || temp.StartsWith("Your message was not sent"))
-                    {
-                        return;
-                    }
-                    else if (temp.StartsWith("The moderators of this room are: "))
-                    {
-                        lock (Moderators)
+                        if (temp.StartsWith("HISTORYEND"))
                         {
-                            Moderators.Clear();
-                            foreach (string mod in temp.Substring(33).Replace(" ", "").Split(','))
+                            Console.WriteLine("Everything should be set and ready!\r\nModBot is good to go!\r\n");
+                            return;
+                        }
+                        else if (temp.StartsWith("You have banned") || temp.StartsWith("Your message was not sent"))
+                        {
+                            return;
+                        }
+                        else if (temp.StartsWith("The moderators of this room are: "))
+                        {
+                            lock (Moderators)
                             {
-                                user = Api.capName(mod);
-                                if (mod != "" && !Moderators.Contains(user))
+                                Moderators.Clear();
+                                foreach (string mod in temp.Substring(33).Replace(" ", "").Split(','))
                                 {
-                                    Moderators.Add(user);
+                                    user = Api.capName(mod);
+                                    if (mod != "" && !Moderators.Contains(user))
+                                    {
+                                        Moderators.Add(user);
+                                    }
                                 }
                             }
-                        }
 
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                        {
-                            MainForm.SpamFilterWindowButton.Enabled = Moderators.Contains(Api.capName(nick));
-                        });
-                        return;
-                    }
-                }
-                string name = Api.GetDisplayName(user);
-                Console.WriteLine(name + ": " + temp);
-                //handleMessage(temp);
-                if (IsModerator && MainForm.Spam_CWL.Checked)
-                {
-                    foreach (char character in temp)
-                    {
-                        if (!"()*&^%$#@!'\"\\/.,?[]{}+_=-<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.ToLower().Contains(character.ToString().ToLower()))
-                        {
-                            warnUser(user, 1, 30, "Using a restricted character", 0, false, true, true, 6);
+                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                            {
+                                MainForm.SpamFilterWindowButton.Enabled = Moderators.Contains(Api.capName(nick));
+                            });
                             return;
                         }
                     }
-                }
-                Commands.CheckCommand(name, temp, true);
-                if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
-                {
-                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    string name = Api.GetDisplayName(user);
+                    Console.WriteLine(name + ": " + temp);
+                    //handleMessage(temp);
+                    if (IsModerator && MainForm.Spam_CWL.Checked)
                     {
-                        MainForm.Giveaway_WinnerChat.SelectionColor = Color.Blue;
-                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
-                        MainForm.Giveaway_WinnerChat.SelectedText = name;
-                        MainForm.Giveaway_WinnerChat.SelectionColor = Color.Black;
-                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Microsoft Sans Serif", 8);
-                        MainForm.Giveaway_WinnerChat.SelectedText = ": " + temp + "\r\n";
-                        MainForm.Giveaway_WinnerChat.Select(MainForm.Giveaway_WinnerChat.Text.Length, MainForm.Giveaway_WinnerChat.Text.Length);
-                        MainForm.Giveaway_WinnerChat.ScrollToCaret();
-                        MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);
-                    });
-                }
-            }
-            else if (msg[1].Equals("JOIN"))
-            {
-                user = getUser(message);
-                if (user == Api.capName(nick)) return;
-                addUserToList(user);
-                if (!Database.userExists(user))
-                {
-                    Database.newUser(user);
-                    //db.addCurrency(user, payout);
-                }
-                string name = Api.GetDisplayName(user);
-                Console.WriteLine(name + " joined");
-                if (greetingOn && greeting != "")
-                {
-                    sendMessage(greeting.Replace("@user", name));
-                }
-                if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
-                {
-                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        foreach (char character in temp)
+                        {
+                            if (!"()*&^%$#@!'\"\\/.,?[]{}+_=-<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.ToLower().Contains(character.ToString().ToLower()))
+                            {
+                                warnUser(user, 1, 30, "Using a restricted character", 0, false, true, true, 6);
+                                return;
+                            }
+                        }
+                    }
+                    Commands.CheckCommand(name, temp, true);
+                    if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                     {
-                        MainForm.Giveaway_WinnerChat.SelectionColor = Color.Green;
-                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
-                        MainForm.Giveaway_WinnerChat.SelectedText = name + " has joined the channel.\r\n";
-                    });
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            MainForm.Giveaway_WinnerChat.SelectionColor = Color.Blue;
+                            MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
+                            MainForm.Giveaway_WinnerChat.SelectedText = name;
+                            MainForm.Giveaway_WinnerChat.SelectionColor = Color.Black;
+                            MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Microsoft Sans Serif", 8);
+                            MainForm.Giveaway_WinnerChat.SelectedText = ": " + temp + "\r\n";
+                            MainForm.Giveaway_WinnerChat.Select(MainForm.Giveaway_WinnerChat.Text.Length, MainForm.Giveaway_WinnerChat.Text.Length);
+                            MainForm.Giveaway_WinnerChat.ScrollToCaret();
+                            MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);
+                        });
+                    }
                 }
-            }
-            else if (msg[1].Equals("PART"))
-            {
-                user = getUser(message);
-                removeUserFromList(user);
-                string name = Api.GetDisplayName(user);
-                Console.WriteLine(name + " left");
-                if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                else if (msg[1].Equals("JOIN"))
                 {
-                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    user = getUser(message);
+                    if (user == Api.capName(nick)) return;
+                    addUserToList(user);
+                    if (!Database.userExists(user))
                     {
-                        MainForm.Giveaway_WinnerTimerLabel.Text = "The winner left!";
-                        MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
+                        Database.newUser(user);
+                        //db.addCurrency(user, payout);
+                    }
+                    string name = Api.GetDisplayName(user);
+                    Console.WriteLine(name + " joined");
+                    if (greetingOn && greeting != "")
+                    {
+                        sendMessage(greeting.Replace("@user", name));
+                    }
+                    if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                    {
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            MainForm.Giveaway_WinnerChat.SelectionColor = Color.Green;
+                            MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
+                            MainForm.Giveaway_WinnerChat.SelectedText = name + " has joined the channel.\r\n";
+                        });
+                    }
+                }
+                else if (msg[1].Equals("PART"))
+                {
+                    user = getUser(message);
+                    removeUserFromList(user);
+                    string name = Api.GetDisplayName(user);
+                    Console.WriteLine(name + " left");
+                    if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                    {
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            MainForm.Giveaway_WinnerTimerLabel.Text = "The winner left!";
+                            MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
 
-                        MainForm.Giveaway_WinnerChat.SelectionColor = Color.Red;
-                        MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
-                        MainForm.Giveaway_WinnerChat.SelectedText = name + " has left the channel.\r\n";
-                    });
-                }
-            }
-            else if (msg[1].Equals("MODE"))
-            {
-                user = msg[4].ToLower();
-                if (msg[3] == "+o")
-                {
-                    /*if (!Moderators.Contains(user))
-                    {
-                        Moderators.Add(user);
-                    }*/
-                    if (user == nick.ToLower())
-                    {
-                        IsModerator = true;
+                            MainForm.Giveaway_WinnerChat.SelectionColor = Color.Red;
+                            MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
+                            MainForm.Giveaway_WinnerChat.SelectedText = name + " has left the channel.\r\n";
+                        });
                     }
                 }
-                else if (msg[3] == "-o")
+                else if (msg[1].Equals("MODE"))
                 {
-                    /*if (Moderators.Contains(user))
+                    user = msg[4].ToLower();
+                    if (msg[3] == "+o")
                     {
-                        Moderators.Remove(user);
-                    }*/
-                    if (user == nick.ToLower())
-                    {
-                        IsModerator = false;
+                        /*if (!Moderators.Contains(user))
+                        {
+                            Moderators.Add(user);
+                        }*/
+                        if (user == nick.ToLower())
+                        {
+                            IsModerator = true;
+                        }
                     }
+                    else if (msg[3] == "-o")
+                    {
+                        /*if (Moderators.Contains(user))
+                        {
+                            Moderators.Remove(user);
+                        }*/
+                        if (user == nick.ToLower())
+                        {
+                            IsModerator = false;
+                        }
+                    }
+                    buildUserList();
                 }
-                buildUserList();
-            }
-            else if (msg[1].Equals("352"))
-            {
-                //Console.WriteLine(message);
-                addUserToList(msg[4]);
-            }
-            /*else
-            {
-                //Console.WriteLine(message);
-            }*/
+                else if (msg[1].Equals("352"))
+                {
+                    //Console.WriteLine(message);
+                    addUserToList(msg[4]);
+                }
+                /*else
+                {
+                    //Console.WriteLine(message);
+                }*/
+            }).Start();
         }
 
         private static void Command_Giveaway(string user, string cmd, string[] args)
@@ -1254,7 +1259,6 @@ namespace ModBot
                             {
                                 if (Giveaway.Open)
                                 {
-                                    giveawayQueue.Change(0, Timeout.Infinite);
                                     Giveaway.closeGiveaway();
                                 }
                                 else
@@ -1358,7 +1362,7 @@ namespace ModBot
                             }
                             else if (Moderators.Contains(Api.capName(nick)))
                             {
-                                if (warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters.", 3, true, true, true, 6) == 1&& Warnings.ContainsKey(Api.capName(user)))
+                                if (warnUser(user, 1, 10, "Attempting to enter a giveaway without meeting the requirements.", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
                                 {
                                     string msg = "you don't answer the requirements!";
                                     if (MainForm.Giveaway_MustFollow.Checked && !Api.IsFollower(user))
@@ -1373,7 +1377,7 @@ namespace ModBot
                                     {
                                         msg = "you haven't watched the stream for long enough!";
                                     }
-                                    sendMessage(user + " " + msg + " (Warning: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
+                                    sendMessage(user + " " + msg + " (Warning: " + Warnings[Api.capName(user)] + "/3).");
                                 }
                             }
                         }
@@ -1393,7 +1397,7 @@ namespace ModBot
                             }
                             else if (Moderators.Contains(Api.capName(nick)))
                             {
-                                if (warnUser(user, 1, 10, "Attempting to buy tickets with insufficient funds and/or invalid parameters.", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
+                                if (warnUser(user, 1, 10, "Attempting to buy tickets without meeting the requirements or with insufficient funds or invalid parameters.", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
                                 {
                                     string msg = "you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid.";
                                     if(tickets < 1 || tickets > Giveaway.MaxTickets)
@@ -1437,7 +1441,7 @@ namespace ModBot
                 {
                     if (args[0].Equals("top5"))
                     {
-                        if (!MainForm.Currency_DisableCommandCheckBox.Checked && Api.GetUnixTimeNow() - LastUsedTop5 > 600 || Database.getUserLevel(user) >= 1)
+                        if (!MainForm.Currency_DisableCommand.Checked && Api.GetUnixTimeNow() - LastUsedTop5 > 600 || Database.getUserLevel(user) >= 1)
                         {
                             LastUsedTop5 = Api.GetUnixTimeNow();
                             int max = 5;
@@ -1470,22 +1474,22 @@ namespace ModBot
                                 {
                                     output += Api.GetDisplayName(TopPoints.ElementAt(i).Key) + " (" + Database.getTimeWatched(TopPoints.ElementAt(i).Key).ToString(@"d\d\ hh\h\ mm\m") + ") - " + TopPoints.ElementAt(i).Value + ", ";
                                 }
-                                sendMessage("The " + max + " users with the most points are: " + output.Substring(0, output.Length - 2) + ".");
+                                sendMessage("The " + max + " users with the most " + currencyName + " are: " + output.Substring(0, output.Length - 2) + ".");
                             }
                             else
                             {
-                                sendMessage("An error has occoured while looking for the 5 users with the most points! Try again later.");
+                                sendMessage("An error has occoured while looking for the 5 users with the most " + currencyName + "! Try again later.");
                             }
                         }
                     }
                     else if ((args[0].Equals("lock") || args[0].Equals("disable")) && Database.getUserLevel(user) >= 2)
                     {
-                        MainForm.Currency_DisableCommandCheckBox.Checked = true;
+                        MainForm.Currency_DisableCommand.Checked = true;
                         sendMessage("The !" + currency + " command is now disabled.", user + " disabled the currency command.");
                     }
                     else if ((args[0].Equals("unlock") || args[0].Equals("enable")) && Database.getUserLevel(user) >= 2)
                     {
-                        MainForm.Currency_DisableCommandCheckBox.Checked = false;
+                        MainForm.Currency_DisableCommand.Checked = false;
                         sendMessage("The !" + currency + " command is now available to use.", user + " enabled the currency command.");
                     }
                     else if (args[0].Equals("clear") && Database.getUserLevel(user) >= 3)
@@ -1616,12 +1620,12 @@ namespace ModBot
             }
             else
             {
-                if (MainForm.Currency_DisableCommandCheckBox.Checked && Database.getUserLevel(user) == 0 && Api.GetUnixTimeNow() - LastCurrencyDisabledAnnounce > 600)
+                if (MainForm.Currency_DisableCommand.Checked && Database.getUserLevel(user) == 0 && Api.GetUnixTimeNow() - LastCurrencyDisabledAnnounce > 600)
                 {
                     LastCurrencyDisabledAnnounce = Api.GetUnixTimeNow();
                     sendMessage("The !" + currency + " command is disabled, you may politely ask a mod to check your " + currencyName + " for you.");
                 }
-                if (!MainForm.Currency_DisableCommandCheckBox.Checked || Database.getUserLevel(user) >= 1)
+                if (!MainForm.Currency_DisableCommand.Checked || Database.getUserLevel(user) >= 1)
                 {
                     addToLookups(user);
                 }

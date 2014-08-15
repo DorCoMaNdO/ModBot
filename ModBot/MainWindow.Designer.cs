@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollow = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -50,7 +50,7 @@
             this.Giveaway_UnbanButton = new System.Windows.Forms.Button();
             this.Giveaway_AddBanTextBox = new System.Windows.Forms.TextBox();
             this.Giveaway_AutoBanWinnerCheckBox = new System.Windows.Forms.CheckBox();
-            this.Currency_DisableCommandCheckBox = new System.Windows.Forms.CheckBox();
+            this.Currency_DisableCommand = new System.Windows.Forms.CheckBox();
             this.Giveaway_CopyWinnerButton = new System.Windows.Forms.Button();
             this.Giveaway_WinnerTimerLabel = new System.Windows.Forms.Label();
             this.Giveaway_WinnerTimer = new System.Windows.Forms.Timer(this.components);
@@ -71,6 +71,7 @@
             this.SettingsWindowButton = new System.Windows.Forms.CheckBox();
             this.DonationsWindowButton = new System.Windows.Forms.CheckBox();
             this.SettingsWindow = new System.Windows.Forms.Panel();
+            this.Misc_ShowConsole = new System.Windows.Forms.CheckBox();
             this.label19 = new System.Windows.Forms.Label();
             this.CurrencySubHandoutAmount = new ModBot.FlatNumericUpDown();
             this.DonationsTokenBox = new System.Windows.Forms.TextBox();
@@ -466,17 +467,17 @@
             this.Giveaway_AutoBanWinnerCheckBox.UseVisualStyleBackColor = true;
             this.Giveaway_AutoBanWinnerCheckBox.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
-            // Currency_DisableCommandCheckBox
+            // Currency_DisableCommand
             // 
-            this.Currency_DisableCommandCheckBox.AutoSize = true;
-            this.Currency_DisableCommandCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Currency_DisableCommandCheckBox.Location = new System.Drawing.Point(6, 85);
-            this.Currency_DisableCommandCheckBox.Name = "Currency_DisableCommandCheckBox";
-            this.Currency_DisableCommandCheckBox.Size = new System.Drawing.Size(151, 17);
-            this.Currency_DisableCommandCheckBox.TabIndex = 35;
-            this.Currency_DisableCommandCheckBox.Text = "Disable currency command";
-            this.Currency_DisableCommandCheckBox.UseVisualStyleBackColor = true;
-            this.Currency_DisableCommandCheckBox.CheckedChanged += new System.EventHandler(this.Currency_DisableCommandCheckBox_CheckedChanged);
+            this.Currency_DisableCommand.AutoSize = true;
+            this.Currency_DisableCommand.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Currency_DisableCommand.Location = new System.Drawing.Point(5, 103);
+            this.Currency_DisableCommand.Name = "Currency_DisableCommand";
+            this.Currency_DisableCommand.Size = new System.Drawing.Size(151, 17);
+            this.Currency_DisableCommand.TabIndex = 35;
+            this.Currency_DisableCommand.Text = "Disable currency command";
+            this.Currency_DisableCommand.UseVisualStyleBackColor = true;
+            this.Currency_DisableCommand.CheckedChanged += new System.EventHandler(this.Settings_CheckedChanged);
             // 
             // Giveaway_CopyWinnerButton
             // 
@@ -616,7 +617,7 @@
             // 
             this.Currency_HandoutActiveStream.AutoSize = true;
             this.Currency_HandoutActiveStream.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Currency_HandoutActiveStream.Location = new System.Drawing.Point(5, 49);
+            this.Currency_HandoutActiveStream.Location = new System.Drawing.Point(5, 57);
             this.Currency_HandoutActiveStream.Name = "Currency_HandoutActiveStream";
             this.Currency_HandoutActiveStream.Size = new System.Drawing.Size(342, 17);
             this.Currency_HandoutActiveStream.TabIndex = 52;
@@ -638,7 +639,7 @@
             // 
             this.Currency_HandoutActiveTime.AutoSize = true;
             this.Currency_HandoutActiveTime.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Currency_HandoutActiveTime.Location = new System.Drawing.Point(5, 64);
+            this.Currency_HandoutActiveTime.Location = new System.Drawing.Point(5, 80);
             this.Currency_HandoutActiveTime.Name = "Currency_HandoutActiveTime";
             this.Currency_HandoutActiveTime.Size = new System.Drawing.Size(393, 17);
             this.Currency_HandoutActiveTime.TabIndex = 54;
@@ -650,7 +651,7 @@
             // Currency_HandoutLastActive
             // 
             this.Currency_HandoutLastActive.Enabled = false;
-            this.Currency_HandoutLastActive.Location = new System.Drawing.Point(308, 64);
+            this.Currency_HandoutLastActive.Location = new System.Drawing.Point(308, 80);
             this.Currency_HandoutLastActive.Maximum = new decimal(new int[] {
             2880,
             0,
@@ -713,6 +714,7 @@
             // SettingsWindow
             // 
             this.SettingsWindow.BackColor = System.Drawing.Color.White;
+            this.SettingsWindow.Controls.Add(this.Misc_ShowConsole);
             this.SettingsWindow.Controls.Add(this.label19);
             this.SettingsWindow.Controls.Add(this.CurrencySubHandoutAmount);
             this.SettingsWindow.Controls.Add(this.DonationsTokenBox);
@@ -756,6 +758,18 @@
             this.SettingsWindow.Size = new System.Drawing.Size(814, 562);
             this.SettingsWindow.TabIndex = 58;
             this.SettingsWindow.Visible = this.SettingsWindowButton.Checked;
+            // 
+            // Misc_ShowConsole
+            // 
+            this.Misc_ShowConsole.AutoSize = true;
+            this.Misc_ShowConsole.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Misc_ShowConsole.Location = new System.Drawing.Point(6, 362);
+            this.Misc_ShowConsole.Name = "Misc_ShowConsole";
+            this.Misc_ShowConsole.Size = new System.Drawing.Size(90, 17);
+            this.Misc_ShowConsole.TabIndex = 95;
+            this.Misc_ShowConsole.Text = "Show console";
+            this.Misc_ShowConsole.UseVisualStyleBackColor = true;
+            this.Misc_ShowConsole.CheckedChanged += new System.EventHandler(this.Settings_CheckedChanged);
             // 
             // label19
             // 
@@ -866,7 +880,7 @@
             this.SettingsErrorLabel.AutoSize = true;
             this.SettingsErrorLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.SettingsErrorLabel.ForeColor = System.Drawing.Color.Red;
-            this.SettingsErrorLabel.Location = new System.Drawing.Point(3, 369);
+            this.SettingsErrorLabel.Location = new System.Drawing.Point(3, 382);
             this.SettingsErrorLabel.Name = "SettingsErrorLabel";
             this.SettingsErrorLabel.Size = new System.Drawing.Size(34, 13);
             this.SettingsErrorLabel.TabIndex = 84;
@@ -1221,7 +1235,7 @@
             this.UpdateTopDonorsCheckBox.TabIndex = 63;
             this.UpdateTopDonorsCheckBox.Text = "Auto-update top donors";
             this.UpdateTopDonorsCheckBox.UseVisualStyleBackColor = true;
-            this.UpdateTopDonorsCheckBox.CheckedChanged += new System.EventHandler(this.UpdateTopDonorsCheckBox_CheckedChanged);
+            this.UpdateTopDonorsCheckBox.CheckedChanged += new System.EventHandler(this.Settings_CheckedChanged);
             // 
             // label15
             // 
@@ -1296,8 +1310,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle2;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1362,7 +1376,7 @@
             this.UpdateRecentDonorsCheckBox.TabIndex = 61;
             this.UpdateRecentDonorsCheckBox.Text = "Auto-update recent donors";
             this.UpdateRecentDonorsCheckBox.UseVisualStyleBackColor = true;
-            this.UpdateRecentDonorsCheckBox.CheckedChanged += new System.EventHandler(this.UpdateRecentDonorsCheckBox_CheckedChanged);
+            this.UpdateRecentDonorsCheckBox.CheckedChanged += new System.EventHandler(this.Settings_CheckedChanged);
             // 
             // label16
             // 
@@ -1383,7 +1397,7 @@
             this.UpdateLastDonorCheckBox.TabIndex = 62;
             this.UpdateLastDonorCheckBox.Text = "Auto-update last donor";
             this.UpdateLastDonorCheckBox.UseVisualStyleBackColor = true;
-            this.UpdateLastDonorCheckBox.CheckedChanged += new System.EventHandler(this.UpdateLastDonorCheckBox_CheckedChanged);
+            this.UpdateLastDonorCheckBox.CheckedChanged += new System.EventHandler(this.Settings_CheckedChanged);
             // 
             // AboutWindowButton
             // 
@@ -1663,7 +1677,7 @@
             this.Channel_UseSteam.Text = "Update game from Steam                                                (Profile pr" +
     "ivacy must be set as public)";
             this.Channel_UseSteam.UseVisualStyleBackColor = true;
-            this.Channel_UseSteam.CheckedChanged += new System.EventHandler(this.Channel_UseSteam_CheckedChanged);
+            this.Channel_UseSteam.CheckedChanged += new System.EventHandler(this.Settings_CheckedChanged);
             // 
             // UpdateTitleGameButton
             // 
@@ -1688,7 +1702,7 @@
             this.CurrencyWindow.Controls.Add(this.Currency_HandoutActiveStream);
             this.CurrencyWindow.Controls.Add(this.Currency_HandoutEveryone);
             this.CurrencyWindow.Controls.Add(this.Currency_HandoutLabel);
-            this.CurrencyWindow.Controls.Add(this.Currency_DisableCommandCheckBox);
+            this.CurrencyWindow.Controls.Add(this.Currency_DisableCommand);
             this.CurrencyWindow.Location = new System.Drawing.Point(108, 30);
             this.CurrencyWindow.Name = "CurrencyWindow";
             this.CurrencyWindow.Size = new System.Drawing.Size(814, 562);
@@ -2096,7 +2110,7 @@
             this.Spam_CWL.TabIndex = 65;
             this.Spam_CWL.Text = "Enabled";
             this.Spam_CWL.UseVisualStyleBackColor = true;
-            this.Spam_CWL.CheckedChanged += new System.EventHandler(this.Spam_CWL_CheckedChanged);
+            this.Spam_CWL.CheckedChanged += new System.EventHandler(this.Settings_CheckedChanged);
             // 
             // Spam_CWLLabel
             // 
@@ -2142,33 +2156,33 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.AboutWindow);
-            this.Controls.Add(this.SettingsWindow);
-            this.Controls.Add(this.DonationsWindow);
-            this.Controls.Add(this.ChannelWindow);
-            this.Controls.Add(this.CurrencyWindow);
             this.Controls.Add(this.GiveawayWindow);
             this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.AuthenticationBrowser);
             this.Controls.Add(this.SpamFilterWindow);
             this.Controls.Add(this.SongRequestPlayer);
             this.Controls.Add(this.panel2);
+            this.Controls.Add(this.AboutWindow);
+            this.Controls.Add(this.SettingsWindow);
+            this.Controls.Add(this.DonationsWindow);
+            this.Controls.Add(this.ChannelWindow);
+            this.Controls.Add(this.CurrencyWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
+            this.Controls.SetChildIndex(this.ChannelWindow, 0);
+            this.Controls.SetChildIndex(this.DonationsWindow, 0);
+            this.Controls.SetChildIndex(this.SettingsWindow, 0);
+            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.SongRequestPlayer, 0);
             this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
             this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
             this.Controls.SetChildIndex(this.GiveawayWindow, 0);
-            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
-            this.Controls.SetChildIndex(this.ChannelWindow, 0);
-            this.Controls.SetChildIndex(this.DonationsWindow, 0);
-            this.Controls.SetChildIndex(this.SettingsWindow, 0);
-            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -2234,7 +2248,7 @@
         public System.Windows.Forms.Button Giveaway_UnbanButton;
         public System.Windows.Forms.TextBox Giveaway_AddBanTextBox;
         public System.Windows.Forms.CheckBox Giveaway_AutoBanWinnerCheckBox;
-        public System.Windows.Forms.CheckBox Currency_DisableCommandCheckBox;
+        public System.Windows.Forms.CheckBox Currency_DisableCommand;
         public System.Windows.Forms.Button Giveaway_CopyWinnerButton;
         public System.Windows.Forms.Label Giveaway_WinnerTimerLabel;
         public System.Windows.Forms.Timer Giveaway_WinnerTimer;
@@ -2366,5 +2380,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Updated;
         private System.Windows.Forms.Label About_UsersLabel;
         public System.Windows.Forms.WebBrowser SongRequestPlayer;
+        public System.Windows.Forms.CheckBox Misc_ShowConsole;
     }
 }

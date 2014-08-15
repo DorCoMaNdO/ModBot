@@ -1,7 +1,6 @@
-﻿using System;
-using System.Text;
+﻿using System.Collections.Specialized;
 using System.Runtime.InteropServices;
-using System.Collections.Specialized;
+using System.Text;
 
 /// <summary>
 /// Class to read/write key values in a INI file

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace ModBot
+﻿namespace ModBot
 {
     public static class Modifications // This class is made strictly for your modifications that do not require editing of the original code.
     {

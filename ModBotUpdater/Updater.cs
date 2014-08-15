@@ -14,13 +14,10 @@ namespace ModBotUpdater
     public partial class Updater : CustomForm
     {
         private Changelog changelog = new Changelog();
-        private List<string> args;
-        public Updater(List<string> args)
+        public Updater()
         {
             InitializeComponent();
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
-
-            this.args = args;
 
             CheckUpdates();
         }
@@ -199,17 +196,22 @@ namespace ModBotUpdater
                     }
                 }
 
-                if (args.Contains("-modbot"))
+                if (Program.args.Contains("-modbot"))
                 {
-                    args.Remove("-modbot");
+                    Program.args.Remove("-modbot");
                     string arg = "";
-                    if (args.Contains("-modbotconnect"))
+                    if (Program.args.Contains("-modbotconnect"))
                     {
-                        args.Remove("-modbotconnect");
+                        Program.args.Remove("-modbotconnect");
                         arg = "-connect";
                     }
+                    if (Program.args.Contains("-modbotupdate"))
+                    {
+                        Program.args.Remove("-modbotupdate");
+                        arg += (arg != "" ? " " : "") + "-autoupdate";
+                    }
                     Process.Start("ModBot.exe", arg);
-                    if (args.Contains("-close")) Close();
+                    if (Program.args.Contains("-close")) Close();
                 }
 
                 UpdateChangelog();
@@ -336,9 +338,9 @@ namespace ModBotUpdater
                     }
                 });
 
-                if (args.Contains("-force"))
+                if (Program.args.Contains("-force"))
                 {
-                    args.Remove("-force");
+                    Program.args.Remove("-force");
                     startDownload();
                     return;
                 }
