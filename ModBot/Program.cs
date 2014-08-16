@@ -205,7 +205,7 @@ namespace ModBot
 
                                     if(Update)
                                     {
-                                        Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed ? " -modbotconnect" : "") + (args.Contains("-autoupdate") ? " -modbotupdate" : ""));
+                                        Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed || args.Contains("-connect") ? " -modbotconnect" : "") + (args.Contains("-autoupdate") ? " -modbotupdate" : ""));
                                         Environment.Exit(0);
                                     }
 
@@ -236,7 +236,7 @@ namespace ModBot
                     {
                         while (File.Exists("ModBotUpdater.exe") && Api.IsFileLocked("ModBotUpdater.exe"))
                         {
-                            MessageBox.Show("Please close ModBot's Updater, a new version of the updater is available and will be extracted.", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            if(MessageBox.Show("Please close ModBot's Updater, a new version of the updater is available and will be extracted.", "ModBot", MessageBoxButtons.RetryCancel, MessageBoxIcon.Information) == DialogResult.Cancel) Environment.Exit(0);
                         }
 
                         File.Delete("ModBotUpdater.exe");

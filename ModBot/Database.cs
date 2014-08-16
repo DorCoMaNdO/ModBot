@@ -22,7 +22,7 @@ namespace ModBot
 
                 while (ModBot.Api.IsFileLocked("ModBot.sqlite", FileShare.Read) && File.Exists("ModBot.sqlite"))
                 {
-                    MessageBox.Show("ModBot's database file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if (MessageBox.Show("ModBot's database file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
                 }
 
                 if (!File.Exists("ModBot.sqlite"))

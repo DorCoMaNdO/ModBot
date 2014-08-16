@@ -62,7 +62,7 @@ namespace ModBotUpdater
                 {
                     while (File.Exists("ModBot.exe") && IsFileLocked("ModBot.exe"))
                     {
-                        MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        if (MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
                     }
                     File.Delete("ModBot.exe");
                 }
@@ -78,7 +78,7 @@ namespace ModBotUpdater
                 {
                     while (File.Exists(@"Updater\ModBot.exe") && IsFileLocked(@"Updater\ModBot.exe"))
                     {
-                        MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        if (MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
                     }
                     File.Delete(@"Updater\ModBot.exe");
                 }
@@ -137,7 +137,7 @@ namespace ModBotUpdater
             {
                 while (File.Exists(@"Updater\ModBot.exe") && IsFileLocked(@"Updater\ModBot.exe"))
                 {
-                    MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if(MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
                 }
 
                 FileStream fiLockFile = new FileInfo(@"Updater\ModBot.exe").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
@@ -147,7 +147,7 @@ namespace ModBotUpdater
                     StateLabel.Text = "Deleting older version...";
                     while (File.Exists("ModBot.exe") && IsFileLocked("ModBot.exe"))
                     {
-                        MessageBox.Show("Please close ModBot inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        if (MessageBox.Show("Please close ModBot inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
                     }
                     File.Delete("ModBot.exe");
                     while (File.Exists("ModBot.exe")) { }
@@ -160,7 +160,7 @@ namespace ModBotUpdater
 
                 while (File.Exists(@"Updater\ModBot.exe") && IsFileLocked(@"Updater\ModBot.exe"))
                 {
-                    MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if (MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
                 }
 
                 StateLabel.Text = "Moving updated version...";
@@ -242,7 +242,7 @@ namespace ModBotUpdater
                 {
                     while (File.Exists("ModBot.exe") && IsFileLocked("ModBot.exe"))
                     {
-                        MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        if (MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
                     }
                     File.Delete("ModBot.exe");
                 }
