@@ -461,9 +461,9 @@ namespace ModBot
 
             if (!bIgnoreUpdates)
             {
+                bIgnoreUpdates = true;
                 ////SettingsPresents.TabPages.Clear();
                 //Console.WriteLine("Getting Settings");
-                bIgnoreUpdates = true;
                 Dictionary<Control, bool> dState = new Dictionary<Control, bool>();
                 /*foreach (Control ctrl in GiveawayWindow.Controls)
                 {
@@ -476,7 +476,7 @@ namespace ModBot
                 bool bRecreateSections = false;
                 foreach (string section in ini.GetSectionNames())
                 {
-                    if(section != "Settings" && !dSettings.ContainsKey(section))
+                    if (section != "Settings" && !dSettings.ContainsKey(section))
                     {
                         bRecreateSections = true;
                         Giveaway_SettingsPresents.TabPages.Clear();
@@ -561,110 +561,113 @@ namespace ModBot
                     }
                 }
 
-                foreach (Control ctrl in dState.Keys)
+                BeginInvoke((MethodInvoker)delegate
                 {
-                    if (GiveawayWindow.Controls.Contains(ctrl))
+                    foreach (Control ctrl in dState.Keys)
                     {
-                        ctrl.Enabled = dState[ctrl];
-                    }
-                }
-
-                string sSelectedPresent = ini.GetValue("Settings", "SelectedPresent", "Default");
-                if (sSelectedPresent != "")
-                {
-                    for (int i = 0; i < Giveaway_SettingsPresents.TabPages.Count; i++)
-                    {
-                        if (Giveaway_SettingsPresents.TabPages[i].Text.Equals(sSelectedPresent))
+                        if (GiveawayWindow.Controls.Contains(ctrl))
                         {
-                            iSettingsPresent = Giveaway_SettingsPresents.SelectedIndex = i;
-                            break;
+                            ctrl.Enabled = dState[ctrl];
                         }
                     }
-                }
 
-                if (Giveaway_BanListListBox.Items.Count > 0)
-                {
-                    Giveaway_BanListListBox.Items.Clear();
-                }
-
-                if (Giveaway_SettingsPresents.SelectedIndex > -1)
-                {
-                    if (dSettings.ContainsKey(Giveaway_SettingsPresents.TabPages[Giveaway_SettingsPresents.SelectedIndex].Text))
+                    string sSelectedPresent = ini.GetValue("Settings", "SelectedPresent", "Default");
+                    if (sSelectedPresent != "")
                     {
-                        foreach (KeyValuePair<string, string> KeyValue in dSettings[Giveaway_SettingsPresents.TabPages[Giveaway_SettingsPresents.SelectedIndex].Text])
+                        for (int i = 0; i < Giveaway_SettingsPresents.TabPages.Count; i++)
                         {
-                            if (KeyValue.Key != "")
+                            if (Giveaway_SettingsPresents.TabPages[i].Text.Equals(sSelectedPresent))
                             {
-                                if (KeyValue.Key.Equals("Giveaway_Type"))
+                                iSettingsPresent = Giveaway_SettingsPresents.SelectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (Giveaway_BanListListBox.Items.Count > 0)
+                    {
+                        Giveaway_BanListListBox.Items.Clear();
+                    }
+
+                    if (Giveaway_SettingsPresents.SelectedIndex > -1)
+                    {
+                        if (dSettings.ContainsKey(Giveaway_SettingsPresents.TabPages[Giveaway_SettingsPresents.SelectedIndex].Text))
+                        {
+                            foreach (KeyValuePair<string, string> KeyValue in dSettings[Giveaway_SettingsPresents.TabPages[Giveaway_SettingsPresents.SelectedIndex].Text])
+                            {
+                                if (KeyValue.Key != "")
                                 {
-                                    Giveaway_TypeActive.Checked = (KeyValue.Value == "0");
-                                    Giveaway_TypeKeyword.Checked = (KeyValue.Value == "1");
-                                    Giveaway_TypeTickets.Checked = (KeyValue.Value == "2");
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_TicketCost"))
-                                {
-                                    Giveaway_TicketCost.Value = Convert.ToInt32(KeyValue.Value);
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MaxTickets"))
-                                {
-                                    Giveaway_MaxTickets.Value = Convert.ToInt32(KeyValue.Value);
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MinCurrencyChecked"))
-                                {
-                                    Giveaway_MinCurrency.Checked = (KeyValue.Value == "1");
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MustFollow"))
-                                {
-                                    Giveaway_MustFollow.Checked = (KeyValue.Value == "1");
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MustSubscribe") && Irc.partnered)
-                                {
-                                    Giveaway_MustSubscribe.Checked = (KeyValue.Value == "1");
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MustWatch"))
-                                {
-                                    Giveaway_MustWatch.Checked = (KeyValue.Value == "1");
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MustWatchDays"))
-                                {
-                                    Giveaway_MustWatchDays.Value = Convert.ToInt32(KeyValue.Value);
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MustWatchHours"))
-                                {
-                                    Giveaway_MustWatchHours.Value = Convert.ToInt32(KeyValue.Value);
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MustWatchMinutes"))
-                                {
-                                    Giveaway_MustWatchMinutes.Value = Convert.ToInt32(KeyValue.Value);
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_MinCurrency"))
-                                {
-                                    Giveaway_MinCurrencyBox.Value = Convert.ToInt32(KeyValue.Value);
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_ActiveUserTime"))
-                                {
-                                    Giveaway_ActiveUserTime.Value = Convert.ToInt32(KeyValue.Value);
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_AutoBanWinner"))
-                                {
-                                    Giveaway_AutoBanWinnerCheckBox.Checked = (KeyValue.Value == "1");
-                                }
-                                else if (KeyValue.Key.Equals("Giveaway_BanList"))
-                                {
-                                    string[] bans = KeyValue.Value.Split(';');
-                                    foreach (string ban in bans)
+                                    if (KeyValue.Key.Equals("Giveaway_Type"))
                                     {
-                                        //Console.WriteLine(ban);
-                                        if (!ban.Equals("") && !Giveaway_BanListListBox.Items.Contains(Api.capName(ban)))
+                                        Giveaway_TypeActive.Checked = (KeyValue.Value == "0");
+                                        Giveaway_TypeKeyword.Checked = (KeyValue.Value == "1");
+                                        Giveaway_TypeTickets.Checked = (KeyValue.Value == "2");
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_TicketCost"))
+                                    {
+                                        Giveaway_TicketCost.Value = Convert.ToInt32(KeyValue.Value);
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_MaxTickets"))
+                                    {
+                                        Giveaway_MaxTickets.Value = Convert.ToInt32(KeyValue.Value);
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_MinCurrencyChecked"))
+                                    {
+                                        Giveaway_MinCurrency.Checked = (KeyValue.Value == "1");
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_MustFollow"))
+                                    {
+                                        Giveaway_MustFollow.Checked = (KeyValue.Value == "1");
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_MustSubscribe") && Irc.partnered)
+                                    {
+                                        Giveaway_MustSubscribe.Checked = (KeyValue.Value == "1");
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_MustWatch"))
+                                    {
+                                        Giveaway_MustWatch.Checked = (KeyValue.Value == "1");
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_MustWatchDays"))
+                                    {
+                                        Giveaway_MustWatchDays.Value = Convert.ToInt32(KeyValue.Value);
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_MustWatchHours"))
+                                    {
+                                        Giveaway_MustWatchHours.Value = Convert.ToInt32(KeyValue.Value);
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_MustWatchMinutes"))
+                                    {
+                                        Giveaway_MustWatchMinutes.Value = Convert.ToInt32(KeyValue.Value);
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_MinCurrency"))
+                                    {
+                                        Giveaway_MinCurrencyBox.Value = Convert.ToInt32(KeyValue.Value);
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_ActiveUserTime"))
+                                    {
+                                        Giveaway_ActiveUserTime.Value = Convert.ToInt32(KeyValue.Value);
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_AutoBanWinner"))
+                                    {
+                                        Giveaway_AutoBanWinnerCheckBox.Checked = (KeyValue.Value == "1");
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_BanList"))
+                                    {
+                                        string[] bans = KeyValue.Value.Split(';');
+                                        foreach (string ban in bans)
                                         {
-                                            Giveaway_BanListListBox.Items.Add(Api.capName(ban));
+                                            //Console.WriteLine(ban);
+                                            if (!ban.Equals("") && !Giveaway_BanListListBox.Items.Contains(Api.capName(ban)))
+                                            {
+                                                Giveaway_BanListListBox.Items.Add(Api.capName(ban));
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
+                });
 
                 if (Giveaway_SettingsPresents.TabPages.Count == 0)
                 {
@@ -676,24 +679,9 @@ namespace ModBot
             }
         }
 
-        private void SetDonationsList(List<Transaction> transactions, string[] sRecentIgnores, string[] sLatestIgnores, string[] sTopIgnores)
+        public void UpdateDonations()
         {
-            if (IsHandleCreated && !DonationsWindowButton.Checked)
-            {
-                BeginInvoke((MethodInvoker)delegate
-                {
-                    Donations_List.Rows.Clear();
-                    for (int i = 0; i < transactions.Count; i++)
-                    {
-                        Donations_List.Rows.Add(transactions[i].date, transactions[i].donor, transactions[i].amount, transactions[i].id, transactions[i].notes, !sRecentIgnores.Contains(transactions[i].id), !sLatestIgnores.Contains(transactions[i].id), !sTopIgnores.Contains(transactions[i].id), true);
-                    }
-                });
-            }
-        }
-
-        public void GrabData()
-        {
-            while (true)
+            while (Irc.donation_clientid != "" && Irc.donation_token != "")
             {
                 List<Transaction> transactions = Api.UpdateTransactions().OrderByDescending(key => Convert.ToDateTime(key.date)).ToList();
                 if (transactions.Count > 0)
@@ -708,27 +696,19 @@ namespace ModBot
                     ini.SetValue("Settings", "Donations_Ignore_Top", sDonationsIgnoreTop);
                     string[] sTopIgnores = sDonationsIgnoreTop.Split(',');
 
-                    /*if (IsHandleCreated && !DonationsWindowButton.Checked)
+                    BeginInvoke((MethodInvoker)delegate
                     {
-                        BeginInvoke((MethodInvoker)delegate
+                        foreach (Transaction transaction in transactions)
                         {
-                            Donations_List.Rows.Clear();
-                            for (int i = 0; i < transactions.Count; i++)
-                            {
-                                Console.WriteLine(i + ": " + transactions[i].date + ", " + transactions[i].donor + ", " + transactions[i].amount + ", " + transactions[i].id + ".");
-                                Donations_List.Rows.Add(transactions[i].date, transactions[i].donor, transactions[i].amount, transactions[i].id, transactions[i].notes, !sRecentIgnores.Contains(transactions[i].id), !sLatestIgnores.Contains(transactions[i].id), !sTopIgnores.Contains(transactions[i].id), true);
-                            }
-                        });
-                    }*/
-                    SetDonationsList(transactions, sRecentIgnores, sLatestIgnores, sTopIgnores); // for some reason the method above lost items...
+                            bool found = false;
+                            foreach (DataGridViewRow row in Donations_List.Rows) if (row.Cells["ID"].Value.ToString() == transaction.id) found = true;
+                            if(!found) Donations_List.Rows.Add(transaction.date, transaction.donor, transaction.amount, transaction.id, transaction.notes, !sRecentIgnores.Contains(transaction.id), !sLatestIgnores.Contains(transaction.id), !sTopIgnores.Contains(transaction.id), true);
+                        }
+                    });
 
-                    int count = Convert.ToInt32(RecentDonorsLimit.Value);
-                    if (transactions.Count < count)
-                    {
-                        count = transactions.Count;
-                    }
+                    int count = Convert.ToInt32(RecentDonorsLimit.Value), iCount = 0;
+                    if (transactions.Count < count) count = transactions.Count;
                     string sTopDonors = "", sRecentDonors = "", sLatestDonor = "";
-                    int iCount = 0;
                     List<Transaction> Donors = new List<Transaction>();
                     foreach (Transaction transaction in transactions)
                     {
@@ -802,6 +782,18 @@ namespace ModBot
                     }
                 }
 
+                Thread.Sleep(1000);
+                if (Irc.ResourceKeeper)
+                {
+                    Thread.Sleep(29000);
+                }
+            }
+        }
+
+        public void UpdateChannelData()
+        {
+            while (true)
+            {
                 int iStatus = 0;
                 if (Irc.irc.Connected)
                 {
@@ -1053,60 +1045,63 @@ namespace ModBot
             SaveSettings();
         }
 
-        public void SaveSettings(int SettingsPresent=-2)
+        public void SaveSettings(int SettingsPresent=-2, bool ReloadSettings=false)
         {
-            if (SettingsPresent == -2)
+            new Thread(() =>
             {
-                if (iSettingsPresent != -2)
+                if (SettingsPresent == -2)
                 {
-                    SettingsPresent = iSettingsPresent;
-                }
-            }
-            if (!bIgnoreUpdates)
-            {
-                if (SettingsPresent > -1)
-                {
-                    string Present = Giveaway_SettingsPresents.TabPages[SettingsPresent].Text;
-                    if (dSettings.ContainsKey(Present))
+                    if (iSettingsPresent != -2)
                     {
-                        //ini.SetValue("Settings", "SelectedPresent", Present);
-                        if (Giveaway_TypeActive.Checked)
-                        {
-                            ini.SetValue(Present, "Giveaway_Type", "0");
-                        }
-                        else if (Giveaway_TypeKeyword.Checked)
-                        {
-                            ini.SetValue(Present, "Giveaway_Type", "1");
-                        }
-                        else if (Giveaway_TypeTickets.Checked)
-                        {
-                            ini.SetValue(Present, "Giveaway_Type", "2");
-                        }
-                        Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
-
-                        ini.SetValue(Present, "Giveaway_TicketCost", Giveaway_TicketCost.Value.ToString());
-                        ini.SetValue(Present, "Giveaway_MaxTickets", Giveaway_MaxTickets.Value.ToString());
-                        ini.SetValue(Present, "Giveaway_MustFollow", Giveaway_MustFollow.Checked ? "1" : "0");
-                        ini.SetValue(Present, "Giveaway_MustSubscribe", Giveaway_MustSubscribe.Checked ? "1" : "0");
-                        ini.SetValue(Present, "Giveaway_MustWatch", Giveaway_MustWatch.Checked ? "1" : "0");
-                        ini.SetValue(Present, "Giveaway_MustWatchDays", Giveaway_MustWatchDays.Value.ToString());
-                        ini.SetValue(Present, "Giveaway_MustWatchHours", Giveaway_MustWatchHours.Value.ToString());
-                        ini.SetValue(Present, "Giveaway_MustWatchMinutes", Giveaway_MustWatchMinutes.Value.ToString());
-                        ini.SetValue(Present, "Giveaway_MinCurrencyChecked", Giveaway_MinCurrency.Checked ? "1" : "0");
-                        ini.SetValue(Present, "Giveaway_MinCurrency", Giveaway_MinCurrencyBox.Value.ToString());
-                        ini.SetValue(Present, "Giveaway_ActiveUserTime", Giveaway_ActiveUserTime.Value.ToString());
-                        ini.SetValue(Present, "Giveaway_AutoBanWinner", Giveaway_AutoBanWinnerCheckBox.Checked ? "1" : "0");
-                        string items = "";
-                        foreach (object item in Giveaway_BanListListBox.Items)
-                        {
-                            items = items + item.ToString() + ";";
-                            //Console.WriteLine("Ban : " + item.ToString());
-                        }
-                        ini.SetValue(Present, "Giveaway_BanList", items);
+                        SettingsPresent = iSettingsPresent;
                     }
                 }
-                GetSettings();
-            }
+                if (!bIgnoreUpdates)
+                {
+                    if (SettingsPresent > -1)
+                    {
+                        string Present = Giveaway_SettingsPresents.TabPages[SettingsPresent].Text;
+                        if (dSettings.ContainsKey(Present))
+                        {
+                            //ini.SetValue("Settings", "SelectedPresent", Present);
+                            if (Giveaway_TypeActive.Checked)
+                            {
+                                ini.SetValue(Present, "Giveaway_Type", "0");
+                            }
+                            else if (Giveaway_TypeKeyword.Checked)
+                            {
+                                ini.SetValue(Present, "Giveaway_Type", "1");
+                            }
+                            else if (Giveaway_TypeTickets.Checked)
+                            {
+                                ini.SetValue(Present, "Giveaway_Type", "2");
+                            }
+                            Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
+
+                            ini.SetValue(Present, "Giveaway_TicketCost", Giveaway_TicketCost.Value.ToString());
+                            ini.SetValue(Present, "Giveaway_MaxTickets", Giveaway_MaxTickets.Value.ToString());
+                            ini.SetValue(Present, "Giveaway_MustFollow", Giveaway_MustFollow.Checked ? "1" : "0");
+                            ini.SetValue(Present, "Giveaway_MustSubscribe", Giveaway_MustSubscribe.Checked ? "1" : "0");
+                            ini.SetValue(Present, "Giveaway_MustWatch", Giveaway_MustWatch.Checked ? "1" : "0");
+                            ini.SetValue(Present, "Giveaway_MustWatchDays", Giveaway_MustWatchDays.Value.ToString());
+                            ini.SetValue(Present, "Giveaway_MustWatchHours", Giveaway_MustWatchHours.Value.ToString());
+                            ini.SetValue(Present, "Giveaway_MustWatchMinutes", Giveaway_MustWatchMinutes.Value.ToString());
+                            ini.SetValue(Present, "Giveaway_MinCurrencyChecked", Giveaway_MinCurrency.Checked ? "1" : "0");
+                            ini.SetValue(Present, "Giveaway_MinCurrency", Giveaway_MinCurrencyBox.Value.ToString());
+                            ini.SetValue(Present, "Giveaway_ActiveUserTime", Giveaway_ActiveUserTime.Value.ToString());
+                            ini.SetValue(Present, "Giveaway_AutoBanWinner", Giveaway_AutoBanWinnerCheckBox.Checked ? "1" : "0");
+                            string items = "";
+                            foreach (object item in Giveaway_BanListListBox.Items)
+                            {
+                                items = items + item.ToString() + ";";
+                                //Console.WriteLine("Ban : " + item.ToString());
+                            }
+                            ini.SetValue(Present, "Giveaway_BanList", items);
+                        }
+                    }
+                    if(ReloadSettings) GetSettings();
+                }
+            }).Start();
         }
 
         private void Giveaway_WinnerTimer_Tick(object sender, EventArgs e)
@@ -1235,7 +1230,7 @@ namespace ModBot
             if (!bIgnoreUpdates)
             {
                 ini.SetValue("Settings", "SelectedPresent", Giveaway_SettingsPresents.TabPages[Giveaway_SettingsPresents.SelectedIndex].Text);
-                SaveSettings(iSettingsPresent);
+                SaveSettings(iSettingsPresent, true);
                 iSettingsPresent = Giveaway_SettingsPresents.SelectedIndex;
             }
         }

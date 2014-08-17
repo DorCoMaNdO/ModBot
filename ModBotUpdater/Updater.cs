@@ -433,13 +433,11 @@ namespace ModBotUpdater
                         string[] sLogVersion = sVersion.Split('.');
                         string sDate = "";
                         int iLogMajor = int.Parse(sLogVersion[0]), iLogMinor = sLogVersion[1] != "*" ? int.Parse(sLogVersion[1]) : 0, iLogBuild = sLogVersion.Length > 2 ? sLogVersion[2] != "*" ? int.Parse(sLogVersion[2]) : 0 : 0, iLogRev = sLogVersion.Length > 3 ? sLogVersion[3] != "*" ? int.Parse(sLogVersion[3]) : 0 : 0;
-                        if (iLogBuild > 0)
-                        {
-                            sDate = " (" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(iLogBuild).AddSeconds(iLogRev * 2).ToLocalTime().ToString(iLogRev > 0 ? "M/dd/yyyy hh:mm:ss tt" : "M/dd/yyyy") + ")";
-                        }
 
-                        changelog.ChangelogNotes.SelectionColor = Color.Blue;
+                        if (iLogBuild > 0) sDate = " (" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(iLogBuild).AddSeconds(iLogRev * 2).ToLocalTime().ToString(iLogRev > 0 ? "M/dd/yyyy hh:mm:ss tt" : "M/dd/yyyy") + ")";
+
                         int Compare = Found ? TimeSpan.FromDays(iCurrentBuild).Add(TimeSpan.FromSeconds(iCurrentRev)).CompareTo(TimeSpan.FromDays(iLogBuild).Add(TimeSpan.FromSeconds(iLogRev))) : -1;
+                        changelog.ChangelogNotes.SelectionColor = Color.Blue;
                         if (Compare == -1 || iLogMajor > iCurrentMajor || iLogMinor > iCurrentMinor)
                         {
                             changelog.ChangelogNotes.SelectionColor = Color.Red;
@@ -448,6 +446,7 @@ namespace ModBotUpdater
                         {
                             changelog.ChangelogNotes.SelectionColor = Color.Green;
                         }
+
                         changelog.ChangelogNotes.SelectionFont = new Font("Segoe Print", 8, FontStyle.Bold);
                         //changelog.ChangelogNotes.SelectedText = sVersion + " " + sDate + " :\r\n";
                         changelog.ChangelogNotes.SelectedText = sVersion;
@@ -459,6 +458,7 @@ namespace ModBotUpdater
                         changelog.ChangelogNotes.SelectedText = " :\r\n";
                         changelog.ChangelogNotes.SelectionFont = new Font("Microsoft Sans Serif", 8);
                         changelog.ChangelogNotes.SelectedText = sChanges;
+
                         sData = sData.Substring(sData.IndexOf("\"}") + 2);
                         if (sData != "")
                         {

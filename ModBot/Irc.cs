@@ -873,15 +873,28 @@ namespace ModBot
                 warningsRemoval = new Timer(warningsRemovalHandler, null, 900000, 900000);
             }
 
-            Console.Write("DONE\r\nLayout updating thread... ");
+            Console.Write("DONE\r\nChannel data updating thread... ");
 
             thread = new Thread(() =>
             {
-                MainForm.GrabData();
+                MainForm.UpdateChannelData();
             });
             Threads.Add(thread);
-            thread.Name = "Layout updating";
+            thread.Name = "Channel data updating";
             thread.Start();
+
+            if (Irc.donation_clientid != "" && Irc.donation_token != "")
+            {
+                Console.Write("DONE\r\nDonations updating thread... ");
+
+                thread = new Thread(() =>
+                {
+                    MainForm.UpdateDonations();
+                });
+                Threads.Add(thread);
+                thread.Name = "Donations updating";
+                thread.Start();
+            }
 
             Console.Write("DONE\r\nInput listening thread... ");
 
