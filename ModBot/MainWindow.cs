@@ -1556,20 +1556,12 @@ namespace ModBot
                 e.SortResult = (int.Parse(e.CellValue2.ToString())).CompareTo(int.Parse(e.CellValue1.ToString()));
                 if (e.SortResult == 0)
                 {
-                    e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()));
+                    e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
                     if (e.SortResult == 0)
                     {
-                        string sVer1 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString(), sVer2 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString();
-                        e.SortResult = sVer1.CompareTo(sVer2);
-                        if (e.SortResult != 0)
-                        {
-                            string[] cell1 = sVer1.Split('.');
-                            string[] cell2 = sVer2.Split('.');
-                            int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
-                            int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
-                            e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
-                        }
-                        else
+                        string[] cell1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString().Split('.'), cell2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString().Split('.');
+                        e.SortResult = TimeSpan.FromDays(int.Parse(cell1[2])).Add(TimeSpan.FromSeconds(int.Parse(cell1[3]))).CompareTo(TimeSpan.FromDays(int.Parse(cell2[2])).Add(TimeSpan.FromSeconds(int.Parse(cell2[3]))));
+                        if (e.SortResult == 0)
                         {
                             e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
                         }
@@ -1582,17 +1574,9 @@ namespace ModBot
                 e.SortResult = Convert.ToDateTime(e.CellValue2.ToString()).CompareTo(Convert.ToDateTime(e.CellValue1.ToString()));
                 if (e.SortResult == 0)
                 {
-                    string sVer1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString(), sVer2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString();
-                    e.SortResult = sVer1.CompareTo(sVer2);
-                    if (e.SortResult != 0)
-                    {
-                        string[] cell1 = sVer1.Split('.');
-                        string[] cell2 = sVer2.Split('.');
-                        int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
-                        int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
-                        e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
-                    }
-                    else
+                    string[] cell1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString().Split('.'), cell2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString().Split('.');
+                    e.SortResult = TimeSpan.FromDays(int.Parse(cell1[2])).Add(TimeSpan.FromSeconds(int.Parse(cell1[3]))).CompareTo(TimeSpan.FromDays(int.Parse(cell2[2])).Add(TimeSpan.FromSeconds(int.Parse(cell2[3]))));
+                    if (e.SortResult == 0)
                     {
                         e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
                         if (e.SortResult == 0)
@@ -1605,16 +1589,9 @@ namespace ModBot
             }
             else if (e.Column.Name == "Version")
             {
-                e.SortResult = e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
-                if (e.SortResult != 0)
-                {
-                    string[] cell1 = e.CellValue1.ToString().Split('.');
-                    string[] cell2 = e.CellValue2.ToString().Split('.');
-                    int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
-                    int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
-                    e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
-                }
-                else
+                string[] cell1 = e.CellValue2.ToString().Split('.'), cell2 = e.CellValue1.ToString().Split('.');
+                e.SortResult = TimeSpan.FromDays(int.Parse(cell1[2])).Add(TimeSpan.FromSeconds(int.Parse(cell1[3]))).CompareTo(TimeSpan.FromDays(int.Parse(cell2[2])).Add(TimeSpan.FromSeconds(int.Parse(cell2[3]))));
+                if (e.SortResult == 0)
                 {
                     e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
                     if (e.SortResult == 0)
@@ -1639,16 +1616,8 @@ namespace ModBot
                         e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
                         if (e.SortResult == 0)
                         {
-                            string sVer1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString(), sVer2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString();
-                            e.SortResult = sVer1.CompareTo(sVer2);
-                            if (e.SortResult != 0)
-                            {
-                                string[] cell1 = sVer1.Split('.');
-                                string[] cell2 = sVer2.Split('.');
-                                int iCell1Major = Convert.ToInt32(cell1[0]), iCell1Minor = Convert.ToInt32(cell1[1]), iCell1Build = Convert.ToInt32(cell1[2]), iCell1Rev = Convert.ToInt32(cell1[3]);
-                                int iCell2Major = Convert.ToInt32(cell2[0]), iCell2Minor = Convert.ToInt32(cell2[1]), iCell2Build = Convert.ToInt32(cell2[2]), iCell2Rev = Convert.ToInt32(cell2[3]);
-                                e.SortResult = (iCell2Major > iCell1Major || iCell2Major == iCell1Major && iCell2Minor > iCell1Minor || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build > iCell1Build || iCell2Major == iCell1Major && iCell2Minor == iCell1Minor && iCell2Build == iCell1Build && iCell2Rev > iCell1Rev) ? 1 : -1;
-                            }
+                            string[] cell1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString().Split('.'), cell2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString().Split('.');
+                            e.SortResult = TimeSpan.FromDays(int.Parse(cell1[2])).Add(TimeSpan.FromSeconds(int.Parse(cell1[3]))).CompareTo(TimeSpan.FromDays(int.Parse(cell2[2])).Add(TimeSpan.FromSeconds(int.Parse(cell2[3]))));
                         }
                     }
                 }

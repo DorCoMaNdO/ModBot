@@ -2590,42 +2590,48 @@ namespace ModBot
 
         private static void addToLookups(string user)
         {
-            if (!usersToLookup.Contains(user))
+            lock (usersToLookup)
             {
-                currencyQueue.Change(5000, Timeout.Infinite);
-                usersToLookup.Add(user);
+                if (!usersToLookup.Contains(user))
+                {
+                    currencyQueue.Change(5000, Timeout.Infinite);
+                    usersToLookup.Add(user);
+                }
             }
         }
 
         private static void handleCurrencyQueue(Object state)
         {
-            if (usersToLookup.Count > 0)
+            lock (usersToLookup)
             {
-                string output = currencyName + ":";
-                bool addComma = false;
-                foreach (string person in usersToLookup)
+                if (usersToLookup.Count > 0)
                 {
-                    if (Database.userExists(person))
+                    string output = currencyName + ":";
+                    bool addComma = false;
+                    foreach (string person in usersToLookup)
                     {
-                        if (addComma)
+                        if (Database.userExists(person))
                         {
-                            output += ", ";
-                        }
+                            if (addComma)
+                            {
+                                output += ", ";
+                            }
 
-                        output += " " + Api.GetDisplayName(person) + " (" + Database.getTimeWatched(person).ToString(@"d\d\ hh\h\ mm\m") + ")" + " - " + Database.checkCurrency(person);
-                        if (Pool.Running && Pool.isInPool(person))
-                        {
-                            output += " [" + Pool.getBetAmount(person) + "]";
+                            output += " " + Api.GetDisplayName(person) + " (" + Database.getTimeWatched(person).ToString(@"d\d\ hh\h\ mm\m") + ")" + " - " + Database.checkCurrency(person);
+                            if (Pool.Running && Pool.isInPool(person))
+                            {
+                                output += " [" + Pool.getBetAmount(person) + "]";
+                            }
+                            if (auctionOpen && Auction.highBidder.Equals(person))
+                            {
+                                output += " {" + Auction.highBid + "}";
+                            }
+                            addComma = true;
                         }
-                        if (auctionOpen && Auction.highBidder.Equals(person))
-                        {
-                            output += " {" + Auction.highBid + "}";
-                        }
-                        addComma = true;
                     }
+                    usersToLookup.Clear();
+                    sendMessage(output);
                 }
-                usersToLookup.Clear();
-                sendMessage(output);
             }
         }
 
