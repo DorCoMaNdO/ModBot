@@ -972,7 +972,7 @@ namespace ModBot
                 if (Warnings.Count > 0)
                 {
                     Warnings = warns;
-                    sendMessage("Users with warnings now have one less.");
+                    sendMessage("Users with warnings has just lost one, hurray! Now play nice Jebaited");
                 }
             }
         }
@@ -1375,7 +1375,7 @@ namespace ModBot
                             }
                             else if (Moderators.Contains(Api.capName(nick)))
                             {
-                                if (warnUser(user, 1, 10, "Attempting to enter a giveaway without meeting the requirements.", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
+                                if (warnUser(user, 1, 10, "Attempting to enter a giveaway without meeting the requirements", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
                                 {
                                     string msg = "you don't answer the requirements!";
                                     if (MainForm.Giveaway_MustFollow.Checked && !Api.IsFollower(user))
@@ -1396,7 +1396,7 @@ namespace ModBot
                         }
                         else
                         {
-                            warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false, true, true, 3);
+                            warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, true, 3);
                         }
                     }
                     else
@@ -1410,7 +1410,7 @@ namespace ModBot
                             }
                             else if (Moderators.Contains(Api.capName(nick)))
                             {
-                                if (warnUser(user, 1, 10, "Attempting to buy tickets without meeting the requirements or with insufficient funds or invalid parameters.", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
+                                if (warnUser(user, 1, 10, "Attempting to buy tickets without meeting the requirements or with insufficient funds or invalid parameters", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
                                 {
                                     string msg = "you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid.";
                                     if(tickets < 1 || tickets > Giveaway.MaxTickets)
@@ -1441,7 +1441,7 @@ namespace ModBot
                 }
                 else
                 {
-                    warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already.", 0, false, true, true, 3);
+                    warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, true, 3);
                 }
             }
         }

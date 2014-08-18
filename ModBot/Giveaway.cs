@@ -99,7 +99,7 @@ namespace ModBot
                     {
                         msg += " who";
                     }
-                    msg += " watched the stream for " + MainForm.Giveaway_MustWatchDays.Value + " days, " + MainForm.Giveaway_MustWatchHours.Value + " hours and " + MainForm.Giveaway_MustWatchMinutes.Value + " minutes";
+                    msg += " watched the stream for at least " + MainForm.Giveaway_MustWatchDays.Value + " days, " + MainForm.Giveaway_MustWatchHours.Value + " hours and " + MainForm.Giveaway_MustWatchMinutes.Value + " minutes";
                 }
                 if (MainForm.Giveaway_MinCurrency.Checked)
                 {

@@ -1106,90 +1106,96 @@ namespace ModBot
 
         private void Giveaway_WinnerTimer_Tick(object sender, EventArgs e)
         {
-            if (Irc.ActiveUsers.ContainsKey(Api.capName(Giveaway_WinnerLabel.Text)))
+            try
             {
-                int time = Api.GetUnixTimeNow() - Irc.ActiveUsers[Api.capName(Giveaway_WinnerLabel.Text)];
-                int color = time - 120;
-                if (color >= 0 && color < 120)
+                if (Irc.ActiveUsers.ContainsKey(Api.capName(Giveaway_WinnerLabel.Text)))
                 {
-                    color = 200 / 120 * color;
-                    Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(color, 200, 0);
-                }
-                else if (color >= 120)
-                {
-                    if (color <= 180)
+                    int time = Api.GetUnixTimeNow() - Irc.ActiveUsers[Api.capName(Giveaway_WinnerLabel.Text)];
+                    int color = time - 120;
+                    if (color >= 0 && color < 120)
                     {
-                        color = 255 / 60 * (color - 120);
-                        int red = 200;
-                        if (color > 200)
-                        {
-                            red = color;
-                            color = 200;
-                        }
-                        Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(red, 200 - color, 0);
+                        color = 200 / 120 * color;
+                        Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(color, 200, 0);
                     }
-                    else 
+                    else if (color >= 120)
                     {
-                        Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
-                    }
-                }
-
-                TimeSpan t = TimeSpan.FromSeconds(time);
-                if(t.Days > 0)
-                {
-                    Giveaway_WinnerTimerLabel.Text = t.ToString(@"d\:hh\:mm\:ss");
-                }
-                else if (t.Hours > 0)
-                {
-                    Giveaway_WinnerTimerLabel.Text = t.ToString(@"h\:mm\:ss");
-                }
-                else
-                {
-                    Giveaway_WinnerTimerLabel.Text = t.ToString(@"m\:ss");
-                }
-            }
-
-            if (Giveaway.LastRoll > 0)
-            {
-                int time = Api.GetUnixTimeNow() - Giveaway.LastRoll;
-                int color = time;
-                if (color >= 0 && color < 60)
-                {
-                    color = 200 / 60 * color;
-                    Giveaway_WinTimeLabel.ForeColor = Color.FromArgb(color, 200, 0);
-                }
-                else if (color >= 60)
-                {
-                    if (color <= 90)
-                    {
-                        color = 255 / 30 * (color - 60);
-                        int red = 200;
-                        if (color > 200)
+                        if (color <= 180)
                         {
-                            red = color;
-                            color = 200;
+                            color = 255 / 60 * (color - 120);
+                            int red = 200;
+                            if (color > 200)
+                            {
+                                red = color;
+                                color = 200;
+                            }
+                            Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(red, 200 - color, 0);
                         }
-                        Giveaway_WinTimeLabel.ForeColor = Color.FromArgb(red, 200 - color, 0);
+                        else
+                        {
+                            Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
+                        }
+                    }
+
+                    TimeSpan t = TimeSpan.FromSeconds(time);
+                    if (t.Days > 0)
+                    {
+                        Giveaway_WinnerTimerLabel.Text = t.ToString(@"d\:hh\:mm\:ss");
+                    }
+                    else if (t.Hours > 0)
+                    {
+                        Giveaway_WinnerTimerLabel.Text = t.ToString(@"h\:mm\:ss");
                     }
                     else
                     {
-                        Giveaway_WinTimeLabel.ForeColor = Color.FromArgb(255, 0, 0);
+                        Giveaway_WinnerTimerLabel.Text = t.ToString(@"m\:ss");
                     }
                 }
 
-                TimeSpan t = TimeSpan.FromSeconds(time);
-                if (t.Days > 0)
+                if (Giveaway.LastRoll > 0)
                 {
-                    Giveaway_WinTimeLabel.Text = t.ToString(@"d\:hh\:mm\:ss");
+                    int time = Api.GetUnixTimeNow() - Giveaway.LastRoll;
+                    int color = time;
+                    if (color >= 0 && color < 60)
+                    {
+                        color = 200 / 60 * color;
+                        Giveaway_WinTimeLabel.ForeColor = Color.FromArgb(color, 200, 0);
+                    }
+                    else if (color >= 60)
+                    {
+                        if (color <= 90)
+                        {
+                            color = 255 / 30 * (color - 60);
+                            int red = 200;
+                            if (color > 200)
+                            {
+                                red = color;
+                                color = 200;
+                            }
+                            Giveaway_WinTimeLabel.ForeColor = Color.FromArgb(red, 200 - color, 0);
+                        }
+                        else
+                        {
+                            Giveaway_WinTimeLabel.ForeColor = Color.FromArgb(255, 0, 0);
+                        }
+                    }
+
+                    TimeSpan t = TimeSpan.FromSeconds(time);
+                    if (t.Days > 0)
+                    {
+                        Giveaway_WinTimeLabel.Text = t.ToString(@"d\:hh\:mm\:ss");
+                    }
+                    else if (t.Hours > 0)
+                    {
+                        Giveaway_WinTimeLabel.Text = t.ToString(@"h\:mm\:ss");
+                    }
+                    else
+                    {
+                        Giveaway_WinTimeLabel.Text = t.ToString(@"m\:ss");
+                    }
                 }
-                else if (t.Hours > 0)
-                {
-                    Giveaway_WinTimeLabel.Text = t.ToString(@"h\:mm\:ss");
-                }
-                else
-                {
-                    Giveaway_WinTimeLabel.Text = t.ToString(@"m\:ss");
-                }
+            }
+            catch
+            {
             }
         }
 
