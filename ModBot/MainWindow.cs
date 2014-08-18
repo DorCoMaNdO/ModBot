@@ -408,19 +408,32 @@ namespace ModBot
             {
                 try
                 {
-                    bool bUpdateNote = false, bNote = false;
+                    bool bUpdateNote = false;
                     while (!bUpdateNote)
                     {
                         Thread.Sleep(60000);
-                        bNote = false;
                         if (IsActivated)
                         {
-                            bUpdateNote = bNote = true;
+                            bUpdateNote = true;
+                            Program.Updates.CheckUpdate(false, true);
                         }
-                        Program.Updates.CheckUpdate(true, bNote);
+                        else
+                        {
+                            bUpdateNote = true;
+                            bool bNote = false;
+                            Activated += (object form, EventArgs eargs) =>
+                            {
+                                if (!bNote)
+                                {
+                                    bNote = true;
+                                    Program.Updates.CheckUpdate(false, true);
+                                }
+                            };
+                        }
+                        Program.Updates.CheckUpdate(true, false);
                     }
                 }
-                catch(Exception)
+                catch
                 {
                 }
             });
