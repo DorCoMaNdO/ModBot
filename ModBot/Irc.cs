@@ -117,7 +117,7 @@ namespace ModBot
                         {
                             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                             {
-                                Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported bot's auth token invalid.");
+                                Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported that bot's auth token is invalid.");
                             });
                             Thread.Sleep(10);
                             break;
@@ -181,7 +181,7 @@ namespace ModBot
                     Thread.Sleep(100);
                 }
 
-                if (!bAbort && channeltoken != "")
+                if (!bAbort)
                 {
                     Console.WriteLine("Validating channel's access token...");
 
@@ -216,12 +216,6 @@ namespace ModBot
 
                                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
-                                            /*if (MainForm.ChannelTitleBox.Text != "Loading..." && MainForm.ChannelGameBox.Text != "Loading...")
-                                            {
-                                                MainForm.ChannelTitleBox.ReadOnly = false;
-                                                MainForm.ChannelGameBox.ReadOnly = false;
-                                                MainForm.UpdateTitleGameButton.Enabled = true;
-                                            }*/
                                             MainForm.Channel_UseSteam.Enabled = true;
                                             ini.SetValue("Settings", "Channel_UseSteam", (MainForm.Channel_UseSteam.Checked = (ini.GetValue("Settings", "Channel_UseSteam", "0") == "1")) ? "1" : "0");
 
@@ -236,9 +230,9 @@ namespace ModBot
                                     {
                                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
-                                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "The channel's access token is missing access and will not be used, some functions will be disabled..\r\n");
+                                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "The channel's access token is missing access.");
                                         });
-                                        channeltoken = "";
+                                        bAbort = true;
                                         Thread.Sleep(10);
                                         break;
                                     }
@@ -247,9 +241,9 @@ namespace ModBot
                                 {
                                     MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                     {
-                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel's auth token invalid, some functions will be disabled.\r\n");
+                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported that the channel's auth token is invalid.");
                                     });
-                                    channeltoken = "";
+                                    bAbort = true;
                                     Thread.Sleep(10);
                                     break;
                                 }
@@ -585,6 +579,7 @@ namespace ModBot
             Console.WriteLine("\r\nDisconnecting...\r\n");
 
             Pool.cancel();
+            if (Giveaway.Started) Giveaway.cancelGiveaway(false);
 
             DetailsConfirmed = false;
             IsModerator = false;
@@ -717,7 +712,7 @@ namespace ModBot
                                 {
                                     Database.addTimeWatched(user, 1);
                                     TimeSpan t = Database.getTimeWatched(user);
-                                    if (t.TotalMinutes % interval == 0 && (!MainForm.Currency_HandoutActiveStream.Checked && !MainForm.Currency_HandoutActiveTime.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= StreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
+                                    if (t.TotalMinutes % interval == 0 && (MainForm.Currency_HandoutEveryone.Checked || MainForm.Currency_HandoutActiveStream.Checked && ActiveUsers[user] >= StreamStartTime || MainForm.Currency_HandoutActiveTime.Checked && ActiveUsers[user] >= StreamStartTime && Api.GetUnixTimeNow() - ActiveUsers[user] <= Convert.ToInt32(MainForm.Currency_HandoutLastActive.Value) * 60))
                                     {
                                         int old = Database.checkCurrency(user);
                                         while (old == Database.checkCurrency(user))
@@ -979,7 +974,7 @@ namespace ModBot
 
         private static void giveawayQueueHandler(object state)
         {
-            if(Giveaway.Started && Giveaway.Open)
+            if(Giveaway.Started)
             {
                 sendMessage("Total of " + Giveaway.Users.Count + " people joined the giveaway.");
             }
@@ -1044,7 +1039,7 @@ namespace ModBot
                     {
                         foreach (char character in temp)
                         {
-                            if (!"()*&^%$#@!'\"\\/.,?[]{}+_=-<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.ToLower().Contains(character.ToString().ToLower()))
+                            if (!"`~!@#$%^&*()-_=+'\"\\/.,?[]{}<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.ToLower().Contains(character.ToString().ToLower()))
                             {
                                 warnUser(user, 1, 30, "Using a restricted character", 0, false, true, true, 6);
                                 return;
@@ -1373,30 +1368,38 @@ namespace ModBot
                             {
                                 giveawayQueue.Change(5000, Timeout.Infinite);
                             }
-                            else if (Moderators.Contains(Api.capName(nick)))
+                            else
                             {
-                                if (warnUser(user, 1, 10, "Attempting to enter a giveaway without meeting the requirements", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
+                                string msg = "you don't answer the requirements!";
+                                if (MainForm.Giveaway_MustFollow.Checked && !Api.IsFollower(user))
                                 {
-                                    string msg = "you don't answer the requirements!";
-                                    if (MainForm.Giveaway_MustFollow.Checked && !Api.IsFollower(user))
+                                    msg = "you don't follow the channel!";
+                                }
+                                else if (MainForm.Giveaway_MustSubscribe.Checked && !Api.IsSubscriber(user))
+                                {
+                                    msg = "you are not subscribed to the channel!";
+                                }
+                                else if (MainForm.Giveaway_MustWatch.Checked && Api.CompareTimeWatched(user) == -1)
+                                {
+                                    msg = "you haven't watched the stream for long enough!";
+                                }
+
+                                if (MainForm.Giveaway_WarnFalseEntries.Checked && Moderators.Contains(Api.capName(nick)))
+                                {
+                                    if (warnUser(user, 1, 10, "Attempting to enter a giveaway without meeting the requirements", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
                                     {
-                                        msg = "you don't follow the channel!";
+                                        sendMessage(user + " " + msg + " (Warning: " + Warnings[Api.capName(user)] + "/3).");
                                     }
-                                    else if (MainForm.Giveaway_MustSubscribe.Checked && !Api.IsSubscriber(user))
-                                    {
-                                        msg = "you are not subscribed to the channel!";
-                                    }
-                                    else if (MainForm.Giveaway_MustWatch.Checked && Api.CompareTimeWatched(user) == -1)
-                                    {
-                                        msg = "you haven't watched the stream for long enough!";
-                                    }
-                                    sendMessage(user + " " + msg + " (Warning: " + Warnings[Api.capName(user)] + "/3).");
+                                }
+                                else
+                                {
+                                    sendMessage(user + " " + msg);
                                 }
                             }
                         }
                         else
                         {
-                            warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, true, 3);
+                            if(MainForm.Giveaway_WarnFalseEntries.Checked) warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, true, 3);
                         }
                     }
                     else
@@ -1408,32 +1411,40 @@ namespace ModBot
                             {
                                 giveawayQueue.Change(5000, Timeout.Infinite);
                             }
-                            else if (Moderators.Contains(Api.capName(nick)))
+                            else
                             {
-                                if (warnUser(user, 1, 10, "Attempting to buy tickets without meeting the requirements or with insufficient funds or invalid parameters", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
+                                string msg = "you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid.";
+                                if (tickets < 1 || tickets > Giveaway.MaxTickets)
                                 {
-                                    string msg = "you have insufficient " + currencyName + ", you don't answer the requirements or the tickets amount you put is invalid.";
-                                    if(tickets < 1 || tickets > Giveaway.MaxTickets)
+                                    msg = "the tickets amount you put is invalid!";
+                                }
+                                else if (Database.checkCurrency(user) < Giveaway.Cost * tickets)
+                                {
+                                    msg = "you have insufficient " + currencyName + "!";
+                                }
+                                else if (MainForm.Giveaway_MustFollow.Checked && !Api.IsFollower(user))
+                                {
+                                    msg = "you don't follow the channel!";
+                                }
+                                else if (MainForm.Giveaway_MustSubscribe.Checked && !Api.IsSubscriber(user))
+                                {
+                                    msg = "you are not subscribed to the channel!";
+                                }
+                                else if (MainForm.Giveaway_MustWatch.Checked && Api.CompareTimeWatched(user) == -1)
+                                {
+                                    msg = "you haven't watched the stream for long enough!";
+                                }
+
+                                if (MainForm.Giveaway_WarnFalseEntries.Checked && Moderators.Contains(Api.capName(nick)))
+                                {
+                                    if (warnUser(user, 1, 10, "Attempting to buy tickets without meeting the requirements or with insufficient funds or invalid parameters", 3, true, true, true, 6) == 1 && Warnings.ContainsKey(Api.capName(user)))
                                     {
-                                        msg = "the tickets amount you put is invalid!";
+                                        sendMessage(user + " " + msg + " (Warning: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
                                     }
-                                    else if (Database.checkCurrency(user) < Giveaway.Cost * tickets)
-                                    {
-                                        msg = "you have insufficient " + currencyName + "!";
-                                    }
-                                    else if (MainForm.Giveaway_MustFollow.Checked && !Api.IsFollower(user))
-                                    {
-                                        msg = "you don't follow the channel!";
-                                    }
-                                    else if (MainForm.Giveaway_MustSubscribe.Checked && !Api.IsSubscriber(user))
-                                    {
-                                        msg = "you are not subscribed to the channel!";
-                                    }
-                                    else if (MainForm.Giveaway_MustWatch.Checked && Api.CompareTimeWatched(user) == -1)
-                                    {
-                                        msg = "you haven't watched the stream for long enough!";
-                                    }
-                                    sendMessage(user + " " + msg + " (Warning: " + Warnings[Api.capName(user)] + "/3) Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
+                                }
+                                else
+                                {
+                                    sendMessage(user + " " + msg + " Ticket cost: " + Giveaway.Cost + ", max. tickets: " + Giveaway.MaxTickets + ".");
                                 }
                             }
                         }
@@ -1441,7 +1452,7 @@ namespace ModBot
                 }
                 else
                 {
-                    warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, true, 3);
+                    if (MainForm.Giveaway_WarnFalseEntries.Checked) warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, true, 3);
                 }
             }
         }
@@ -2547,11 +2558,7 @@ namespace ModBot
             //DB Lookup person to see if they have a battletag set
             string btag = Database.getBtag(person);
             //print(btag);
-            if (btag == null)
-            {
-                return person;
-            }
-            else return person + " (" + btag + ") ";
+            return person + (btag != "" ? " [" + btag + "] " : "");
         }
 
         private static List<string> buildBetOptions(string[] temp)

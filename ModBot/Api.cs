@@ -130,7 +130,7 @@ namespace ModBot
         public static bool IsSubscriber(string user)
         {
             bool bSubscriber = false;
-            if (Irc.partnered && Irc.channeltoken != "")
+            if (Irc.partnered)
             {
                 using (WebClient w = new WebClient())
                 {

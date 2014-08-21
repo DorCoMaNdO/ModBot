@@ -308,18 +308,24 @@ namespace ModBot
                     {
                         if (r.Read())
                         {
-                            //Console.WriteLine(r["btag"]);
+                            /*//Console.WriteLine(r["btag"]);
                             if (System.DBNull.Value.Equals(r["btag"]))
                             {
                                 //Console.WriteLine("btag is null");
                                 return null;
                             }
-                            else return r["btag"].ToString();
+                            else return r["btag"].ToString();*/
+                            return r["btag"].ToString();
+                        }
+                        else
+                        {
+                            return "";
                         }
                     }
                 }
             }
-            else {
+            else
+            {
                 newUser(user);
             }
             return null;

@@ -64,7 +64,7 @@ namespace ModBot
                             }
 
                             List<string> channels = w.DownloadString("http://ddoguild.co.uk/modbot/streams/list.php").Split(Environment.NewLine.ToCharArray()).ToList();
-                            List<Tuple<string, string, string, int, string>> Channels = new List<Tuple<string, string, string, int, string>>();
+                            List<Tuple<string, string, string, string, int, string>> Channels = new List<Tuple<string, string, string, string, int, string>>();
                             foreach (string channel in channels)
                             {
                                 if (channel != "")
@@ -84,31 +84,30 @@ namespace ModBot
                                         }
                                     }
                                     //Channels.Add(new Tuple<string, string, string, int, string>(JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/users/" + json["Channel"].ToString()))["display_name"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToString()));
-                                    Channels.Add(new Tuple<string, string, string, int, string>(json["Channel"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToLocalTime().ToString()));
+                                    Channels.Add(new Tuple<string, string, string, string, int, string>(json["Channel"].ToString(), json["Bot"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToLocalTime().ToString()));
                                 }
                             }
                             BeginInvoke((MethodInvoker)delegate
                             {
                                 if (About_Users.Rows.Count == 0) About_Users.Sort(About_Users.Columns["Status"], System.ComponentModel.ListSortDirection.Ascending);
-                                foreach (Tuple<string, string, string, int, string> channel in Channels)
+                                foreach (Tuple<string, string, string, string, int, string> channel in Channels)
                                 {
-                                    string name = channel.Item1;
                                     bool Found = false;
                                     foreach (DataGridViewRow row in About_Users.Rows)
                                     {
-                                        if (row.Cells["Channel"].Value.ToString() == name)
+                                        if (row.Cells["Channel"].Value.ToString() == channel.Item1 && row.Cells["Bot"].Value.ToString() == channel.Item2)
                                         {
-                                            row.Cells["Status"].Value = channel.Item2;
-                                            row.Cells["Version"].Value = channel.Item3;
-                                            row.Cells["Viewers"].Value = channel.Item4;
-                                            row.Cells["Updated"].Value = channel.Item5;
+                                            row.Cells["Status"].Value = channel.Item3;
+                                            row.Cells["Version"].Value = channel.Item4;
+                                            row.Cells["Viewers"].Value = channel.Item5;
+                                            row.Cells["Updated"].Value = channel.Item6;
                                             Found = true;
                                             break;
                                         }
                                     }
                                     if (!Found)
                                     {
-                                        About_Users.Rows.Add(name, channel.Item2, channel.Item3, channel.Item4, channel.Item5);
+                                        About_Users.Rows.Add(channel.Item1, channel.Item2, channel.Item3, channel.Item4, channel.Item5, channel.Item6);
                                     }
                                 }
 
@@ -544,6 +543,9 @@ namespace ModBot
                             sVariable = ini.GetValue(section, "Giveaway_AutoBanWinner", "0");
                             ini.SetValue(section, "Giveaway_AutoBanWinner", sVariable);
                             dSectionSettings.Add("Giveaway_AutoBanWinner", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_WarnFalseEntries", "0");
+                            ini.SetValue(section, "Giveaway_WarnFalseEntries", sVariable);
+                            dSectionSettings.Add("Giveaway_WarnFalseEntries", sVariable);
                             sVariable = ini.GetValue(section, "Giveaway_BanList", "");
                             ini.SetValue(section, "Giveaway_BanList", sVariable);
                             dSectionSettings.Add("Giveaway_BanList", sVariable);
@@ -662,7 +664,11 @@ namespace ModBot
                                     }
                                     else if (KeyValue.Key.Equals("Giveaway_AutoBanWinner"))
                                     {
-                                        Giveaway_AutoBanWinnerCheckBox.Checked = (KeyValue.Value == "1");
+                                        Giveaway_AutoBanWinner.Checked = (KeyValue.Value == "1");
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_WarnFalseEntries"))
+                                    {
+                                        Giveaway_WarnFalseEntries.Checked = (KeyValue.Value == "1");
                                     }
                                     else if (KeyValue.Key.Equals("Giveaway_BanList"))
                                     {
@@ -855,13 +861,6 @@ namespace ModBot
                                     ChannelGameBox.Text = sGame;
 
                                     TitleGameModified = false;
-
-                                    if (Irc.channeltoken != "" && Irc.DetailsConfirmed)
-                                    {
-                                        ChannelTitleBox.ReadOnly = false;
-                                        ChannelGameBox.ReadOnly = false;
-                                        UpdateTitleGameButton.Enabled = true;
-                                    }
                                 }
                             });
                         }
@@ -1008,6 +1007,7 @@ namespace ModBot
             else if (ctrl == Giveaway_TypeActive)
             {
                 Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
+                Giveaway_WarnFalseEntries.Enabled = !Giveaway_TypeActive.Checked;
             }
             else if (ctrl == Giveaway_TypeTickets)
             {
@@ -1102,7 +1102,8 @@ namespace ModBot
                             ini.SetValue(Present, "Giveaway_MinCurrencyChecked", Giveaway_MinCurrency.Checked ? "1" : "0");
                             ini.SetValue(Present, "Giveaway_MinCurrency", Giveaway_MinCurrencyBox.Value.ToString());
                             ini.SetValue(Present, "Giveaway_ActiveUserTime", Giveaway_ActiveUserTime.Value.ToString());
-                            ini.SetValue(Present, "Giveaway_AutoBanWinner", Giveaway_AutoBanWinnerCheckBox.Checked ? "1" : "0");
+                            ini.SetValue(Present, "Giveaway_AutoBanWinner", Giveaway_AutoBanWinner.Checked ? "1" : "0");
+                            ini.SetValue(Present, "Giveaway_WarnFalseEntries", Giveaway_WarnFalseEntries.Checked ? "1" : "0");
                             string items = "";
                             foreach (object item in Giveaway_BanListListBox.Items)
                             {
@@ -1435,7 +1436,7 @@ namespace ModBot
 
         private void ConnectionDetailsChanged(object sender, EventArgs e)
         {
-            ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "")) == "");
+            ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (ChannelTokenBox.Text == "" ? "Channel token is missing.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "")) == "");
         }
 
         private void GenerateToken_Request(object sender, EventArgs e)

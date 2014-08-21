@@ -38,7 +38,7 @@ namespace ModBot
                 dState.Clear();
                 foreach (Control ctrl in MainForm.GiveawayWindow.Controls)
                 {
-                    if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(CheckBox) || ctrl.GetType() == typeof(RadioButton) || ctrl.GetType() == typeof(NumericUpDown)) && ctrl != MainForm.Giveaway_AutoBanWinnerCheckBox)
+                    if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(CheckBox) || ctrl.GetType() == typeof(RadioButton) || ctrl.GetType() == typeof(NumericUpDown)) && ctrl != MainForm.Giveaway_AutoBanWinner)
                     {
                         dState.Add(ctrl, ctrl.Enabled);
                         ctrl.Enabled = false;
@@ -165,6 +165,10 @@ namespace ModBot
                 MainForm.Giveaway_CloseButton.Enabled = true;
                 MainForm.Giveaway_OpenButton.Enabled = false;
             });
+            if (!MainForm.Giveaway_TypeActive.Checked)
+            {
+                Irc.giveawayQueue.Change(0, Timeout.Infinite);
+            }
             Irc.sendMessage("Entries to the giveaway are now open.");
         }
 
@@ -206,20 +210,17 @@ namespace ModBot
                 Started = false;
                 Open = false;
             });
-            if (announce)
-            {
-                Irc.sendMessage("The giveaway has ended!");
-            }
+            if (announce) Irc.sendMessage("The giveaway has ended!");
         }
 
-        public static void cancelGiveaway()
+        public static void cancelGiveaway(bool announce = true)
         {
             foreach (string user in Users.Keys)
             {
                 Database.addCurrency(user, Users[user] * Cost);
             }
             endGiveaway(false);
-            Irc.sendMessage("The giveaway has been cancelled" + (MainForm.Giveaway_TypeTickets.Checked ? ", entries has been refunded." : "."));
+            if(announce) Irc.sendMessage("The giveaway has been cancelled" + (MainForm.Giveaway_TypeTickets.Checked ? ", entries has been refunded." : "."));
         }
 
         public static bool HasBoughtTickets(string user)
@@ -380,7 +381,7 @@ namespace ModBot
                                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = true;
                                 MainForm.Giveaway_RerollButton.Enabled = true;
                                 LastRoll = Api.GetUnixTimeNow();
-                                if (MainForm.Giveaway_AutoBanWinnerCheckBox.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(sWinner)) MainForm.Giveaway_BanListListBox.Items.Add(Api.capName(sWinner));
+                                if (MainForm.Giveaway_AutoBanWinner.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(sWinner)) MainForm.Giveaway_BanListListBox.Items.Add(Api.capName(sWinner));
                             });
                             thread = new Thread(() =>
                             {

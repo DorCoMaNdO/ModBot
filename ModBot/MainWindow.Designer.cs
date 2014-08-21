@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollow = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -49,7 +49,7 @@
             this.Giveaway_BanButton = new System.Windows.Forms.Button();
             this.Giveaway_UnbanButton = new System.Windows.Forms.Button();
             this.Giveaway_AddBanTextBox = new System.Windows.Forms.TextBox();
-            this.Giveaway_AutoBanWinnerCheckBox = new System.Windows.Forms.CheckBox();
+            this.Giveaway_AutoBanWinner = new System.Windows.Forms.CheckBox();
             this.Currency_DisableCommand = new System.Windows.Forms.CheckBox();
             this.Giveaway_CopyWinnerButton = new System.Windows.Forms.Button();
             this.Giveaway_WinnerTimerLabel = new System.Windows.Forms.Label();
@@ -133,6 +133,7 @@
             this.About_UsersLabel = new System.Windows.Forms.Label();
             this.About_Users = new System.Windows.Forms.DataGridView();
             this.Channel = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Bot = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Status = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Version = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Viewers = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -157,6 +158,7 @@
             this.CurrencyWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindow = new System.Windows.Forms.Panel();
+            this.Giveaway_WarnFalseEntries = new System.Windows.Forms.CheckBox();
             this.Giveaway_MustWatchMinutes = new ModBot.FlatNumericUpDown();
             this.Giveaway_MustWatchHours = new ModBot.FlatNumericUpDown();
             this.Giveaway_MustWatchDays = new ModBot.FlatNumericUpDown();
@@ -249,7 +251,6 @@
             this.ChannelTitleBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ChannelTitleBox.Location = new System.Drawing.Point(6, 41);
             this.ChannelTitleBox.Name = "ChannelTitleBox";
-            this.ChannelTitleBox.ReadOnly = true;
             this.ChannelTitleBox.Size = new System.Drawing.Size(653, 20);
             this.ChannelTitleBox.TabIndex = 17;
             this.ChannelTitleBox.Text = "Loading...";
@@ -273,7 +274,6 @@
             this.ChannelGameBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ChannelGameBox.Location = new System.Drawing.Point(6, 80);
             this.ChannelGameBox.Name = "ChannelGameBox";
-            this.ChannelGameBox.ReadOnly = true;
             this.ChannelGameBox.Size = new System.Drawing.Size(653, 20);
             this.ChannelGameBox.TabIndex = 19;
             this.ChannelGameBox.Text = "Loading...";
@@ -455,17 +455,17 @@
             this.Giveaway_AddBanTextBox.TabIndex = 33;
             this.Giveaway_AddBanTextBox.TextChanged += new System.EventHandler(this.Giveaway_AddBanTextBox_TextChanged);
             // 
-            // Giveaway_AutoBanWinnerCheckBox
+            // Giveaway_AutoBanWinner
             // 
-            this.Giveaway_AutoBanWinnerCheckBox.AutoSize = true;
-            this.Giveaway_AutoBanWinnerCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_AutoBanWinnerCheckBox.Location = new System.Drawing.Point(6, 237);
-            this.Giveaway_AutoBanWinnerCheckBox.Name = "Giveaway_AutoBanWinnerCheckBox";
-            this.Giveaway_AutoBanWinnerCheckBox.Size = new System.Drawing.Size(140, 17);
-            this.Giveaway_AutoBanWinnerCheckBox.TabIndex = 34;
-            this.Giveaway_AutoBanWinnerCheckBox.Text = "Automatically ban winner";
-            this.Giveaway_AutoBanWinnerCheckBox.UseVisualStyleBackColor = true;
-            this.Giveaway_AutoBanWinnerCheckBox.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
+            this.Giveaway_AutoBanWinner.AutoSize = true;
+            this.Giveaway_AutoBanWinner.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_AutoBanWinner.Location = new System.Drawing.Point(6, 237);
+            this.Giveaway_AutoBanWinner.Name = "Giveaway_AutoBanWinner";
+            this.Giveaway_AutoBanWinner.Size = new System.Drawing.Size(140, 17);
+            this.Giveaway_AutoBanWinner.TabIndex = 34;
+            this.Giveaway_AutoBanWinner.Text = "Automatically ban winner";
+            this.Giveaway_AutoBanWinner.UseVisualStyleBackColor = true;
+            this.Giveaway_AutoBanWinner.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // Currency_DisableCommand
             // 
@@ -816,9 +816,9 @@
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(309, 57);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(249, 13);
+            this.label4.Size = new System.Drawing.Size(128, 13);
             this.label4.TabIndex = 90;
-            this.label4.Text = "Channel\'s Access Token (Optional, recommended):";
+            this.label4.Text = "Channel\'s Access Token:";
             // 
             // GenerateChannelTokenButton
             // 
@@ -841,6 +841,7 @@
             this.ChannelTokenBox.PasswordChar = '*';
             this.ChannelTokenBox.Size = new System.Drawing.Size(390, 20);
             this.ChannelTokenBox.TabIndex = 88;
+            this.ChannelTokenBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
             // 
             // GenerateBotTokenButton
             // 
@@ -1047,9 +1048,9 @@
             this.label13.AutoSize = true;
             this.label13.Location = new System.Drawing.Point(3, 18);
             this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(57, 13);
+            this.label13.Size = new System.Drawing.Size(26, 13);
             this.label13.TabIndex = 60;
-            this.label13.Text = "Bot Name:";
+            this.label13.Text = "Bot:";
             // 
             // label8
             // 
@@ -1310,8 +1311,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle1;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1455,6 +1456,7 @@
             this.About_Users.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.About_Users.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Channel,
+            this.Bot,
             this.Status,
             this.Version,
             this.Viewers,
@@ -1475,7 +1477,14 @@
             this.Channel.HeaderText = "Channel";
             this.Channel.Name = "Channel";
             this.Channel.ReadOnly = true;
-            this.Channel.Width = 300;
+            this.Channel.Width = 150;
+            // 
+            // Bot
+            // 
+            this.Bot.HeaderText = "Bot";
+            this.Bot.Name = "Bot";
+            this.Bot.ReadOnly = true;
+            this.Bot.Width = 150;
             // 
             // Status
             // 
@@ -1682,7 +1691,6 @@
             // UpdateTitleGameButton
             // 
             this.UpdateTitleGameButton.BackColor = System.Drawing.Color.White;
-            this.UpdateTitleGameButton.Enabled = false;
             this.UpdateTitleGameButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.UpdateTitleGameButton.Location = new System.Drawing.Point(665, 41);
             this.UpdateTitleGameButton.Name = "UpdateTitleGameButton";
@@ -1749,6 +1757,7 @@
             // GiveawayWindow
             // 
             this.GiveawayWindow.BackColor = System.Drawing.Color.White;
+            this.GiveawayWindow.Controls.Add(this.Giveaway_WarnFalseEntries);
             this.GiveawayWindow.Controls.Add(this.Giveaway_MustWatchMinutes);
             this.GiveawayWindow.Controls.Add(this.Giveaway_MustWatchHours);
             this.GiveawayWindow.Controls.Add(this.Giveaway_MustWatchDays);
@@ -1776,7 +1785,7 @@
             this.GiveawayWindow.Controls.Add(this.Giveaway_CopyWinnerButton);
             this.GiveawayWindow.Controls.Add(this.Giveaway_RerollButton);
             this.GiveawayWindow.Controls.Add(this.Giveaway_StopButton);
-            this.GiveawayWindow.Controls.Add(this.Giveaway_AutoBanWinnerCheckBox);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_AutoBanWinner);
             this.GiveawayWindow.Controls.Add(this.Giveaway_UnbanButton);
             this.GiveawayWindow.Controls.Add(this.Giveaway_ActiveUserTime);
             this.GiveawayWindow.Controls.Add(this.Giveaway_BanButton);
@@ -1793,6 +1802,19 @@
             this.GiveawayWindow.Name = "GiveawayWindow";
             this.GiveawayWindow.Size = new System.Drawing.Size(814, 562);
             this.GiveawayWindow.TabIndex = 63;
+            // 
+            // Giveaway_WarnFalseEntries
+            // 
+            this.Giveaway_WarnFalseEntries.AutoSize = true;
+            this.Giveaway_WarnFalseEntries.Enabled = false;
+            this.Giveaway_WarnFalseEntries.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_WarnFalseEntries.Location = new System.Drawing.Point(6, 260);
+            this.Giveaway_WarnFalseEntries.Name = "Giveaway_WarnFalseEntries";
+            this.Giveaway_WarnFalseEntries.Size = new System.Drawing.Size(148, 17);
+            this.Giveaway_WarnFalseEntries.TabIndex = 65;
+            this.Giveaway_WarnFalseEntries.Text = "Warn, timeout false entries";
+            this.Giveaway_WarnFalseEntries.UseVisualStyleBackColor = true;
+            this.Giveaway_WarnFalseEntries.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // Giveaway_MustWatchMinutes
             // 
@@ -2095,10 +2117,10 @@
             this.label22.AutoSize = true;
             this.label22.Location = new System.Drawing.Point(3, 21);
             this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(237, 26);
+            this.label22.Size = new System.Drawing.Size(245, 26);
             this.label22.TabIndex = 66;
-            this.label22.Text = "Blocks all characters but the ones entered below\r\n* Added by default: ()*&^%$#@!\'" +
-    "\"\\/.,?[]{}+_=-<>|:;";
+            this.label22.Text = "Blocks all characters but the ones entered below\r\n* Added by default: `~!@#$%^&*(" +
+    ")-_=+\'\"\\/.,?[]{}<>|:;";
             // 
             // Spam_CWL
             // 
@@ -2156,6 +2178,8 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
+            this.Controls.Add(this.ChannelWindow);
+            this.Controls.Add(this.CurrencyWindow);
             this.Controls.Add(this.GiveawayWindow);
             this.Controls.Add(this.AuthenticationLabel);
             this.Controls.Add(this.AuthenticationBrowser);
@@ -2165,15 +2189,11 @@
             this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
-            this.Controls.Add(this.ChannelWindow);
-            this.Controls.Add(this.CurrencyWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
-            this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
             this.Controls.SetChildIndex(this.AboutWindow, 0);
@@ -2183,6 +2203,8 @@
             this.Controls.SetChildIndex(this.AuthenticationBrowser, 0);
             this.Controls.SetChildIndex(this.AuthenticationLabel, 0);
             this.Controls.SetChildIndex(this.GiveawayWindow, 0);
+            this.Controls.SetChildIndex(this.CurrencyWindow, 0);
+            this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -2247,7 +2269,7 @@
         public System.Windows.Forms.Button Giveaway_BanButton;
         public System.Windows.Forms.Button Giveaway_UnbanButton;
         public System.Windows.Forms.TextBox Giveaway_AddBanTextBox;
-        public System.Windows.Forms.CheckBox Giveaway_AutoBanWinnerCheckBox;
+        public System.Windows.Forms.CheckBox Giveaway_AutoBanWinner;
         public System.Windows.Forms.CheckBox Currency_DisableCommand;
         public System.Windows.Forms.Button Giveaway_CopyWinnerButton;
         public System.Windows.Forms.Label Giveaway_WinnerTimerLabel;
@@ -2373,13 +2395,15 @@
         public System.Windows.Forms.CheckBox Giveaway_MustWatch;
         public System.Windows.Forms.CheckBox Giveaway_MustSubscribe;
         public System.Windows.Forms.DataGridView About_Users;
+        private System.Windows.Forms.Label About_UsersLabel;
+        public System.Windows.Forms.WebBrowser SongRequestPlayer;
+        public System.Windows.Forms.CheckBox Misc_ShowConsole;
+        public System.Windows.Forms.CheckBox Giveaway_WarnFalseEntries;
         private System.Windows.Forms.DataGridViewTextBoxColumn Channel;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Bot;
         private System.Windows.Forms.DataGridViewTextBoxColumn Status;
         private System.Windows.Forms.DataGridViewTextBoxColumn Version;
         private System.Windows.Forms.DataGridViewTextBoxColumn Viewers;
         private System.Windows.Forms.DataGridViewTextBoxColumn Updated;
-        private System.Windows.Forms.Label About_UsersLabel;
-        public System.Windows.Forms.WebBrowser SongRequestPlayer;
-        public System.Windows.Forms.CheckBox Misc_ShowConsole;
     }
 }
