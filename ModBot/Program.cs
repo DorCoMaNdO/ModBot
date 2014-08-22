@@ -150,7 +150,7 @@ namespace ModBot
 
         public static void FocusConsole()
         {
-            SetForegroundWindow(GetConsoleWindow());
+            if(MainForm.Misc_ShowConsole.Checked) SetForegroundWindow(GetConsoleWindow());
         }
 
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
