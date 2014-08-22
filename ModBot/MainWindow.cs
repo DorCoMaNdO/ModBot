@@ -49,6 +49,9 @@ namespace ModBot
                         w.Proxy = null;
                         try
                         {
+                            // Thanks to Illarvan for giving me some space on his server!
+                            List<string> channels;
+                            string url = "http://ddoguild.co.uk/modbot/streams/";
                             if (Irc.DetailsConfirmed)
                             {
                                 int iViewers = Irc.ActiveUsers.Count;
@@ -59,11 +62,10 @@ namespace ModBot
                                         iViewers--;
                                     }
                                 }
-                                // Thanks to Illarvan for giving me some space on his server!
-                                w.DownloadString("http://ddoguild.co.uk/modbot/streams/?channel=" + Irc.channel.Substring(1) + "&bot=" + Irc.nick + "&hash=" + Hash + "&version=" + Assembly.GetExecutingAssembly().GetName().Version + "&viewers=" + iViewers + "&date=" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(Assembly.GetExecutingAssembly().GetName().Version.Build).AddSeconds(Assembly.GetExecutingAssembly().GetName().Version.Revision * 2).ToString("M/dd/yyyy hh:mm:ss tt") + "&status=" + (Irc.IsStreaming ? "2" : "1"));
+                                url = "http://ddoguild.co.uk/modbot/streams/?channel=" + Irc.channel.Substring(1) + "&bot=" + Irc.nick + "&hash=" + Hash + "&version=" + Assembly.GetExecutingAssembly().GetName().Version + "&viewers=" + iViewers + "&date=" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(Assembly.GetExecutingAssembly().GetName().Version.Build).AddSeconds(Assembly.GetExecutingAssembly().GetName().Version.Revision * 2).ToString("M/dd/yyyy hh:mm:ss tt") + "&status=" + (Irc.IsStreaming ? "2" : "1");
                             }
 
-                            List<string> channels = w.DownloadString("http://ddoguild.co.uk/modbot/streams/list.php").Split(Environment.NewLine.ToCharArray()).ToList();
+                            channels = w.DownloadString(url).Replace("<pre>", "").Replace("</pre>", "").Split(Environment.NewLine.ToCharArray()).ToList();
                             List<Tuple<string, string, string, string, int, string>> Channels = new List<Tuple<string, string, string, string, int, string>>();
                             foreach (string channel in channels)
                             {
@@ -116,8 +118,9 @@ namespace ModBot
                                 About_Users.Sort(About_Users.SortedColumn, About_Users.SortOrder == SortOrder.Ascending ? System.ComponentModel.ListSortDirection.Ascending : System.ComponentModel.ListSortDirection.Descending);
                             });
                         }
-                        catch
+                        catch(Exception e)
                         {
+                            Console.WriteLine(e);
                         }
                     }
                     Thread.Sleep(60000);
