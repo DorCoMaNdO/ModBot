@@ -118,9 +118,8 @@ namespace ModBot
                                 About_Users.Sort(About_Users.SortedColumn, About_Users.SortOrder == SortOrder.Ascending ? System.ComponentModel.ListSortDirection.Ascending : System.ComponentModel.ListSortDirection.Descending);
                             });
                         }
-                        catch(Exception e)
+                        catch
                         {
-                            Console.WriteLine(e);
                         }
                     }
                     Thread.Sleep(60000);
