@@ -38,7 +38,7 @@ namespace ModBot
                 dState.Clear();
                 foreach (Control ctrl in MainForm.GiveawayWindow.Controls)
                 {
-                    if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(CheckBox) || ctrl.GetType() == typeof(RadioButton) || ctrl.GetType() == typeof(NumericUpDown)) && ctrl != MainForm.Giveaway_AutoBanWinner)
+                    if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(CheckBox) || ctrl.GetType() == typeof(RadioButton) || ctrl.GetType() == typeof(NumericUpDown)) && ctrl != MainForm.Giveaway_AutoBanWinner && ctrl != MainForm.Giveaway_WarnFalseEntries && ctrl != MainForm.Giveaway_AnnounceWarnedEntries)
                     {
                         dState.Add(ctrl, ctrl.Enabled);
                         ctrl.Enabled = false;
@@ -118,11 +118,11 @@ namespace ModBot
                     MainForm.Giveaway_CancelButton.Enabled = true;
 
                     Irc.sendMessage("A giveaway has started! Ticket cost: " + ticketcost + ", max. tickets: " + maxtickets + ". Anyone" + msg + " can join!");
-                    Irc.sendMessage("Join by using \"!ticket AMOUNT\".");
+                    Irc.sendMessage("Join by typing \"!ticket AMOUNT\".");
                 }
                 else if (MainForm.Giveaway_TypeKeyword.Checked)
                 {
-                    Irc.sendMessage("A giveaway has started! Join by using \"!ticket\". Anyone" + msg + " can join!");
+                    Irc.sendMessage("A giveaway has started! Join by typing \"" + (MainForm.Giveaway_CustomKeyword.Text == "" ? "!ticket" : MainForm.Giveaway_CustomKeyword.Text) + "\". Anyone" + msg + " can join!");
                 }
                 else
                 {

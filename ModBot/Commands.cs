@@ -71,7 +71,6 @@ namespace ModBot
             }
         }
 
-        private static SQLiteConnection DB = Database.DB;
         private static List<Command> lCommands = new List<Command>();
 
         public static void Add(string Command, CommandExecutedHandler Handler)
@@ -142,7 +141,7 @@ namespace ModBot
             {
                 foreach (Command Command in lCommands)
                 {
-                    if (Command.Cmd.ToLower() == cmd[0])
+                    if (Command.Cmd.ToLower() == cmd[0].ToLower())
                     {
                         if (call)
                         {
@@ -169,7 +168,7 @@ namespace ModBot
             {
                 foreach (Command Command in lCommands)
                 {
-                    if (Command.Cmd.ToLower() == cmd[0])
+                    if (Command.Cmd.ToLower() == cmd[0].ToLower())
                     {
                         if (call)
                         {
@@ -179,105 +178,25 @@ namespace ModBot
                     }
                 }
             }
-            if (cmdExists(cmd[0]))
+            if (Database.Commands.cmdExists(cmd[0]))
             {
                 if (call) // ToDo : Convert to the new system
                 {
-                    if (Database.getUserLevel(user) >= LevelRequired(cmd[0]))
+                    if (Database.getUserLevel(user) >= Database.Commands.LevelRequired(cmd[0]))
                     {
                         if (cmd.Length > 1 && Database.getUserLevel(user) > 0)
                         {
-                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", Api.GetDisplayName(cmd[1])));
+                            Irc.sendMessage(Database.Commands.getOutput(cmd[0]).Replace("@user", Api.GetDisplayName(cmd[1])));
                         }
                         else
                         {
-                            Irc.sendMessage(getOutput(cmd[0]).Replace("@user", user));
+                            Irc.sendMessage(Database.Commands.getOutput(cmd[0]).Replace("@user", user));
                         }
                     }
                 }
                 return true;
             }
             return false;
-        }
-
-        public static bool cmdExists(string command)
-        {
-            using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM commands", DB))
-            {
-                using (SQLiteDataReader r = cmd.ExecuteReader())
-                {
-                    while (r.Read())
-                    {
-                        if (r["command"].ToString().Equals(command, StringComparison.OrdinalIgnoreCase))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        public static void addCommand(string command, int level, string output)
-        {
-            using (SQLiteCommand cmd = new SQLiteCommand("INSERT INTO commands (command, level, output) VALUES (\"" + command + "\", " + level + ", \"" + output + "\");", DB))
-            {
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        public static void removeCommand(string command)
-        {
-            using (SQLiteCommand cmd = new SQLiteCommand("DELETE FROM commands WHERE command = \"" + command + "\";", DB))
-            {
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        public static int LevelRequired(string command)
-        {
-            using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM commands WHERE command = \"" + command + "\";", DB))
-            {
-                using (SQLiteDataReader r = cmd.ExecuteReader())
-                {
-                    while (r.Read())
-                    {
-                        return int.Parse(r["level"].ToString());
-                    }
-                }
-            }
-            return 0;
-        }
-
-        public static string getList()
-        {
-            string commands = "";
-            using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM commands;", DB))
-            {
-                using (SQLiteDataReader r = cmd.ExecuteReader())
-                {
-                    while (r.Read())
-                    {
-                        commands += r["command"].ToString() + ", ";
-                    }
-                }
-            }
-            return commands.Substring(0, commands.Length - 2);
-        }
-
-        public static string getOutput(string command)
-        {
-            using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM commands WHERE command = \"" + command + "\";", DB))
-            {
-                using (SQLiteDataReader r = cmd.ExecuteReader())
-                {
-                    while (r.Read())
-                    {
-                        return r["output"].ToString();
-                    }
-                    return "";
-                }
-            }
         }
     }
 }

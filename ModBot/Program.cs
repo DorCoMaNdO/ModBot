@@ -134,7 +134,6 @@ namespace ModBot
             //stream = new FileInfo("ModBot.ini").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
             Updates.ExtractUpdater();
             Updates.CheckUpdate();
-            Database.Initialize();
             Application.Run(MainForm = new MainWindow());
         }
 

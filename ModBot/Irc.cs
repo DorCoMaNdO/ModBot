@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using MySql.Data.MySqlClient;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -34,7 +35,7 @@ namespace ModBot
         public static TcpClient irc;
         public static StreamReader read;
         public static StreamWriter write;
-        public static MainWindow MainForm = Program.MainForm;
+        private static MainWindow MainForm = Program.MainForm;
         public static string nick, password, channel, currency, currencyName, admin, donation_clientid, donation_token, channeltoken;
         public static int interval, payout, subpayout, StreamStartTime;
         public static bool partnered, IsStreaming, ResourceKeeper, IsModerator, DetailsConfirmed, CommandsRegistered;
@@ -230,7 +231,7 @@ namespace ModBot
                                     {
                                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
-                                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "The channel's access token is missing access.");
+                                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "The channel's access token is missing access. It must be generated through here to have all the access required.");
                                         });
                                         bAbort = true;
                                         Thread.Sleep(10);
@@ -263,13 +264,74 @@ namespace ModBot
                 }
             }
 
+            DetailsConfirmed = true;
+
+            if (!bAbort)
+            {
+                Console.WriteLine("Configuring settings...");
+
+                OnInitialize(InitializationStep.ConfigureSettings);
+
+                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                {
+                    string name = "";
+                    foreach (string word in currencyName.Split(' '))
+                    {
+                        if (word != "")
+                        {
+                            int length = (name + word).Length;
+                            string suffix = (length < currencyName.Length) ? (currencyName.Substring(length).Split(' ')).Length > 0 ? currencyName.Substring(length).Split(' ')[0] : currencyName.Substring(length) : "";
+                            name += word + ((MainForm.CreateGraphics().MeasureString(word, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16 || MainForm.CreateGraphics().MeasureString(word + " " + suffix, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16) ? "\r\n" : " ");
+                        }
+                    }
+                    MainForm.CurrencyWindowButton.Text = name;
+                    while (MainForm.CreateGraphics().MeasureString(name, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16 || MainForm.CreateGraphics().MeasureString(name, MainForm.CurrencyWindowButton.Font).Height > MainForm.CurrencyWindowButton.Height - 16)
+                    {
+                        MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, MainForm.CurrencyWindowButton.Font.Size - 1, FontStyle.Bold);
+                    }
+                    if (MainForm.CurrencyWindowButton.Font.Size < 6)
+                    {
+                        MainForm.CurrencyWindowButton.Text = "Currency";
+                        MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, 10F, FontStyle.Bold);
+                    }
+                    MainForm.ChannelWindowButton.Text = admin;
+
+                    MainForm.Currency_HandoutLabel.Text = "Handout " + currencyName + " to :";
+
+                    MainForm.Giveaway_MinCurrency.Text = "Must have at least                       " + currencyName;
+                });
+
+                ini.SetValue("Settings", "ResourceKeeper", (ResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
+
+                /*if (donationkey == "")
+                {
+                    MainForm.Donations_ManageButton.Enabled = false;
+                }*/
+
+                ini.SetValue("Settings", "Channel_Greeting", greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!"));
+
+                IgnoredUsers.Add("jtv");
+                IgnoredUsers.Add("moobot");
+                IgnoredUsers.Add("nightbot");
+                IgnoredUsers.Add(nick.ToLower());
+                IgnoredUsers.Add(admin.ToLower());
+
+                Console.WriteLine("Settings configured.\r\n");
+
+                OnInitialize(InitializationStep.DatabaseSetup);
+
+                Database.Initialize();
+
+                bAbort = (Database.DB == null && Database.MySqlDB == null);
+            }
+
             if (bAbort)
             {
                 Console.WriteLine("Aborting connection...");
 
                 OnInitialize(InitializationStep.ConnectionAborted);
 
-                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                /*MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                 {
                     foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
                     {
@@ -277,67 +339,12 @@ namespace ModBot
                     }
                     MainForm.DisconnectButton.Enabled = false;
                     MainForm.ConnectButton.Enabled = false;
-                });
+                });*/
+                Disconnect(false, false);
 
                 Console.WriteLine("Connection aborted.\r\n");
                 return;
             }
-
-            DetailsConfirmed = true;
-
-            Console.WriteLine("Configuring settings...");
-
-            OnInitialize(InitializationStep.ConfigureSettings);
-
-            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-            {
-                string name = "";
-                foreach (string word in currencyName.Split(' '))
-                {
-                    if (word != "")
-                    {
-                        int length = (name + word).Length;
-                        string suffix = (length < currencyName.Length) ? (currencyName.Substring(length).Split(' ')).Length > 0 ? currencyName.Substring(length).Split(' ')[0] : currencyName.Substring(length) : "";
-                        name += word + ((MainForm.CreateGraphics().MeasureString(word, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16 || MainForm.CreateGraphics().MeasureString(word + " " + suffix, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16) ? "\r\n" : " ");
-                    }
-                }
-                MainForm.CurrencyWindowButton.Text = name;
-                while (MainForm.CreateGraphics().MeasureString(name, MainForm.CurrencyWindowButton.Font).Width > MainForm.CurrencyWindowButton.Width - 16 || MainForm.CreateGraphics().MeasureString(name, MainForm.CurrencyWindowButton.Font).Height > MainForm.CurrencyWindowButton.Height - 16)
-                {
-                    MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, MainForm.CurrencyWindowButton.Font.Size - 1, FontStyle.Bold);
-                }
-                if (MainForm.CurrencyWindowButton.Font.Size < 6)
-                {
-                    MainForm.CurrencyWindowButton.Text = "Currency";
-                    MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, 10F, FontStyle.Bold);
-                }
-                MainForm.ChannelWindowButton.Text = admin;
-
-                MainForm.Currency_HandoutLabel.Text = "Handout " + currencyName + " to :";
-
-                MainForm.Giveaway_MinCurrency.Text = "Must have at least                       " + currencyName;
-            });
-
-            ini.SetValue("Settings", "ResourceKeeper", (ResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
-
-            /*if (donationkey == "")
-            {
-                MainForm.Donations_ManageButton.Enabled = false;
-            }*/
-
-            ini.SetValue("Settings", "Channel_Greeting", greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!"));
-
-            IgnoredUsers.Add("jtv");
-            IgnoredUsers.Add("moobot");
-            IgnoredUsers.Add("nightbot");
-            IgnoredUsers.Add(nick.ToLower());
-            IgnoredUsers.Add(admin.ToLower());
-
-            Console.WriteLine("Settings configured.\r\n");
-
-            if (Database.DB == null) OnInitialize(InitializationStep.DatabaseSetup);
-
-            Database.CreateTable();
 
             //Database.newUser(admin);
             Database.setUserLevel(admin, 4);
@@ -357,8 +364,8 @@ namespace ModBot
 
                 Commands.Add("!raffle", Command_Giveaway);
                 Commands.Add("!giveaway", Command_Giveaway);
-                Commands.Add("!ticket", Command_Tickets);
-                Commands.Add("!tickets", Command_Tickets);
+                Commands.Add("!ticket", Command_Ticket);
+                Commands.Add("!tickets", Command_Ticket);
 
                 Commands.Add("!" + currency, Command_Currency);
 
@@ -508,7 +515,9 @@ namespace ModBot
 
                     OnInitialize(InitializationStep.ConnectionFailed);
 
-                    DetailsConfirmed = false;
+                    Disconnect(true, false);
+
+                    /*DetailsConfirmed = false;
                     IsModerator = false;
 
                     //MainForm.Hide();
@@ -536,6 +545,18 @@ namespace ModBot
                     if (irc != null && irc.Connected)
                     {
                         irc.Close();
+                    }
+
+                    if (Database.DB != null)
+                    {
+                        Database.DB.Close();
+                        Database.DB = null;
+                    }
+
+                    if (Database.MySqlDB != null)
+                    {
+                        Database.MySqlDB.Close();
+                        Database.MySqlDB = null;
                     }
 
                     IsStreaming = false;
@@ -567,16 +588,16 @@ namespace ModBot
                         }
                         MainForm.DisconnectButton.Enabled = false;
                         MainForm.ConnectButton.Enabled = true;
-                    });
+                    });*/
                 }
             }
         }
 
-        public static void Disconnect()
+        public static void Disconnect(bool allowreconnecting = true, bool log = true)
         {
             Program.FocusConsole();
 
-            Console.WriteLine("\r\nDisconnecting...\r\n");
+            if (log) Console.WriteLine("\r\nDisconnecting...\r\n");
 
             Pool.cancel();
             if (Giveaway.Started) Giveaway.cancelGiveaway(false);
@@ -614,9 +635,12 @@ namespace ModBot
                 MainForm.ConnectButton.Enabled = false;
             });
 
+            MainForm.ChannelTitle = "";
+            MainForm.ChannelGame = "";
+
             if (Threads.Count > 0)
             {
-                Console.WriteLine("Stopping threads...");
+                if (log) Console.WriteLine("Stopping threads...");
                 List<Thread> Ts = new List<Thread>();
                 foreach (Thread t in Threads)
                 {
@@ -636,7 +660,7 @@ namespace ModBot
                     while (t.IsAlive) Thread.Sleep(10);
                     Console.Write("DONE\r\n");
                 }*/
-                Console.WriteLine("Threads stopped.\r\n");
+                if (log) Console.WriteLine("Threads stopped.\r\n");
                 //Console.WriteLine("Threads stopped.\r\nClearing threads list...");
                 //Threads.Clear();
                 //Console.WriteLine("Threads list clear.\r\n");
@@ -644,17 +668,33 @@ namespace ModBot
 
             if (irc != null && irc.Connected)
             {
-                Console.WriteLine("Closing connection...");
+                if (log) Console.WriteLine("Closing connection...");
                 irc.Close();
-                Console.WriteLine("Connection closed.\r\n");
+                if (log) Console.WriteLine("Connection closed.\r\n");
+            }
+
+            if (Database.DB != null)
+            {
+                if (log) Console.WriteLine("Closing database...");
+                Database.DB.Close();
+                Database.DB = null;
+                if (log) Console.WriteLine("Database closed.\r\n");
+            }
+
+            if (Database.MySqlDB != null)
+            {
+                if (log) Console.WriteLine("Closing MySQL connection...");
+                Database.MySqlDB.Close();
+                Database.MySqlDB = null;
+                if (log) Console.WriteLine("MySQL connection closed.\r\n");
             }
 
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
-                MainForm.ConnectButton.Enabled = true;
+                MainForm.ConnectButton.Enabled = allowreconnecting;
             });
 
-            Console.WriteLine("Disconnected.\r\n");
+            if (log) Console.WriteLine("Disconnected.\r\n");
         }
 
         private static void StartThreads()
@@ -896,7 +936,7 @@ namespace ModBot
             //Listen();
             thread = new Thread(() =>
             {
-                Thread.Sleep(10);
+                Thread.Sleep(50);
                 Console.WriteLine("Attempting to listen to input...");
                 int attempt = 0;
                 while (attempt < 5)
@@ -1009,7 +1049,7 @@ namespace ModBot
 
                         if (MainForm.Giveaway_WarnFalseEntries.Checked && Moderators.Contains(Api.capName(nick)))
                         {
-                            if (warnUser(user, 1, 10, "Attempting to buy tickets without meeting the requirements or with insufficient funds or invalid parameters", 3, true, true, true, 6) == 1)
+                            if (warnUser(user, 1, 10, "Attempting to buy tickets without meeting the requirements or with insufficient funds or invalid parameters", 3, true, true, MainForm.Giveaway_AnnounceWarnedEntries.Checked, 6) == 1)
                             {
                                 if (finalmessage.Length + msg.Length > 512)
                                 {
@@ -1017,7 +1057,7 @@ namespace ModBot
                                     Thread.Sleep(1000);
                                     finalmessage = "";
                                 }
-                                finalmessage += name + " " + msg + " (Warning: " + Warnings[user] + "/3). ";
+                                finalmessage += name + ", " + msg + " (Warning: " + Warnings[user] + "/3). ";
                             }
                         }
                         else
@@ -1028,7 +1068,7 @@ namespace ModBot
                                 Thread.Sleep(1000);
                                 finalmessage = "";
                             }
-                            finalmessage += name + " " + msg + ". ";
+                            finalmessage += name + ", " + msg + ". ";
                         }
                     }
                     if (finalmessage != "") sendMessage(finalmessage);
@@ -1103,6 +1143,11 @@ namespace ModBot
                                 return;
                             }
                         }
+                    }
+                    if (MainForm.Giveaway_TypeKeyword.Checked && temp.ToLower() == MainForm.Giveaway_CustomKeyword.Text.ToLower())
+                    {
+                        Command_Ticket(name, "Custom", new string[0]);
+                        return;
                     }
                     Commands.CheckCommand(name, temp, true);
                     if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
@@ -1244,14 +1289,14 @@ namespace ModBot
                                 if (!Giveaway.Open)
                                 {
                                     string winner = Giveaway.getWinner();
-                                    if (winner.Equals(""))
-                                    {
-                                        sendMessage("No valid winner found, please try again!");
-                                    }
-                                    else
+                                    if (winner != "")
                                     {
                                         TimeSpan t = Database.getTimeWatched(winner);
                                         sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+                                    }
+                                    else
+                                    {
+                                        sendMessage("No valid winner found, please try again!");
                                     }
                                 }
                                 else
@@ -1403,18 +1448,18 @@ namespace ModBot
 
                 if ((args[0].Equals("buy") || args[0].Equals("join") || args[0].Equals("purchase") || args[0].Equals("ticket") || args[0].Equals("tickets")) && args.Length > 1)
                 {
-                    Command_Tickets(user, "!ticket", new string[] { args[1] });
+                    Command_Ticket(user, "!ticket", new string[] { args[1] });
                 }
             }
             else
             {
-                Command_Tickets(user, "!ticket", args);
+                Command_Ticket(user, "!ticket", args);
             }
         }
 
-        private static void Command_Tickets(string user, string cmd, string[] args)
+        private static void Command_Ticket(string user, string cmd, string[] args)
         {
-            if (Giveaway.Started && (MainForm.Giveaway_TypeKeyword.Checked || MainForm.Giveaway_TypeTickets.Checked))
+            if (Giveaway.Started && (MainForm.Giveaway_TypeKeyword.Checked && (MainForm.Giveaway_CustomKeyword.Text == "" || MainForm.Giveaway_CustomKeyword.Text != "" && cmd == "Custom") || MainForm.Giveaway_TypeTickets.Checked))
             {
                 if (Giveaway.Open)
                 {
@@ -1427,17 +1472,18 @@ namespace ModBot
                                 if (Giveaway.BuyTickets(user))
                                 {
                                     if (giveawayFalseEntries.ContainsKey(Api.capName(user))) giveawayFalseEntries.Remove(Api.capName(user));
+                                    giveawayQueue.Change(5000, Timeout.Infinite);
                                 }
                                 else
                                 {
                                     if (!giveawayFalseEntries.ContainsKey(Api.capName(user))) giveawayFalseEntries.Add(Api.capName(user), 1);
+                                    if(giveawayFalseEntries.Count == 1) giveawayQueue.Change(5000, Timeout.Infinite);
                                 }
                             }
-                            giveawayQueue.Change(5000, Timeout.Infinite);
                         }
                         else
                         {
-                            if(MainForm.Giveaway_WarnFalseEntries.Checked) warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, true, 3);
+                            if (MainForm.Giveaway_WarnFalseEntries.Checked) warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, MainForm.Giveaway_AnnounceWarnedEntries.Checked, 3);
                         }
                     }
                     else
@@ -1450,19 +1496,20 @@ namespace ModBot
                                 if (int.TryParse(args[0], out tickets) && tickets > 0 && Giveaway.BuyTickets(user, tickets))
                                 {
                                     if (giveawayFalseEntries.ContainsKey(Api.capName(user))) giveawayFalseEntries.Remove(Api.capName(user));
+                                    giveawayQueue.Change(5000, Timeout.Infinite);
                                 }
                                 else
                                 {
                                     if (!giveawayFalseEntries.ContainsKey(Api.capName(user))) giveawayFalseEntries.Add(Api.capName(user), tickets);
+                                    if (giveawayFalseEntries.Count == 1) giveawayQueue.Change(5000, Timeout.Infinite);
                                 }
                             }
-                            giveawayQueue.Change(5000, Timeout.Infinite);
                         }
                     }
                 }
                 else
                 {
-                    if (MainForm.Giveaway_WarnFalseEntries.Checked) warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, true, 3);
+                    if (MainForm.Giveaway_WarnFalseEntries.Checked) warnUser(user, 1, 5, "Giveaway entries closed and/or is in the giveaway already", 0, false, true, MainForm.Giveaway_AnnounceWarnedEntries.Checked, 3);
                 }
             }
         }
@@ -1482,16 +1529,36 @@ namespace ModBot
                             Dictionary<string, int> TopPoints = new Dictionary<string, int>();
                             //"SELECT * FROM table ORDER BY amount DESC LIMIT 5;"
                             List<string> users = new List<string>();
-                            using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM '" + channel.Substring(1) + "' ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", Database.DB))
+                            if (Database.DB != null)
                             {
-                                using (SQLiteDataReader r = query.ExecuteReader())
+                                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel.Substring(1) + " ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", Database.DB))
                                 {
-                                    while (r.Read())
+                                    using (SQLiteDataReader r = query.ExecuteReader())
                                     {
-                                        string usr = Api.capName(r["user"].ToString());
-                                        if (!IgnoredUsers.Any(c => c.Equals(usr.ToLower())) && !TopPoints.ContainsKey(usr))
+                                        while (r.Read())
                                         {
-                                            TopPoints.Add(usr, int.Parse(r["currency"].ToString()));
+                                            string usr = Api.capName(r["user"].ToString());
+                                            if (!IgnoredUsers.Any(c => c.Equals(usr.ToLower())) && !TopPoints.ContainsKey(usr))
+                                            {
+                                                TopPoints.Add(usr, int.Parse(r["currency"].ToString()));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else if(Database.MySqlDB != null)
+                            {
+                                using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel.Substring(1) + " ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", Database.MySqlDB))
+                                {
+                                    using (MySqlDataReader r = query.ExecuteReader())
+                                    {
+                                        while (r.Read())
+                                        {
+                                            string usr = Api.capName(r["user"].ToString());
+                                            if (!IgnoredUsers.Any(c => c.Equals(usr.ToLower())) && !TopPoints.ContainsKey(usr))
+                                            {
+                                                TopPoints.Add(usr, int.Parse(r["currency"].ToString()));
+                                            }
                                         }
                                     }
                                 }
@@ -2204,7 +2271,7 @@ namespace ModBot
                                 {
                                     output += args[i] + " ";
                                 }
-                                Commands.addCommand(command, level, output.Substring(0, output.Length - 1));
+                                Database.Commands.addCommand(command, level, output.Substring(0, output.Length - 1));
                                 sendMessage(command + " command added.", user + " added the command " + command);
                             }
                             else
@@ -2220,9 +2287,9 @@ namespace ModBot
                     else if ((args[0].Equals("removecommand") || args[0].Equals("removecmd") || args[0].Equals("delcmd") || args[0].Equals("deletecmd") || args[0].Equals("deletecmd") || args[0].Equals("deletecommand")) && args.Length >= 2)
                     {
                         string command = args[1].ToLower();
-                        if (Commands.cmdExists(command))
+                        if (Database.Commands.cmdExists(command))
                         {
-                            Commands.removeCommand(command);
+                            Database.Commands.removeCommand(command);
                             sendMessage(command + " command removed.", user + " removed the command " + command);
                         }
                         else
@@ -2235,7 +2302,7 @@ namespace ModBot
                 {
                     if (args[0].Equals("commmandlist") || args[0].Equals("cmdlist") || args[0].Equals("commmandslist") || args[0].Equals("cmdslist") || args[0].Equals("cmds") || args[0].Equals("commands"))
                     {
-                        string temp = Commands.getList();
+                        string temp = Database.Commands.getList();
                         if (temp != "")
                         {
                             sendMessage("Current commands: " + temp);
@@ -2286,7 +2353,7 @@ namespace ModBot
 
                 if (warnUser(name, 1, interval, reason, max) == 1)
                 {
-                    sendMessage(Api.GetDisplayName(name) + " you have been warned by " + user + (reason != "" ? " for " + reason : "") + " (Warning: " + Warnings[name] + "/" + max + ")", user + " has warned " + name + (reason != "" ? " for " + reason : ""));
+                    sendMessage(Api.GetDisplayName(name) + ", you have been warned by " + user + (reason != "" ? " for " + reason : "") + " (Warning: " + Warnings[name] + "/" + max + ")", user + " has warned " + name + (reason != "" ? " for " + reason : ""));
                 }
             }
         }
