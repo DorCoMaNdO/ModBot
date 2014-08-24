@@ -267,7 +267,7 @@ namespace ModBot
 
         private static bool CheckUser(string user)
         {
-            return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (MainForm.Giveaway_MustFollow.Checked && Api.IsFollower(user) || !MainForm.Giveaway_MustFollow.Checked) && (MainForm.Giveaway_MustSubscribe.Checked && Api.IsSubscriber(user) || !MainForm.Giveaway_MustSubscribe.Checked) && (MainForm.Giveaway_MustWatch.Checked && Api.CompareTimeWatched(user) >= 0 || !MainForm.Giveaway_MustWatch.Checked));
+            return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (!MainForm.Giveaway_MustFollow.Checked || Api.IsFollower(user)) && (!MainForm.Giveaway_MustSubscribe.Checked || Api.IsSubscriber(user)) && (!MainForm.Giveaway_MustWatch.Checked || Api.CompareTimeWatched(user) >= 0));
         }
 
         public static string getWinner()

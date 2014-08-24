@@ -1459,7 +1459,7 @@ namespace ModBot
 
         private static void Command_Ticket(string user, string cmd, string[] args)
         {
-            if (Giveaway.Started && (MainForm.Giveaway_TypeKeyword.Checked && (MainForm.Giveaway_CustomKeyword.Text == "" || MainForm.Giveaway_CustomKeyword.Text != "" && cmd == "Custom") || MainForm.Giveaway_TypeTickets.Checked))
+            if (Giveaway.Started && (MainForm.Giveaway_TypeKeyword.Checked && (MainForm.Giveaway_CustomKeyword.Text == "" || cmd == "Custom") || MainForm.Giveaway_TypeTickets.Checked))
             {
                 if (Giveaway.Open)
                 {
