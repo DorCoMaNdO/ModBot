@@ -58,11 +58,9 @@ namespace ModBot
                         using (WebClient w = new WebClient())
                         {
                             w.Proxy = null;
-                            string json_data = "";
                             try
                             {
-                                json_data = w.DownloadString("https://api.twitch.tv/kraken/users/" + user);
-                                Database.setDisplayName(user, JObject.Parse(json_data)["display_name"].ToString());
+                                Database.setDisplayName(user, JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/users/" + user))["display_name"].ToString());
                             }
                             catch
                             {
@@ -92,11 +90,9 @@ namespace ModBot
                     dCheckingDisplayName[user].Join();
                 }
             }
-            if (Database.getDisplayName(user) == "")
-            {
-                return capName(user);
-            }
-            return Database.getDisplayName(user);
+            string name = Database.getDisplayName(user);
+            if (name == "") return capName(user);
+            return name;
         }
 
         public static string capName(string name)

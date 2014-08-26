@@ -19,6 +19,8 @@ namespace ModBotUpdater
             InitializeComponent();
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
 
+            BetaUpdates.Checked = (Program.ini.GetValue("Settings", "BetaUpdates", "0") == "1");
+
             CheckUpdates();
         }
 
@@ -262,6 +264,21 @@ namespace ModBotUpdater
                         try
                         {
                             sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
+                            if (sLatestVersion != "")
+                            {
+                                if (Program.ini.GetValue("Settings", "BetaUpdates", "0") == "1")
+                                {
+                                    string sBetaVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotBeta.txt");
+                                    if (sBetaVersion != "")
+                                    {
+                                        string[] sLatest = sLatestVersion.Split('.'), sBeta = sBetaVersion.Split('.');
+                                        if (TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sBeta[2])).Add(TimeSpan.FromSeconds(int.Parse(sBeta[3])))) == -1)
+                                        {
+                                            sLatestVersion = sBetaVersion;
+                                        }
+                                    }
+                                }
+                            }
                             w.OpenRead("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + sLatestVersion + "/ModBot.exe");
                             dFileSize = Convert.ToDouble(w.ResponseHeaders["Content-Length"]);
                         }
@@ -481,6 +498,11 @@ namespace ModBotUpdater
         private void Updater_FormClosing(object sender, FormClosingEventArgs e)
         {
             Environment.Exit(0);
+        }
+
+        private void BetaUpdates_CheckedChanged(object sender, EventArgs e)
+        {
+            Program.ini.SetValue("Settings", "BetaUpdates", BetaUpdates.Checked ? "1" : "0");
         }
     }
 }

@@ -92,7 +92,7 @@ public class EmbeddedAssembly
         // Create the file on disk
         if (!fileOk)
         {
-            System.IO.File.WriteAllBytes(tempFile, ba);
+            File.WriteAllBytes(tempFile, ba);
         }
         
         // Load it into memory

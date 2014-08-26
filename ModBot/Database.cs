@@ -13,7 +13,7 @@ namespace ModBot
         private static MainWindow MainForm;
         public static SQLiteConnection DB;
         public static MySqlConnection MySqlDB;
-        private static string channel;
+        public static string table;
 
         public static void Initialize()
         {
@@ -24,7 +24,7 @@ namespace ModBot
 
             Console.WriteLine("Setting up the database...");
 
-            channel = Irc.channel.Substring(1);
+            table = Irc.channel.Substring(1);
 
             if (MainForm.MySQL_Host.Text == "" || MainForm.MySQL_Database.Text == "" || MainForm.MySQL_Username.Text == "")
             {
@@ -48,10 +48,10 @@ namespace ModBot
 
                 using (SQLiteCommand query = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'commands' (id INTEGER PRIMARY KEY AUTOINCREMENT, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", DB)) query.ExecuteNonQuery();
 
-                using (SQLiteCommand query = new SQLiteCommand("CREATE TABLE IF NOT EXISTS " + channel + " (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB)) query.ExecuteNonQuery();
+                using (SQLiteCommand query = new SQLiteCommand("CREATE TABLE IF NOT EXISTS " + table + " (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", DB)) query.ExecuteNonQuery();
 
                 // Handle old users
-                using (SQLiteCommand query = new SQLiteCommand("SELECT display_name FROM " + channel + ";", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT display_name FROM " + table + ";", DB))
                 {
                     try
                     {
@@ -73,11 +73,11 @@ namespace ModBot
                     }
                     catch (SQLiteException)
                     {
-                        using (SQLiteCommand query2 = new SQLiteCommand("ALTER TABLE " + channel + " ADD COLUMN display_name TEXT DEFAULT null;", DB)) query2.ExecuteNonQuery();
+                        using (SQLiteCommand query2 = new SQLiteCommand("ALTER TABLE " + table + " ADD COLUMN display_name TEXT DEFAULT null;", DB)) query2.ExecuteNonQuery();
                     }
                 }
 
-                using (SQLiteCommand query = new SQLiteCommand("SELECT time_watched FROM " + channel + ";", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT time_watched FROM " + table + ";", DB))
                 {
                     try
                     {
@@ -85,7 +85,7 @@ namespace ModBot
                     }
                     catch (SQLiteException)
                     {
-                        using (SQLiteCommand query2 = new SQLiteCommand("ALTER TABLE " + channel + " ADD COLUMN time_watched INTEGER DEFAULT 0;", DB)) query2.ExecuteNonQuery();
+                        using (SQLiteCommand query2 = new SQLiteCommand("ALTER TABLE " + table + " ADD COLUMN time_watched INTEGER DEFAULT 0;", DB)) query2.ExecuteNonQuery();
                     }
                 }
 
@@ -111,6 +111,9 @@ namespace ModBot
             else
             {
                 Console.WriteLine("Connecting to MySQL server...");
+
+                if (MainForm.MySQL_Table.Text != "") table = MainForm.MySQL_Table.Text.ToLower();
+
                 try
                 {
                     MySqlDB = new MySqlConnection("Server=" + MainForm.MySQL_Host.Text + ";Port=" + MainForm.MySQL_Port.Value + ";Database=" + MainForm.MySQL_Database.Text + ";Uid=" + MainForm.MySQL_Username.Text + ";Pwd=" + MainForm.MySQL_Password.Text + ";");
@@ -120,7 +123,7 @@ namespace ModBot
 
                     using (MySqlCommand query = new MySqlCommand("CREATE TABLE IF NOT EXISTS commands (id INTEGER PRIMARY KEY AUTO_INCREMENT, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", MySqlDB)) query.ExecuteNonQuery();
 
-                    using (MySqlCommand query = new MySqlCommand("CREATE TABLE IF NOT EXISTS " + channel + " (id INTEGER PRIMARY KEY AUTO_INCREMENT, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlCommand query = new MySqlCommand("CREATE TABLE IF NOT EXISTS " + table + " (id INTEGER PRIMARY KEY AUTO_INCREMENT, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", MySqlDB)) query.ExecuteNonQuery();
 
                     /*if (tableExists("transfers") && !tableHasData(channel))
                     {
@@ -129,17 +132,21 @@ namespace ModBot
                 }
                 catch (MySqlException e)
                 {
-                    Console.WriteLine(e);
-                    Console.WriteLine(e.Number);
+                    //Console.WriteLine(e);
+                    //Console.WriteLine(e.Number);
                     MainForm.BeginInvoke((MethodInvoker)delegate
                     {
                         if (e.Number == 1042)
                         {
-                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Unable to connect to MySQL server.\r\n");
+                            Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Unable to connect to MySQL server.\r\n");
                         }
                         else if (e.Number == 0 || e.Number == 1045)
                         {
-                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Incorrect MySQL login details.\r\n");
+                            Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Incorrect MySQL login details.\r\n");
+                        }
+                        else if (e.Number == 1064)
+                        {
+                            Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Invalid MySQL table name.\r\n");
                         }
                     });
 
@@ -162,11 +169,11 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("INSERT INTO " + channel + " (user) VALUES ('" + user + "');", DB)) query.ExecuteNonQuery();
+                    using (SQLiteCommand query = new SQLiteCommand("INSERT INTO " + table + " (user) VALUES ('" + user + "');", DB)) query.ExecuteNonQuery();
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("INSERT INTO " + channel + " (user) VALUES ('" + user + "');", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlCommand query = new MySqlCommand("INSERT INTO " + table + " (user) VALUES ('" + user + "');", MySqlDB)) query.ExecuteNonQuery();
                 }
                 if (bCheckDisplayName)
                 {
@@ -180,7 +187,7 @@ namespace ModBot
             List<string> users = new List<string>();
             if (DB != null)
             {
-                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel + ";", DB))
+                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + table + ";", DB))
                 {
                     using (SQLiteDataReader r = query.ExecuteReader())
                     {
@@ -193,7 +200,7 @@ namespace ModBot
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel + ";", MySqlDB))
+                using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + ";", MySqlDB))
                 {
                     using (MySqlDataReader r = query.ExecuteReader())
                     {
@@ -213,11 +220,11 @@ namespace ModBot
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
-                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + channel + " SET display_name = '" + name + "' WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
+                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + table + " SET display_name = '" + name + "' WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + channel + " SET display_name = '" + name + "' WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET display_name = '" + name + "' WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
             }
         }
 
@@ -228,7 +235,7 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", DB))
+                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", DB))
                     {
                         using (SQLiteDataReader r = query.ExecuteReader())
                         {
@@ -241,7 +248,7 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
                     {
                         using (MySqlDataReader r = query.ExecuteReader())
                         {
@@ -267,11 +274,11 @@ namespace ModBot
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
-                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + channel + " SET currency = " + amount + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
+                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + table + " SET currency = " + amount + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + channel + " SET currency = " + amount + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET currency = " + amount + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
             }
         }
 
@@ -282,7 +289,7 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", DB))
+                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", DB))
                     {
                         using (SQLiteDataReader r = query.ExecuteReader())
                         {
@@ -302,7 +309,7 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
                     {
                         using (MySqlDataReader r = query.ExecuteReader())
                         {
@@ -334,11 +341,11 @@ namespace ModBot
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
-                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + channel + " SET currency = currency + " + amount + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
+                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + table + " SET currency = currency + " + amount + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + channel + " SET currency = currency + " + amount + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET currency = currency + " + amount + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
             }
         }
 
@@ -350,11 +357,11 @@ namespace ModBot
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
-                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + channel + " SET currency = currency - " + amount + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
+                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + table + " SET currency = currency - " + amount + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + channel + " SET currency = currency - " + amount + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET currency = currency - " + amount + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
             }
         }
 
@@ -365,7 +372,7 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", DB))
+                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", DB))
                     {
                         using (SQLiteDataReader r = query.ExecuteReader())
                         {
@@ -381,7 +388,7 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
                     {
                         using (MySqlDataReader r = query.ExecuteReader())
                         {
@@ -409,7 +416,7 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", DB))
+                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", DB))
                     {
                         using (SQLiteDataReader r = query.ExecuteReader())
                         {
@@ -429,7 +436,7 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
                     {
                         using (MySqlDataReader r = query.ExecuteReader())
                         {
@@ -454,11 +461,11 @@ namespace ModBot
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
-                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + channel + " SET btag = '" + btag + "' WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
+                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + table + " SET btag = '" + btag + "' WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + channel + " SET btag = '" + btag + "' WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET btag = '" + btag + "' WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
             }
         }
 
@@ -473,7 +480,7 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", DB))
+                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", DB))
                     {
                         using (SQLiteDataReader r = query.ExecuteReader())
                         {
@@ -486,7 +493,7 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
                     {
                         using (MySqlDataReader r = query.ExecuteReader())
                         {
@@ -508,11 +515,11 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("UPDATE " + channel + " SET subscriber = 1 WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
+                    using (SQLiteCommand query = new SQLiteCommand("UPDATE " + table + " SET subscriber = 1 WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("UPDATE " + channel + " SET subscriber = 1 WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET subscriber = 1 WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
                 }
                 return true;
             }
@@ -526,11 +533,11 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("UPDATE " + channel + " SET subscriber = 0 WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
+                    using (SQLiteCommand query = new SQLiteCommand("UPDATE " + table + " SET subscriber = 0 WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("UPDATE " + channel + " SET subscriber = 0 WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET subscriber = 0 WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
                 }
                 return true;
             }
@@ -548,7 +555,7 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", DB))
+                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", DB))
                     {
                         using (SQLiteDataReader r = query.ExecuteReader())
                         {
@@ -561,7 +568,7 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
                     {
                         using (MySqlDataReader r = query.ExecuteReader())
                         {
@@ -582,11 +589,11 @@ namespace ModBot
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
-                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + channel + " SET userlevel = " + level + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
+                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + table + " SET userlevel = " + level + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + channel + " SET userlevel = " + level + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET userlevel = " + level + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
             }
         }
 
@@ -601,7 +608,7 @@ namespace ModBot
             {
                 if (DB != null)
                 {
-                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", DB))
+                    using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", DB))
                     {
                         using (SQLiteDataReader r = query.ExecuteReader())
                         {
@@ -614,7 +621,7 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
                     {
                         using (MySqlDataReader r = query.ExecuteReader())
                         {
@@ -635,11 +642,11 @@ namespace ModBot
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
-                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + channel + " SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
+                using (SQLiteCommand query = new SQLiteCommand("UPDATE " + table + " SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", DB)) query.ExecuteNonQuery();
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + channel + " SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
             }
         }
 

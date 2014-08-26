@@ -90,6 +90,7 @@ namespace ModBot
                                     Channels.Add(new Tuple<string, string, string, string, string>(json["Channel"].ToString(), json["Bot"].ToString(), sStatus, json["Version"].ToString(), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToLocalTime().ToString()), new Tuple<string,string,int>(json["Title"].ToString(), json["Game"].ToString(), int.Parse(json["Viewers"].ToString())));
                                 }
                             }
+                            while (!IsHandleCreated) Thread.Sleep(100);
                             BeginInvoke((MethodInvoker)delegate
                             {
                                 foreach (Tuple<string, string, string, string, string> channel in Channels.Keys)
@@ -120,9 +121,8 @@ namespace ModBot
                                 About_Users.Sort(About_Users.SortedColumn, About_Users.SortOrder == SortOrder.Ascending ? System.ComponentModel.ListSortDirection.Ascending : System.ComponentModel.ListSortDirection.Descending);
                             });
                         }
-                        catch(Exception e)
+                        catch
                         {
-                            Console.WriteLine(e);
                         }
                     }
                     Thread.Sleep(60000);
@@ -133,8 +133,8 @@ namespace ModBot
             Threads.Add(thread);
 
             About_Users.Sort(About_Users.Columns["Status"], System.ComponentModel.ListSortDirection.Ascending);
-            About_Users.Columns["Version"].Visible = false;
-            About_Users.Columns["Updated"].Visible = false;
+            //About_Users.Columns["Version"].Visible = false;
+            //About_Users.Columns["Updated"].Visible = false;
             About_Users.Columns["Title"].Width += 120;
             About_Users.Columns["Game"].Width += 80;
 
@@ -368,6 +368,7 @@ namespace ModBot
             ini.SetValue("Settings", "Currency_HandoutTime", (Currency_HandoutLastActive.Value = variable).ToString());
 
             ini.SetValue("Settings", "Spam_CWL", (Spam_CWL.Checked = (ini.GetValue("Settings", "Spam_CWL", "0") == "1")) ? "1" : "0");
+            ini.SetValue("Settings", "Spam_CWLAnnounceTimeouts", (Spam_CWLAnnounceTimeouts.Checked = (ini.GetValue("Settings", "Spam_CWLAnnounceTimeouts", "0") == "1")) ? "1" : "0");
             ini.SetValue("Settings", "Spam_CWhiteList", Spam_CWLBox.Text = ini.GetValue("Settings", "Spam_CWhiteList", "abcdefghijklmnopqrstuvwxyz0123456789"));
 
             ini.SetValue("Settings", "Misc_ShowConsole", (Misc_ShowConsole.Checked = (ini.GetValue("Settings", "Misc_ShowConsole", "1") == "1")) ? "1" : "0");
@@ -382,6 +383,7 @@ namespace ModBot
             ini.SetValue("Settings", "MySQL_Database", MySQL_Database.Text = ini.GetValue("Settings", "MySQL_Database", ""));
             ini.SetValue("Settings", "MySQL_Username", MySQL_Username.Text = ini.GetValue("Settings", "MySQL_Username", ""));
             ini.SetValue("Settings", "MySQL_Password", MySQL_Password.Text = ini.GetValue("Settings", "MySQL_Password", ""));
+            ini.SetValue("Settings", "MySQL_Table", MySQL_Table.Text = ini.GetValue("Settings", "MySQL_Table", ""));
 
             bIgnoreUpdates = false;
 
@@ -887,7 +889,8 @@ namespace ModBot
                         {
                             JObject stream = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1)));
 
-                            string sGame = stream["game"].ToString();
+                            ChannelGame = stream["game"].ToString();
+                            ChannelTitle = stream["status"].ToString();
 
                             if(Channel_UseSteam.Checked)
                             {
@@ -895,13 +898,13 @@ namespace ModBot
 
                                 try
                                 {
-                                    if (SteamData["response"]["players"].HasValues) sGame = SteamData["response"]["players"][0]["gameextrainfo"].ToString();
+                                    if (SteamData["response"]["players"].HasValues) ChannelGame = SteamData["response"]["players"][0]["gameextrainfo"].ToString();
                                 }
                                 catch { }
 
-                                if(stream["game"].ToString() != sGame)
+                                if (stream["game"].ToString() != ChannelGame)
                                 {
-                                    Api.UpdateTitleGame(stream["status"].ToString(), sGame);
+                                    Api.UpdateTitleGame(ChannelTitle, ChannelGame);
                                 }
                             }
 
@@ -909,8 +912,8 @@ namespace ModBot
                             {
                                 if (!TitleGameModified)
                                 {
-                                    ChannelTitleBox.Text = stream["status"].ToString();
-                                    ChannelGameBox.Text = sGame;
+                                    ChannelTitleBox.Text = ChannelTitle;
+                                    ChannelGameBox.Text = ChannelGame;
 
                                     TitleGameModified = false;
                                 }
@@ -1500,7 +1503,8 @@ namespace ModBot
 
         private void ConnectionDetailsChanged(object sender, EventArgs e)
         {
-            ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (ChannelTokenBox.Text == "" ? "Channel token is missing.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "")) == "");
+            //ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (ChannelTokenBox.Text == "" ? "Channel token is missing.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "")) == "");
+            SettingsErrorLabel.Text = (BotNameBox.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (ChannelTokenBox.Text == "" ? "Channel token is missing.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "");
         }
 
         private void GenerateToken_Request(object sender, EventArgs e)
@@ -1765,6 +1769,18 @@ namespace ModBot
             else if (sender.GetType() == typeof(TextBox))
             {
                 TextBox tb = (TextBox)sender;
+                if (tb == MySQL_Table)
+                {
+                    foreach (char c in " !@#$%^&*()[]{}\\/|'\"~`")
+                    {
+                        if (MySQL_Table.Text.Contains(c))
+                        {
+                            if(!SettingsErrorLabel.Text.Contains("Invalid MySQL table name.\r\n")) SettingsErrorLabel.Text += "Invalid MySQL table name.\r\n";
+                            return;
+                        }
+                    }
+                }
+                SettingsErrorLabel.Text = SettingsErrorLabel.Text.Replace("Invalid MySQL table name.\r\n", "");
                 ini.SetValue("Settings", tb.Name, tb.Text);
             }
             else if (sender.GetType() == typeof(NumericUpDown) || sender.GetType() == typeof(FlatNumericUpDown))
@@ -1772,6 +1788,11 @@ namespace ModBot
                 NumericUpDown nud = (NumericUpDown)sender;
                 ini.SetValue("Settings", nud.Name, nud.Value.ToString());
             }
+        }
+
+        private void SettingsErrorLabel_TextChanged(object sender, EventArgs e)
+        {
+            ConnectButton.Enabled = (SettingsErrorLabel.Text == "");
         }
     }
 }

@@ -7,6 +7,7 @@ namespace ModBotUpdater
 {
     static class Program
     {
+        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini", "\r\n[Default]");
         public static List<string> args;
 
         /// <summary>

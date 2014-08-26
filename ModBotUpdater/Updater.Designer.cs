@@ -38,6 +38,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.StateLabel = new System.Windows.Forms.Label();
             this.ChangelogButton = new System.Windows.Forms.Button();
+            this.BetaUpdates = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // DownloadProgressBar
@@ -148,11 +149,24 @@
             this.ChangelogButton.UseVisualStyleBackColor = false;
             this.ChangelogButton.Click += new System.EventHandler(this.ChangelogButton_Click);
             // 
+            // BetaUpdates
+            // 
+            this.BetaUpdates.AutoSize = true;
+            this.BetaUpdates.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BetaUpdates.Location = new System.Drawing.Point(384, 35);
+            this.BetaUpdates.Name = "BetaUpdates";
+            this.BetaUpdates.Size = new System.Drawing.Size(134, 17);
+            this.BetaUpdates.TabIndex = 96;
+            this.BetaUpdates.Text = "Check for beta updates";
+            this.BetaUpdates.UseVisualStyleBackColor = true;
+            this.BetaUpdates.CheckedChanged += new System.EventHandler(this.BetaUpdates_CheckedChanged);
+            // 
             // Updater
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(532, 174);
+            this.Controls.Add(this.BetaUpdates);
             this.Controls.Add(this.ChangelogButton);
             this.Controls.Add(this.StateLabel);
             this.Controls.Add(this.label3);
@@ -178,6 +192,7 @@
             this.Controls.SetChildIndex(this.label3, 0);
             this.Controls.SetChildIndex(this.StateLabel, 0);
             this.Controls.SetChildIndex(this.ChangelogButton, 0);
+            this.Controls.SetChildIndex(this.BetaUpdates, 0);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -195,6 +210,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label StateLabel;
         public System.Windows.Forms.Button ChangelogButton;
+        public System.Windows.Forms.CheckBox BetaUpdates;
     }
 }
 

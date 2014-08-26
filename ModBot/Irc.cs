@@ -118,7 +118,7 @@ namespace ModBot
                         {
                             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                             {
-                                Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported that bot's auth token is invalid.");
+                                Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Twitch reported that bot's auth token is invalid.\r\n");
                             });
                             Thread.Sleep(10);
                             break;
@@ -162,7 +162,7 @@ namespace ModBot
                             {
                                 MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                 {
-                                    Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported channel not found.");
+                                    Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Twitch reported channel not found.\r\n");
                                 });
                                 bAbort = true;
                                 System.Threading.Thread.Sleep(10);
@@ -231,7 +231,7 @@ namespace ModBot
                                     {
                                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
-                                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "The channel's access token is missing access. It must be generated through here to have all the access required.");
+                                            Console.WriteLine(MainForm.SettingsErrorLabel.Text += "The channel's access token is missing access. It must be generated through here to have all the access required.\r\n");
                                         });
                                         bAbort = true;
                                         Thread.Sleep(10);
@@ -242,7 +242,7 @@ namespace ModBot
                                 {
                                     MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                     {
-                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported that the channel's auth token is invalid.");
+                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Twitch reported that the channel's auth token is invalid.\r\n");
                                     });
                                     bAbort = true;
                                     Thread.Sleep(10);
@@ -321,11 +321,9 @@ namespace ModBot
                 OnInitialize(InitializationStep.DatabaseSetup);
 
                 Database.Initialize();
-
-                bAbort = (Database.DB == null && Database.MySqlDB == null);
             }
 
-            if (bAbort)
+            if (bAbort || Database.DB == null && Database.MySqlDB == null)
             {
                 Console.WriteLine("Aborting connection...");
 
@@ -340,7 +338,7 @@ namespace ModBot
                     MainForm.DisconnectButton.Enabled = false;
                     MainForm.ConnectButton.Enabled = false;
                 });*/
-                Disconnect(false, false);
+                Disconnect(bAbort ? !bAbort : MainForm.SettingsErrorLabel.Text == "", false);
 
                 Console.WriteLine("Connection aborted.\r\n");
                 return;
@@ -481,7 +479,7 @@ namespace ModBot
 
                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                         {
-                            Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Username and/or password (oauth token) are incorrect!");
+                            Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Username and/or password (oauth token) are incorrect!\r\n");
                             MainForm.ConnectButton.Enabled = false;
                             MainForm.DisconnectButton.Enabled = false;
                         });
@@ -782,6 +780,8 @@ namespace ModBot
 
             thread = new Thread(() =>
             {
+                buildUserList(0); // Preload the list of users so the currency handout options will work correctly.
+                
                 while (true)
                 {
                     buildUserList();
@@ -824,7 +824,7 @@ namespace ModBot
                                 {
                                     MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                     {
-                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text = "Twitch reported that the channel was not found.");
+                                        Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Twitch reported that the channel was not found.\r\n");
                                         Disconnect();
                                         MainForm.ConnectButton.Enabled = false;
                                     });
@@ -1051,7 +1051,7 @@ namespace ModBot
                         {
                             if (warnUser(user, 1, 10, "Attempting to buy tickets without meeting the requirements or with insufficient funds or invalid parameters", 3, true, true, MainForm.Giveaway_AnnounceWarnedEntries.Checked, 6) == 1)
                             {
-                                if (finalmessage.Length + msg.Length > 512)
+                                if (finalmessage.Length + msg.Length > 996)
                                 {
                                     sendMessage(finalmessage);
                                     Thread.Sleep(1000);
@@ -1062,7 +1062,7 @@ namespace ModBot
                         }
                         else
                         {
-                            if (finalmessage.Length + msg.Length > 512)
+                            if (finalmessage.Length + msg.Length > 996)
                             {
                                 sendMessage(finalmessage);
                                 Thread.Sleep(1000);
@@ -1139,7 +1139,7 @@ namespace ModBot
                         {
                             if (!"`~!@#$%^&*()-_=+'\"\\/.,?[]{}<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.ToLower().Contains(character.ToString().ToLower()))
                             {
-                                warnUser(user, 1, 30, "Using a restricted character", 0, false, true, true, 6);
+                                warnUser(user, 1, 30, "Using a restricted character", 0, false, true, MainForm.Spam_CWLAnnounceTimeouts.Checked, 6);
                                 return;
                             }
                         }
@@ -1531,7 +1531,7 @@ namespace ModBot
                             List<string> users = new List<string>();
                             if (Database.DB != null)
                             {
-                                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + channel.Substring(1) + " ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", Database.DB))
+                                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + Database.table + " ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", Database.DB))
                                 {
                                     using (SQLiteDataReader r = query.ExecuteReader())
                                     {
@@ -1548,7 +1548,7 @@ namespace ModBot
                             }
                             else if(Database.MySqlDB != null)
                             {
-                                using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + channel.Substring(1) + " ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", Database.MySqlDB))
+                                using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + Database.table + " ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", Database.MySqlDB))
                                 {
                                     using (MySqlDataReader r = query.ExecuteReader())
                                     {
@@ -2425,18 +2425,19 @@ namespace ModBot
             }
         }
 
-        private static void addUserToList(string user)
+        private static void addUserToList(string user, int time = -1)
         {
+            if (time == -1) time = Api.GetUnixTimeNow();
             user = Api.capName(user);
             lock (ActiveUsers)
             {
                 if (!ActiveUsers.ContainsKey(user))
                 {
-                    ActiveUsers.Add(user, Api.GetUnixTimeNow());
+                    ActiveUsers.Add(user, time);
                 }
                 else
                 {
-                    ActiveUsers[user] = Api.GetUnixTimeNow();
+                    ActiveUsers[user] = time;
                 }
             }
         }
@@ -2466,7 +2467,7 @@ namespace ModBot
             }
         }
 
-        public static void buildUserList()
+        public static void buildUserList(int time = 0)
         {
             //sendRaw("WHO " + channel);
             Thread thread = new Thread(() =>
@@ -2516,7 +2517,7 @@ namespace ModBot
                                     string user = Api.capName(sUser);
                                     if (sUser != "" && !ActiveUsers.ContainsKey(user))
                                     {
-                                        addUserToList(user);
+                                        addUserToList(user, time);
                                     }
                                 }
                             }

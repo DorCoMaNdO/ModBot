@@ -174,21 +174,39 @@ namespace ModBot
                         try
                         {
                             string sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString(), sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
+                            string sBetaVersion = sLatestVersion;
+
                             if (sLatestVersion != "")
                             {
+                                bool Beta = false;
                                 string[] sCurrent = sCurrentVersion.Split('.'), sLatest = sLatestVersion.Split('.');
+                                if (ini.GetValue("Settings", "BetaUpdates", "0") == "1")
+                                {
+                                    sBetaVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotBeta.txt");
+                                    if (sBetaVersion != "")
+                                    {
+                                        string[] sBeta = sBetaVersion.Split('.');
+                                        if (TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sBeta[2])).Add(TimeSpan.FromSeconds(int.Parse(sBeta[3])))) == -1)
+                                        {
+                                            Beta = true;
+                                            sLatestVersion = sBetaVersion;
+                                            sLatest = sBeta;
+                                        }
+                                    }
+                                }
+
                                 if (TimeSpan.FromDays(int.Parse(sCurrent[2])).Add(TimeSpan.FromSeconds(int.Parse(sCurrent[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3])))) == -1)
                                 {
                                     bool Update = args.Contains("-autoupdate");
 
                                     if (bConsole)
                                     {
-                                        Console.WriteLine("\r\n********************************************************************************\r\nAn update to ModBot is available, please use the updater to update!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\n\r\n********************************************************************************\r\n");
+                                        Console.WriteLine("\r\n********************************************************************************\r\n" + (Beta ? "A beta" : "An") + " update to ModBot is available, please use the updater to update!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\n\r\n********************************************************************************\r\n");
                                     }
 
                                     if (bMessageBox)
                                     {
-                                        if (MessageBox.Show("An update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
+                                        if (MessageBox.Show((Beta ? "A beta" : "An") + " update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
                                         {
                                             if (!File.Exists("ModBotUpdater.exe"))
                                             {
@@ -200,7 +218,7 @@ namespace ModBot
 
                                     if(Update)
                                     {
-                                        Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed || args.Contains("-connect") ? " -modbotconnect" : "") + (args.Contains("-autoupdate") ? " -modbotupdate" : ""));
+                                        Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed ? " -modbotconnect" : "") + (args.Contains("-autoupdate") ? " -modbotupdate" : ""));
                                         Environment.Exit(0);
                                     }
 

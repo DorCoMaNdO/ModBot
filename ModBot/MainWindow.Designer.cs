@@ -71,6 +71,8 @@
             this.SettingsWindowButton = new System.Windows.Forms.CheckBox();
             this.DonationsWindowButton = new System.Windows.Forms.CheckBox();
             this.SettingsWindow = new System.Windows.Forms.Panel();
+            this.label23 = new System.Windows.Forms.Label();
+            this.MySQL_Table = new System.Windows.Forms.TextBox();
             this.MySQL_Port = new ModBot.FlatNumericUpDown();
             this.label25 = new System.Windows.Forms.Label();
             this.MySQL_Password = new System.Windows.Forms.TextBox();
@@ -143,6 +145,14 @@
             this.AboutWindow = new System.Windows.Forms.Panel();
             this.About_UsersLabel = new System.Windows.Forms.Label();
             this.About_Users = new System.Windows.Forms.DataGridView();
+            this.Channel = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Bot = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Title = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Game = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Status = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Viewers = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Version = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Updated = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.DonateImage = new System.Windows.Forms.PictureBox();
             this.SupportLinkLabel = new System.Windows.Forms.LinkLabel();
             this.EmailLinkLabel = new System.Windows.Forms.LinkLabel();
@@ -186,20 +196,13 @@
             this.AuthenticationLabel = new System.Windows.Forms.Label();
             this.SpamFilterWindowButton = new System.Windows.Forms.CheckBox();
             this.SpamFilterWindow = new System.Windows.Forms.Panel();
+            this.Spam_CWLAnnounceTimeouts = new System.Windows.Forms.CheckBox();
             this.Spam_CWLBox = new System.Windows.Forms.TextBox();
             this.label22 = new System.Windows.Forms.Label();
             this.Spam_CWL = new System.Windows.Forms.CheckBox();
             this.Spam_CWLLabel = new System.Windows.Forms.Label();
             this.Spam_CWLSpacer = new System.Windows.Forms.GroupBox();
             this.SongRequestPlayer = new System.Windows.Forms.WebBrowser();
-            this.Channel = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Bot = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Title = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Game = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Status = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Viewers = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Version = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Updated = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrencyBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_ActiveUserTime)).BeginInit();
             this.Giveaway_SettingsPresents.SuspendLayout();
@@ -730,6 +733,8 @@
             // SettingsWindow
             // 
             this.SettingsWindow.BackColor = System.Drawing.Color.White;
+            this.SettingsWindow.Controls.Add(this.label23);
+            this.SettingsWindow.Controls.Add(this.MySQL_Table);
             this.SettingsWindow.Controls.Add(this.MySQL_Port);
             this.SettingsWindow.Controls.Add(this.label25);
             this.SettingsWindow.Controls.Add(this.MySQL_Password);
@@ -785,6 +790,25 @@
             this.SettingsWindow.Size = new System.Drawing.Size(814, 562);
             this.SettingsWindow.TabIndex = 58;
             this.SettingsWindow.Visible = this.SettingsWindowButton.Checked;
+            // 
+            // label23
+            // 
+            this.label23.AutoSize = true;
+            this.label23.Location = new System.Drawing.Point(471, 446);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(279, 13);
+            this.label23.TabIndex = 110;
+            this.label23.Text = "Table name (if kept blank the channel name will be used):";
+            // 
+            // MySQL_Table
+            // 
+            this.MySQL_Table.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.MySQL_Table.Location = new System.Drawing.Point(474, 462);
+            this.MySQL_Table.MaxLength = 128;
+            this.MySQL_Table.Name = "MySQL_Table";
+            this.MySQL_Table.Size = new System.Drawing.Size(334, 20);
+            this.MySQL_Table.TabIndex = 111;
+            this.MySQL_Table.TextChanged += new System.EventHandler(this.Settings_Changed);
             // 
             // MySQL_Port
             // 
@@ -1033,6 +1057,7 @@
             this.SettingsErrorLabel.Size = new System.Drawing.Size(34, 13);
             this.SettingsErrorLabel.TabIndex = 84;
             this.SettingsErrorLabel.Text = "Error";
+            this.SettingsErrorLabel.TextChanged += new System.EventHandler(this.SettingsErrorLabel_TextChanged);
             // 
             // DisconnectButton
             // 
@@ -1587,7 +1612,7 @@
             // About_UsersLabel
             // 
             this.About_UsersLabel.AutoSize = true;
-            this.About_UsersLabel.Location = new System.Drawing.Point(3, 329);
+            this.About_UsersLabel.Location = new System.Drawing.Point(3, 330);
             this.About_UsersLabel.Name = "About_UsersLabel";
             this.About_UsersLabel.Size = new System.Drawing.Size(64, 13);
             this.About_UsersLabel.TabIndex = 62;
@@ -1617,9 +1642,63 @@
             this.About_Users.RowHeadersVisible = false;
             this.About_Users.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.About_Users.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.About_Users.Size = new System.Drawing.Size(814, 219);
+            this.About_Users.Size = new System.Drawing.Size(814, 218);
             this.About_Users.TabIndex = 61;
             this.About_Users.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.About_Users_SortCompare);
+            // 
+            // Channel
+            // 
+            this.Channel.HeaderText = "Channel";
+            this.Channel.Name = "Channel";
+            this.Channel.ReadOnly = true;
+            // 
+            // Bot
+            // 
+            this.Bot.HeaderText = "Bot";
+            this.Bot.Name = "Bot";
+            this.Bot.ReadOnly = true;
+            // 
+            // Title
+            // 
+            this.Title.HeaderText = "Title";
+            this.Title.Name = "Title";
+            this.Title.ReadOnly = true;
+            this.Title.Width = 150;
+            // 
+            // Game
+            // 
+            this.Game.HeaderText = "Game";
+            this.Game.Name = "Game";
+            this.Game.ReadOnly = true;
+            this.Game.Width = 120;
+            // 
+            // Status
+            // 
+            this.Status.HeaderText = "Status";
+            this.Status.Name = "Status";
+            this.Status.ReadOnly = true;
+            this.Status.Width = 76;
+            // 
+            // Viewers
+            // 
+            this.Viewers.HeaderText = "Viewers";
+            this.Viewers.Name = "Viewers";
+            this.Viewers.ReadOnly = true;
+            this.Viewers.Width = 50;
+            // 
+            // Version
+            // 
+            this.Version.HeaderText = "Version";
+            this.Version.Name = "Version";
+            this.Version.ReadOnly = true;
+            this.Version.Width = 84;
+            // 
+            // Updated
+            // 
+            this.Updated.HeaderText = "Updated";
+            this.Updated.Name = "Updated";
+            this.Updated.ReadOnly = true;
+            this.Updated.Width = 116;
             // 
             // DonateImage
             // 
@@ -2227,6 +2306,7 @@
             // SpamFilterWindow
             // 
             this.SpamFilterWindow.BackColor = System.Drawing.Color.White;
+            this.SpamFilterWindow.Controls.Add(this.Spam_CWLAnnounceTimeouts);
             this.SpamFilterWindow.Controls.Add(this.Spam_CWLBox);
             this.SpamFilterWindow.Controls.Add(this.label22);
             this.SpamFilterWindow.Controls.Add(this.Spam_CWL);
@@ -2236,6 +2316,18 @@
             this.SpamFilterWindow.Name = "SpamFilterWindow";
             this.SpamFilterWindow.Size = new System.Drawing.Size(814, 562);
             this.SpamFilterWindow.TabIndex = 68;
+            // 
+            // Spam_CWLAnnounceTimeouts
+            // 
+            this.Spam_CWLAnnounceTimeouts.AutoSize = true;
+            this.Spam_CWLAnnounceTimeouts.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Spam_CWLAnnounceTimeouts.Location = new System.Drawing.Point(74, 49);
+            this.Spam_CWLAnnounceTimeouts.Name = "Spam_CWLAnnounceTimeouts";
+            this.Spam_CWLAnnounceTimeouts.Size = new System.Drawing.Size(114, 17);
+            this.Spam_CWLAnnounceTimeouts.TabIndex = 69;
+            this.Spam_CWLAnnounceTimeouts.Text = "Announce timeouts";
+            this.Spam_CWLAnnounceTimeouts.UseVisualStyleBackColor = true;
+            this.Spam_CWLAnnounceTimeouts.CheckedChanged += new System.EventHandler(this.Settings_Changed);
             // 
             // Spam_CWLBox
             // 
@@ -2301,60 +2393,6 @@
             this.SongRequestPlayer.TabIndex = 69;
             this.SongRequestPlayer.Visible = false;
             this.SongRequestPlayer.WebBrowserShortcutsEnabled = false;
-            // 
-            // Channel
-            // 
-            this.Channel.HeaderText = "Channel";
-            this.Channel.Name = "Channel";
-            this.Channel.ReadOnly = true;
-            // 
-            // Bot
-            // 
-            this.Bot.HeaderText = "Bot";
-            this.Bot.Name = "Bot";
-            this.Bot.ReadOnly = true;
-            // 
-            // Title
-            // 
-            this.Title.HeaderText = "Title";
-            this.Title.Name = "Title";
-            this.Title.ReadOnly = true;
-            this.Title.Width = 150;
-            // 
-            // Game
-            // 
-            this.Game.HeaderText = "Game";
-            this.Game.Name = "Game";
-            this.Game.ReadOnly = true;
-            this.Game.Width = 120;
-            // 
-            // Status
-            // 
-            this.Status.HeaderText = "Status";
-            this.Status.Name = "Status";
-            this.Status.ReadOnly = true;
-            this.Status.Width = 76;
-            // 
-            // Viewers
-            // 
-            this.Viewers.HeaderText = "Viewers";
-            this.Viewers.Name = "Viewers";
-            this.Viewers.ReadOnly = true;
-            this.Viewers.Width = 50;
-            // 
-            // Version
-            // 
-            this.Version.HeaderText = "Version";
-            this.Version.Name = "Version";
-            this.Version.ReadOnly = true;
-            this.Version.Width = 84;
-            // 
-            // Updated
-            // 
-            this.Updated.HeaderText = "Updated";
-            this.Updated.Name = "Updated";
-            this.Updated.ReadOnly = true;
-            this.Updated.Width = 116;
             // 
             // MainWindow
             // 
@@ -2611,5 +2649,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Viewers;
         private System.Windows.Forms.DataGridViewTextBoxColumn Version;
         private System.Windows.Forms.DataGridViewTextBoxColumn Updated;
+        private System.Windows.Forms.Label label23;
+        public System.Windows.Forms.TextBox MySQL_Table;
+        public System.Windows.Forms.CheckBox Spam_CWLAnnounceTimeouts;
     }
 }
