@@ -133,7 +133,7 @@ namespace ModBot
                     w.Proxy = null;
                     try
                     {
-                        string sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + Irc.channel.Substring(1) + "/subscriptions/" + user.ToLower() + "?oauth_token=" + Irc.channeltoken);
+                        string sData = w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1) + "/subscriptions/" + user.ToLower() + "?oauth_token=" + Irc.channeltoken);
                         //bSubscriber = (!sData.Contains("Token invalid or missing required scope"));
                         bSubscriber = true;
                     }

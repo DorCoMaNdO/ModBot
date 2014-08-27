@@ -1440,7 +1440,7 @@ namespace ModBot
                     {
                         sMessage = sMessage + "and have " + MainForm.Giveaway_MinCurrency.Value + " " + currencyName + ", ";
                     }
-                    sMessage = sMessage + "the winner is selected from a list of viewers that were active in the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes";
+                    sMessage = sMessage + "the winner is selected from a list of viewers that were active within the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes";
                     if (MainForm.Giveaway_MustFollowCheckBox.Checked || MainForm.Giveaway_MinCurrencyCheckBox.Checked) sMessage = sMessage + " and comply the terms";
                     sMessage = sMessage + ".";
                     sendMessage(sMessage);

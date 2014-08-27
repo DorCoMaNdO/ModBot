@@ -63,7 +63,7 @@ namespace ModBot
                 string msg = "";
                 if (MainForm.Giveaway_TypeActive.Checked)
                 {
-                    msg = " who sent a message or joined in the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes";
+                    msg = " who sent a message or joined within the last " + MainForm.Giveaway_ActiveUserTime.Value + " minutes";
                 }
                 if (MainForm.Giveaway_MustSubscribe.Checked)
                 {
@@ -126,14 +126,14 @@ namespace ModBot
                 }
                 else
                 {
-                    closeGiveaway(false);
+                    closeGiveaway(false, false);
 
                     Irc.sendMessage("A giveaway has started! Anyone" + msg + " qualifies!");
                 }
             });
         }
 
-        public static void closeGiveaway(bool announce = true)
+        public static void closeGiveaway(bool announce = true, bool open = true)
         {
             Open = false;
             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
@@ -142,7 +142,7 @@ namespace ModBot
                 MainForm.Giveaway_RerollButton.Text = "Roll";
                 MainForm.Giveaway_RerollButton.Enabled = true;
                 MainForm.Giveaway_CloseButton.Enabled = false;
-                MainForm.Giveaway_OpenButton.Enabled = true;
+                MainForm.Giveaway_OpenButton.Enabled = open;
             });
             if (announce)
             {

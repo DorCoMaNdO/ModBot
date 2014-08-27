@@ -1647,6 +1647,10 @@ namespace ModBot
                         if (e.SortResult == 0)
                         {
                             e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
+                            if (e.SortResult == 0)
+                            {
+                                e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
+                            }
                         }
                     }
                 }
@@ -1664,7 +1668,11 @@ namespace ModBot
                         e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
                         if (e.SortResult == 0)
                         {
-                            e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                            e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
+                            if (e.SortResult == 0)
+                            {
+                                e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                            }
                         }
                     }
                 }
@@ -1679,10 +1687,14 @@ namespace ModBot
                     e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
                     if (e.SortResult == 0)
                     {
-                        e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                        e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
                         if (e.SortResult == 0)
                         {
-                            e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
+                            e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                            if (e.SortResult == 0)
+                            {
+                                e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
+                            }
                         }
                     }
                 }
@@ -1693,14 +1705,18 @@ namespace ModBot
                 e.SortResult = e.CellValue2.ToString().CompareTo(e.CellValue1.ToString());
                 if (e.SortResult == 0)
                 {
-                    e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                    e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
                     if (e.SortResult == 0)
                     {
-                        e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
+                        e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
                         if (e.SortResult == 0)
                         {
-                            string[] cell1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString().Split('.'), cell2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString().Split('.');
-                            e.SortResult = TimeSpan.FromDays(int.Parse(cell1[2])).Add(TimeSpan.FromSeconds(int.Parse(cell1[3]))).CompareTo(TimeSpan.FromDays(int.Parse(cell2[2])).Add(TimeSpan.FromSeconds(int.Parse(cell2[3]))));
+                            e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
+                            if (e.SortResult == 0)
+                            {
+                                string[] cell1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString().Split('.'), cell2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString().Split('.');
+                                e.SortResult = TimeSpan.FromDays(int.Parse(cell1[2])).Add(TimeSpan.FromSeconds(int.Parse(cell1[3]))).CompareTo(TimeSpan.FromDays(int.Parse(cell2[2])).Add(TimeSpan.FromSeconds(int.Parse(cell2[3]))));
+                            }
                         }
                     }
                 }
@@ -1708,7 +1724,7 @@ namespace ModBot
             }
             else if (e.Column.Name == "Game")
             {
-                e.SortResult = e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
+                e.SortResult = e.CellValue1.ToString() == "" ? 1 : e.CellValue2.ToString() == "" ? -1 : e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
                 if (e.SortResult == 0)
                 {
                     e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
@@ -1727,6 +1743,10 @@ namespace ModBot
                     }
                 }
                 e.Handled = true;
+            }
+            else if (e.Column.Name == "Title")
+            {
+                e.SortResult = e.CellValue1.ToString() == "" ? 1 : e.CellValue2.ToString() == "" ? -1 : e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
             }
         }
 

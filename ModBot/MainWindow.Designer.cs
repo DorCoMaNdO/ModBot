@@ -1593,7 +1593,6 @@
             // AboutWindow
             // 
             this.AboutWindow.BackColor = System.Drawing.Color.White;
-            this.AboutWindow.Controls.Add(this.About_UsersLabel);
             this.AboutWindow.Controls.Add(this.About_Users);
             this.AboutWindow.Controls.Add(this.DonateImage);
             this.AboutWindow.Controls.Add(this.SupportLinkLabel);
@@ -1604,6 +1603,7 @@
             this.AboutWindow.Controls.Add(this.AboutImage);
             this.AboutWindow.Controls.Add(this.VersionLabel);
             this.AboutWindow.Controls.Add(this.label20);
+            this.AboutWindow.Controls.Add(this.About_UsersLabel);
             this.AboutWindow.Location = new System.Drawing.Point(108, 30);
             this.AboutWindow.Name = "AboutWindow";
             this.AboutWindow.Size = new System.Drawing.Size(814, 562);
@@ -1612,7 +1612,7 @@
             // About_UsersLabel
             // 
             this.About_UsersLabel.AutoSize = true;
-            this.About_UsersLabel.Location = new System.Drawing.Point(3, 330);
+            this.About_UsersLabel.Location = new System.Drawing.Point(3, 332);
             this.About_UsersLabel.Name = "About_UsersLabel";
             this.About_UsersLabel.Size = new System.Drawing.Size(64, 13);
             this.About_UsersLabel.TabIndex = 62;
@@ -1636,7 +1636,7 @@
             this.Version,
             this.Updated});
             this.About_Users.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke;
-            this.About_Users.Location = new System.Drawing.Point(0, 343);
+            this.About_Users.Location = new System.Drawing.Point(0, 344);
             this.About_Users.MultiSelect = false;
             this.About_Users.Name = "About_Users";
             this.About_Users.RowHeadersVisible = false;
