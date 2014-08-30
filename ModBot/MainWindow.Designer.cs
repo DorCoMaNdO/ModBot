@@ -71,6 +71,7 @@
             this.SettingsWindowButton = new System.Windows.Forms.CheckBox();
             this.DonationsWindowButton = new System.Windows.Forms.CheckBox();
             this.SettingsWindow = new System.Windows.Forms.Panel();
+            this.SettingsErrorLabel = new System.Windows.Forms.Label();
             this.label23 = new System.Windows.Forms.Label();
             this.MySQL_Table = new System.Windows.Forms.TextBox();
             this.MySQL_Port = new ModBot.FlatNumericUpDown();
@@ -94,7 +95,6 @@
             this.GenerateBotTokenButton = new System.Windows.Forms.Button();
             this.label21 = new System.Windows.Forms.Label();
             this.CurrencyCommandBox = new System.Windows.Forms.TextBox();
-            this.SettingsErrorLabel = new System.Windows.Forms.Label();
             this.DisconnectButton = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
             this.DonationsLabel = new System.Windows.Forms.Label();
@@ -143,7 +143,6 @@
             this.UpdateLastDonorCheckBox = new System.Windows.Forms.CheckBox();
             this.AboutWindowButton = new System.Windows.Forms.CheckBox();
             this.AboutWindow = new System.Windows.Forms.Panel();
-            this.About_UsersLabel = new System.Windows.Forms.Label();
             this.About_Users = new System.Windows.Forms.DataGridView();
             this.Channel = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Bot = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -162,10 +161,18 @@
             this.AboutImage = new System.Windows.Forms.PictureBox();
             this.VersionLabel = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
+            this.About_UsersLabel = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
             this.AuthenticationBrowser = new System.Windows.Forms.WebBrowser();
             this.ChannelWindowButton = new System.Windows.Forms.CheckBox();
             this.ChannelWindow = new System.Windows.Forms.Panel();
+            this.Channel_SubscriptionRewardsList = new System.Windows.Forms.DataGridView();
+            this.Reward = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Instructions = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Channel_SubscriptionsDate = new System.Windows.Forms.DateTimePicker();
+            this.SubscriptionsLabel = new System.Windows.Forms.Label();
+            this.Channel_SubscriptionRewards = new System.Windows.Forms.CheckBox();
+            this.SubscriptionsSpacer = new System.Windows.Forms.GroupBox();
             this.Channel_SteamID64 = new System.Windows.Forms.TextBox();
             this.Channel_UseSteam = new System.Windows.Forms.CheckBox();
             this.UpdateTitleGameButton = new System.Windows.Forms.Button();
@@ -173,6 +180,9 @@
             this.CurrencyWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindow = new System.Windows.Forms.Panel();
+            this.Giveaway_UserList = new System.Windows.Forms.ListBox();
+            this.GiveawayUsersLabel = new System.Windows.Forms.Label();
+            this.GiveawayUsersSpacer = new System.Windows.Forms.GroupBox();
             this.Giveaway_CustomKeyword = new System.Windows.Forms.TextBox();
             this.Giveaway_AnnounceWarnedEntries = new System.Windows.Forms.CheckBox();
             this.Giveaway_WarnFalseEntries = new System.Windows.Forms.CheckBox();
@@ -193,6 +203,7 @@
             this.Giveaway_TypeTickets = new System.Windows.Forms.RadioButton();
             this.Giveaway_TypeKeyword = new System.Windows.Forms.RadioButton();
             this.Giveaway_TypeActive = new System.Windows.Forms.RadioButton();
+            this.Giveaway_UserCount = new System.Windows.Forms.Label();
             this.AuthenticationLabel = new System.Windows.Forms.Label();
             this.SpamFilterWindowButton = new System.Windows.Forms.CheckBox();
             this.SpamFilterWindow = new System.Windows.Forms.Panel();
@@ -221,6 +232,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.DonateImage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.AboutImage)).BeginInit();
             this.ChannelWindow.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Channel_SubscriptionRewardsList)).BeginInit();
             this.CurrencyWindow.SuspendLayout();
             this.GiveawayWindow.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchMinutes)).BeginInit();
@@ -237,7 +249,7 @@
             this.ChannelStatusLabel.ForeColor = System.Drawing.Color.Red;
             this.ChannelStatusLabel.Location = new System.Drawing.Point(0, 0);
             this.ChannelStatusLabel.Name = "ChannelStatusLabel";
-            this.ChannelStatusLabel.Size = new System.Drawing.Size(814, 24);
+            this.ChannelStatusLabel.Size = new System.Drawing.Size(1024, 24);
             this.ChannelStatusLabel.TabIndex = 12;
             this.ChannelStatusLabel.Text = "DISCONNECTED";
             this.ChannelStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -270,7 +282,7 @@
             this.ChannelTitleBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ChannelTitleBox.Location = new System.Drawing.Point(6, 41);
             this.ChannelTitleBox.Name = "ChannelTitleBox";
-            this.ChannelTitleBox.Size = new System.Drawing.Size(653, 20);
+            this.ChannelTitleBox.Size = new System.Drawing.Size(864, 20);
             this.ChannelTitleBox.TabIndex = 17;
             this.ChannelTitleBox.Text = "Loading...";
             this.ChannelTitleBox.TextChanged += new System.EventHandler(this.TitleGame_Modified);
@@ -293,7 +305,7 @@
             this.ChannelGameBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ChannelGameBox.Location = new System.Drawing.Point(6, 80);
             this.ChannelGameBox.Name = "ChannelGameBox";
-            this.ChannelGameBox.Size = new System.Drawing.Size(653, 20);
+            this.ChannelGameBox.Size = new System.Drawing.Size(864, 20);
             this.ChannelGameBox.TabIndex = 19;
             this.ChannelGameBox.Text = "Loading...";
             this.ChannelGameBox.TextChanged += new System.EventHandler(this.TitleGame_Modified);
@@ -435,7 +447,7 @@
             this.Giveaway_BanListListBox.FormattingEnabled = true;
             this.Giveaway_BanListListBox.Location = new System.Drawing.Point(324, 46);
             this.Giveaway_BanListListBox.Name = "Giveaway_BanListListBox";
-            this.Giveaway_BanListListBox.Size = new System.Drawing.Size(200, 93);
+            this.Giveaway_BanListListBox.Size = new System.Drawing.Size(484, 93);
             this.Giveaway_BanListListBox.TabIndex = 30;
             this.Giveaway_BanListListBox.SelectedIndexChanged += new System.EventHandler(this.Giveaway_BanListListBox_SelectedIndexChanged);
             // 
@@ -446,7 +458,7 @@
             this.Giveaway_BanButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Giveaway_BanButton.Location = new System.Drawing.Point(324, 170);
             this.Giveaway_BanButton.Name = "Giveaway_BanButton";
-            this.Giveaway_BanButton.Size = new System.Drawing.Size(97, 23);
+            this.Giveaway_BanButton.Size = new System.Drawing.Size(239, 23);
             this.Giveaway_BanButton.TabIndex = 31;
             this.Giveaway_BanButton.Text = "Ban";
             this.Giveaway_BanButton.UseVisualStyleBackColor = false;
@@ -457,9 +469,9 @@
             this.Giveaway_UnbanButton.BackColor = System.Drawing.Color.White;
             this.Giveaway_UnbanButton.Enabled = false;
             this.Giveaway_UnbanButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Giveaway_UnbanButton.Location = new System.Drawing.Point(427, 170);
+            this.Giveaway_UnbanButton.Location = new System.Drawing.Point(569, 170);
             this.Giveaway_UnbanButton.Name = "Giveaway_UnbanButton";
-            this.Giveaway_UnbanButton.Size = new System.Drawing.Size(97, 23);
+            this.Giveaway_UnbanButton.Size = new System.Drawing.Size(239, 23);
             this.Giveaway_UnbanButton.TabIndex = 32;
             this.Giveaway_UnbanButton.Text = "Unban";
             this.Giveaway_UnbanButton.UseVisualStyleBackColor = false;
@@ -470,7 +482,7 @@
             this.Giveaway_AddBanTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.Giveaway_AddBanTextBox.Location = new System.Drawing.Point(324, 144);
             this.Giveaway_AddBanTextBox.Name = "Giveaway_AddBanTextBox";
-            this.Giveaway_AddBanTextBox.Size = new System.Drawing.Size(200, 20);
+            this.Giveaway_AddBanTextBox.Size = new System.Drawing.Size(484, 20);
             this.Giveaway_AddBanTextBox.TabIndex = 33;
             this.Giveaway_AddBanTextBox.TextChanged += new System.EventHandler(this.Giveaway_AddBanTextBox_TextChanged);
             // 
@@ -553,7 +565,7 @@
             this.Giveaway_SettingsPresents.Location = new System.Drawing.Point(-1, -1);
             this.Giveaway_SettingsPresents.Name = "Giveaway_SettingsPresents";
             this.Giveaway_SettingsPresents.SelectedIndex = 0;
-            this.Giveaway_SettingsPresents.Size = new System.Drawing.Size(816, 22);
+            this.Giveaway_SettingsPresents.Size = new System.Drawing.Size(1026, 22);
             this.Giveaway_SettingsPresents.TabIndex = 43;
             this.Giveaway_SettingsPresents.SelectedIndexChanged += new System.EventHandler(this.SettingsPresents_SelectedIndexChanged);
             // 
@@ -562,7 +574,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(808, 0);
+            this.tabPage1.Size = new System.Drawing.Size(1018, 0);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Default";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -593,9 +605,9 @@
             this.GiveawayTypeLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.GiveawayTypeLabel.Location = new System.Drawing.Point(58, 25);
             this.GiveawayTypeLabel.Name = "GiveawayTypeLabel";
-            this.GiveawayTypeLabel.Size = new System.Drawing.Size(89, 19);
+            this.GiveawayTypeLabel.Size = new System.Drawing.Size(35, 19);
             this.GiveawayTypeLabel.TabIndex = 13;
-            this.GiveawayTypeLabel.Text = "Giveaway type";
+            this.GiveawayTypeLabel.Text = "Type";
             this.GiveawayTypeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // HandoutLabel
@@ -614,7 +626,7 @@
             this.HandoutSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
             this.HandoutSpacer.Location = new System.Drawing.Point(-1, 0);
             this.HandoutSpacer.Name = "HandoutSpacer";
-            this.HandoutSpacer.Size = new System.Drawing.Size(816, 11);
+            this.HandoutSpacer.Size = new System.Drawing.Size(1026, 11);
             this.HandoutSpacer.TabIndex = 49;
             this.HandoutSpacer.TabStop = false;
             // 
@@ -733,6 +745,7 @@
             // SettingsWindow
             // 
             this.SettingsWindow.BackColor = System.Drawing.Color.White;
+            this.SettingsWindow.Controls.Add(this.SettingsErrorLabel);
             this.SettingsWindow.Controls.Add(this.label23);
             this.SettingsWindow.Controls.Add(this.MySQL_Table);
             this.SettingsWindow.Controls.Add(this.MySQL_Port);
@@ -756,7 +769,6 @@
             this.SettingsWindow.Controls.Add(this.GenerateBotTokenButton);
             this.SettingsWindow.Controls.Add(this.label21);
             this.SettingsWindow.Controls.Add(this.CurrencyCommandBox);
-            this.SettingsWindow.Controls.Add(this.SettingsErrorLabel);
             this.SettingsWindow.Controls.Add(this.DisconnectButton);
             this.SettingsWindow.Controls.Add(this.label14);
             this.SettingsWindow.Controls.Add(this.DonationsLabel);
@@ -787,14 +799,26 @@
             this.SettingsWindow.Controls.Add(this.label5);
             this.SettingsWindow.Location = new System.Drawing.Point(108, 30);
             this.SettingsWindow.Name = "SettingsWindow";
-            this.SettingsWindow.Size = new System.Drawing.Size(814, 562);
+            this.SettingsWindow.Size = new System.Drawing.Size(1024, 562);
             this.SettingsWindow.TabIndex = 58;
             this.SettingsWindow.Visible = this.SettingsWindowButton.Checked;
+            // 
+            // SettingsErrorLabel
+            // 
+            this.SettingsErrorLabel.AutoSize = true;
+            this.SettingsErrorLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.SettingsErrorLabel.ForeColor = System.Drawing.Color.Red;
+            this.SettingsErrorLabel.Location = new System.Drawing.Point(3, 382);
+            this.SettingsErrorLabel.Name = "SettingsErrorLabel";
+            this.SettingsErrorLabel.Size = new System.Drawing.Size(34, 13);
+            this.SettingsErrorLabel.TabIndex = 84;
+            this.SettingsErrorLabel.Text = "Error";
+            this.SettingsErrorLabel.TextChanged += new System.EventHandler(this.SettingsErrorLabel_TextChanged);
             // 
             // label23
             // 
             this.label23.AutoSize = true;
-            this.label23.Location = new System.Drawing.Point(471, 446);
+            this.label23.Location = new System.Drawing.Point(681, 446);
             this.label23.Name = "label23";
             this.label23.Size = new System.Drawing.Size(279, 13);
             this.label23.TabIndex = 110;
@@ -803,7 +827,7 @@
             // MySQL_Table
             // 
             this.MySQL_Table.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.MySQL_Table.Location = new System.Drawing.Point(474, 462);
+            this.MySQL_Table.Location = new System.Drawing.Point(684, 462);
             this.MySQL_Table.MaxLength = 128;
             this.MySQL_Table.Name = "MySQL_Table";
             this.MySQL_Table.Size = new System.Drawing.Size(334, 20);
@@ -812,7 +836,7 @@
             // 
             // MySQL_Port
             // 
-            this.MySQL_Port.Location = new System.Drawing.Point(588, 384);
+            this.MySQL_Port.Location = new System.Drawing.Point(798, 384);
             this.MySQL_Port.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -836,7 +860,7 @@
             // label25
             // 
             this.label25.AutoSize = true;
-            this.label25.Location = new System.Drawing.Point(641, 407);
+            this.label25.Location = new System.Drawing.Point(851, 407);
             this.label25.Name = "label25";
             this.label25.Size = new System.Drawing.Size(56, 13);
             this.label25.TabIndex = 107;
@@ -845,7 +869,7 @@
             // MySQL_Password
             // 
             this.MySQL_Password.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.MySQL_Password.Location = new System.Drawing.Point(644, 423);
+            this.MySQL_Password.Location = new System.Drawing.Point(854, 423);
             this.MySQL_Password.MaxLength = 512;
             this.MySQL_Password.Name = "MySQL_Password";
             this.MySQL_Password.PasswordChar = '*';
@@ -856,7 +880,7 @@
             // label26
             // 
             this.label26.AutoSize = true;
-            this.label26.Location = new System.Drawing.Point(471, 407);
+            this.label26.Location = new System.Drawing.Point(681, 407);
             this.label26.Name = "label26";
             this.label26.Size = new System.Drawing.Size(58, 13);
             this.label26.TabIndex = 104;
@@ -865,7 +889,7 @@
             // MySQL_Username
             // 
             this.MySQL_Username.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.MySQL_Username.Location = new System.Drawing.Point(474, 423);
+            this.MySQL_Username.Location = new System.Drawing.Point(684, 423);
             this.MySQL_Username.MaxLength = 128;
             this.MySQL_Username.Name = "MySQL_Username";
             this.MySQL_Username.Size = new System.Drawing.Size(164, 20);
@@ -875,7 +899,7 @@
             // label27
             // 
             this.label27.AutoSize = true;
-            this.label27.Location = new System.Drawing.Point(641, 368);
+            this.label27.Location = new System.Drawing.Point(851, 368);
             this.label27.Name = "label27";
             this.label27.Size = new System.Drawing.Size(56, 13);
             this.label27.TabIndex = 103;
@@ -884,7 +908,7 @@
             // MySQL_Database
             // 
             this.MySQL_Database.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.MySQL_Database.Location = new System.Drawing.Point(644, 384);
+            this.MySQL_Database.Location = new System.Drawing.Point(854, 384);
             this.MySQL_Database.MaxLength = 128;
             this.MySQL_Database.Name = "MySQL_Database";
             this.MySQL_Database.Size = new System.Drawing.Size(164, 20);
@@ -894,7 +918,7 @@
             // label24
             // 
             this.label24.AutoSize = true;
-            this.label24.Location = new System.Drawing.Point(471, 368);
+            this.label24.Location = new System.Drawing.Point(681, 368);
             this.label24.Name = "label24";
             this.label24.Size = new System.Drawing.Size(32, 13);
             this.label24.TabIndex = 98;
@@ -903,7 +927,7 @@
             // MySQL_Host
             // 
             this.MySQL_Host.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.MySQL_Host.Location = new System.Drawing.Point(474, 384);
+            this.MySQL_Host.Location = new System.Drawing.Point(684, 384);
             this.MySQL_Host.MaxLength = 128;
             this.MySQL_Host.Name = "MySQL_Host";
             this.MySQL_Host.Size = new System.Drawing.Size(108, 20);
@@ -914,7 +938,7 @@
             // 
             this.MySQLLabel.AutoSize = true;
             this.MySQLLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.MySQLLabel.Location = new System.Drawing.Point(483, 349);
+            this.MySQLLabel.Location = new System.Drawing.Point(691, 349);
             this.MySQLLabel.Name = "MySQLLabel";
             this.MySQLLabel.Size = new System.Drawing.Size(318, 19);
             this.MySQLLabel.TabIndex = 97;
@@ -924,7 +948,7 @@
             // MySQLSpacer
             // 
             this.MySQLSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
-            this.MySQLSpacer.Location = new System.Drawing.Point(468, 349);
+            this.MySQLSpacer.Location = new System.Drawing.Point(676, 349);
             this.MySQLSpacer.Name = "MySQLSpacer";
             this.MySQLSpacer.Size = new System.Drawing.Size(348, 11);
             this.MySQLSpacer.TabIndex = 96;
@@ -945,7 +969,7 @@
             // label19
             // 
             this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(662, 247);
+            this.label19.Location = new System.Drawing.Point(872, 247);
             this.label19.Name = "label19";
             this.label19.Size = new System.Drawing.Size(142, 13);
             this.label19.TabIndex = 94;
@@ -953,7 +977,7 @@
             // 
             // CurrencySubHandoutAmount
             // 
-            this.CurrencySubHandoutAmount.Location = new System.Drawing.Point(665, 263);
+            this.CurrencySubHandoutAmount.Location = new System.Drawing.Point(875, 263);
             this.CurrencySubHandoutAmount.Maximum = new decimal(new int[] {
             200,
             0,
@@ -976,16 +1000,16 @@
             // DonationsTokenBox
             // 
             this.DonationsTokenBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.DonationsTokenBox.Location = new System.Drawing.Point(410, 323);
+            this.DonationsTokenBox.Location = new System.Drawing.Point(515, 323);
             this.DonationsTokenBox.Name = "DonationsTokenBox";
             this.DonationsTokenBox.PasswordChar = '*';
-            this.DonationsTokenBox.Size = new System.Drawing.Size(398, 20);
+            this.DonationsTokenBox.Size = new System.Drawing.Size(503, 20);
             this.DonationsTokenBox.TabIndex = 91;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(309, 57);
+            this.label4.Location = new System.Drawing.Point(409, 57);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(128, 13);
             this.label4.TabIndex = 90;
@@ -996,9 +1020,9 @@
             this.GenerateChannelTokenButton.BackColor = System.Drawing.Color.White;
             this.GenerateChannelTokenButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.GenerateChannelTokenButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.GenerateChannelTokenButton.Location = new System.Drawing.Point(708, 72);
+            this.GenerateChannelTokenButton.Location = new System.Drawing.Point(808, 72);
             this.GenerateChannelTokenButton.Name = "GenerateChannelTokenButton";
-            this.GenerateChannelTokenButton.Size = new System.Drawing.Size(100, 22);
+            this.GenerateChannelTokenButton.Size = new System.Drawing.Size(210, 22);
             this.GenerateChannelTokenButton.TabIndex = 89;
             this.GenerateChannelTokenButton.Text = "Generate";
             this.GenerateChannelTokenButton.UseVisualStyleBackColor = false;
@@ -1007,7 +1031,7 @@
             // ChannelTokenBox
             // 
             this.ChannelTokenBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ChannelTokenBox.Location = new System.Drawing.Point(312, 73);
+            this.ChannelTokenBox.Location = new System.Drawing.Point(412, 73);
             this.ChannelTokenBox.Name = "ChannelTokenBox";
             this.ChannelTokenBox.PasswordChar = '*';
             this.ChannelTokenBox.Size = new System.Drawing.Size(390, 20);
@@ -1019,9 +1043,9 @@
             this.GenerateBotTokenButton.BackColor = System.Drawing.Color.White;
             this.GenerateBotTokenButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.GenerateBotTokenButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.GenerateBotTokenButton.Location = new System.Drawing.Point(708, 33);
+            this.GenerateBotTokenButton.Location = new System.Drawing.Point(808, 33);
             this.GenerateBotTokenButton.Name = "GenerateBotTokenButton";
-            this.GenerateBotTokenButton.Size = new System.Drawing.Size(100, 22);
+            this.GenerateBotTokenButton.Size = new System.Drawing.Size(210, 22);
             this.GenerateBotTokenButton.TabIndex = 87;
             this.GenerateBotTokenButton.Text = "Generate";
             this.GenerateBotTokenButton.UseVisualStyleBackColor = false;
@@ -1030,7 +1054,7 @@
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(407, 191);
+            this.label21.Location = new System.Drawing.Point(512, 191);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(164, 13);
             this.label21.TabIndex = 85;
@@ -1039,34 +1063,22 @@
             // CurrencyCommandBox
             // 
             this.CurrencyCommandBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.CurrencyCommandBox.Location = new System.Drawing.Point(410, 207);
+            this.CurrencyCommandBox.Location = new System.Drawing.Point(515, 207);
             this.CurrencyCommandBox.MaxLength = 64;
             this.CurrencyCommandBox.Name = "CurrencyCommandBox";
-            this.CurrencyCommandBox.Size = new System.Drawing.Size(398, 20);
+            this.CurrencyCommandBox.Size = new System.Drawing.Size(503, 20);
             this.CurrencyCommandBox.TabIndex = 86;
             this.CurrencyCommandBox.Text = "ModCoins";
             this.CurrencyCommandBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
-            // 
-            // SettingsErrorLabel
-            // 
-            this.SettingsErrorLabel.AutoSize = true;
-            this.SettingsErrorLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SettingsErrorLabel.ForeColor = System.Drawing.Color.Red;
-            this.SettingsErrorLabel.Location = new System.Drawing.Point(3, 382);
-            this.SettingsErrorLabel.Name = "SettingsErrorLabel";
-            this.SettingsErrorLabel.Size = new System.Drawing.Size(34, 13);
-            this.SettingsErrorLabel.TabIndex = 84;
-            this.SettingsErrorLabel.Text = "Error";
-            this.SettingsErrorLabel.TextChanged += new System.EventHandler(this.SettingsErrorLabel_TextChanged);
             // 
             // DisconnectButton
             // 
             this.DisconnectButton.BackColor = System.Drawing.Color.White;
             this.DisconnectButton.Enabled = false;
             this.DisconnectButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.DisconnectButton.Location = new System.Drawing.Point(492, 506);
+            this.DisconnectButton.Location = new System.Drawing.Point(598, 506);
             this.DisconnectButton.Name = "DisconnectButton";
-            this.DisconnectButton.Size = new System.Drawing.Size(316, 50);
+            this.DisconnectButton.Size = new System.Drawing.Size(420, 50);
             this.DisconnectButton.TabIndex = 83;
             this.DisconnectButton.Text = "Disconnect";
             this.DisconnectButton.UseVisualStyleBackColor = false;
@@ -1131,7 +1143,7 @@
             this.DonationsSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
             this.DonationsSpacer.Location = new System.Drawing.Point(-1, 289);
             this.DonationsSpacer.Name = "DonationsSpacer";
-            this.DonationsSpacer.Size = new System.Drawing.Size(816, 11);
+            this.DonationsSpacer.Size = new System.Drawing.Size(1026, 11);
             this.DonationsSpacer.TabIndex = 80;
             this.DonationsSpacer.TabStop = false;
             // 
@@ -1184,7 +1196,7 @@
             this.CurrencySpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
             this.CurrencySpacer.Location = new System.Drawing.Point(-1, 99);
             this.CurrencySpacer.Name = "CurrencySpacer";
-            this.CurrencySpacer.Size = new System.Drawing.Size(816, 11);
+            this.CurrencySpacer.Size = new System.Drawing.Size(1026, 11);
             this.CurrencySpacer.TabIndex = 61;
             this.CurrencySpacer.TabStop = false;
             // 
@@ -1193,7 +1205,7 @@
             this.SubscribersSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
             this.SubscribersSpacer.Location = new System.Drawing.Point(-1, 233);
             this.SubscribersSpacer.Name = "SubscribersSpacer";
-            this.SubscribersSpacer.Size = new System.Drawing.Size(816, 11);
+            this.SubscribersSpacer.Size = new System.Drawing.Size(1026, 11);
             this.SubscribersSpacer.TabIndex = 63;
             this.SubscribersSpacer.TabStop = false;
             // 
@@ -1202,7 +1214,7 @@
             this.ConnectionSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
             this.ConnectionSpacer.Location = new System.Drawing.Point(-1, 0);
             this.ConnectionSpacer.Name = "ConnectionSpacer";
-            this.ConnectionSpacer.Size = new System.Drawing.Size(816, 11);
+            this.ConnectionSpacer.Size = new System.Drawing.Size(1026, 11);
             this.ConnectionSpacer.TabIndex = 50;
             this.ConnectionSpacer.TabStop = false;
             // 
@@ -1212,7 +1224,7 @@
             this.DonationsClientIdBox.Location = new System.Drawing.Point(6, 323);
             this.DonationsClientIdBox.Name = "DonationsClientIdBox";
             this.DonationsClientIdBox.PasswordChar = '*';
-            this.DonationsClientIdBox.Size = new System.Drawing.Size(398, 20);
+            this.DonationsClientIdBox.Size = new System.Drawing.Size(503, 20);
             this.DonationsClientIdBox.TabIndex = 76;
             // 
             // label13
@@ -1236,7 +1248,7 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(309, 20);
+            this.label12.Location = new System.Drawing.Point(409, 20);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(105, 13);
             this.label12.TabIndex = 65;
@@ -1256,7 +1268,7 @@
             this.SubLinkBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.SubLinkBox.Location = new System.Drawing.Point(6, 263);
             this.SubLinkBox.Name = "SubLinkBox";
-            this.SubLinkBox.Size = new System.Drawing.Size(653, 20);
+            this.SubLinkBox.Size = new System.Drawing.Size(863, 20);
             this.SubLinkBox.TabIndex = 68;
             // 
             // label10
@@ -1298,10 +1310,11 @@
             // ConnectButton
             // 
             this.ConnectButton.BackColor = System.Drawing.Color.White;
+            this.ConnectButton.Enabled = false;
             this.ConnectButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.ConnectButton.Location = new System.Drawing.Point(6, 506);
             this.ConnectButton.Name = "ConnectButton";
-            this.ConnectButton.Size = new System.Drawing.Size(316, 50);
+            this.ConnectButton.Size = new System.Drawing.Size(420, 50);
             this.ConnectButton.TabIndex = 0;
             this.ConnectButton.Text = "Connect";
             this.ConnectButton.UseVisualStyleBackColor = false;
@@ -1310,7 +1323,7 @@
             // BotPasswordBox
             // 
             this.BotPasswordBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.BotPasswordBox.Location = new System.Drawing.Point(312, 34);
+            this.BotPasswordBox.Location = new System.Drawing.Point(412, 34);
             this.BotPasswordBox.Name = "BotPasswordBox";
             this.BotPasswordBox.PasswordChar = '*';
             this.BotPasswordBox.Size = new System.Drawing.Size(390, 20);
@@ -1323,7 +1336,7 @@
             this.BotNameBox.Location = new System.Drawing.Point(6, 34);
             this.BotNameBox.MaxLength = 64;
             this.BotNameBox.Name = "BotNameBox";
-            this.BotNameBox.Size = new System.Drawing.Size(300, 20);
+            this.BotNameBox.Size = new System.Drawing.Size(400, 20);
             this.BotNameBox.TabIndex = 64;
             this.BotNameBox.Text = "ModBot";
             this.BotNameBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
@@ -1334,7 +1347,7 @@
             this.ChannelBox.Location = new System.Drawing.Point(6, 73);
             this.ChannelBox.MaxLength = 64;
             this.ChannelBox.Name = "ChannelBox";
-            this.ChannelBox.Size = new System.Drawing.Size(300, 20);
+            this.ChannelBox.Size = new System.Drawing.Size(400, 20);
             this.ChannelBox.TabIndex = 67;
             this.ChannelBox.Text = "ModChannel";
             this.ChannelBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
@@ -1345,7 +1358,7 @@
             this.CurrencyNameBox.Location = new System.Drawing.Point(6, 207);
             this.CurrencyNameBox.MaxLength = 64;
             this.CurrencyNameBox.Name = "CurrencyNameBox";
-            this.CurrencyNameBox.Size = new System.Drawing.Size(398, 20);
+            this.CurrencyNameBox.Size = new System.Drawing.Size(503, 20);
             this.CurrencyNameBox.TabIndex = 71;
             this.CurrencyNameBox.Text = "Mod Coins";
             this.CurrencyNameBox.TextChanged += new System.EventHandler(this.ConnectionDetailsChanged);
@@ -1353,7 +1366,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(407, 307);
+            this.label5.Location = new System.Drawing.Point(512, 307);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(95, 13);
             this.label5.TabIndex = 92;
@@ -1372,12 +1385,12 @@
             this.DonationsWindow.Controls.Add(this.UpdateLastDonorCheckBox);
             this.DonationsWindow.Location = new System.Drawing.Point(108, 30);
             this.DonationsWindow.Name = "DonationsWindow";
-            this.DonationsWindow.Size = new System.Drawing.Size(814, 562);
+            this.DonationsWindow.Size = new System.Drawing.Size(1024, 562);
             this.DonationsWindow.TabIndex = 59;
             // 
             // RecentDonorsLimit
             // 
-            this.RecentDonorsLimit.Location = new System.Drawing.Point(374, 23);
+            this.RecentDonorsLimit.Location = new System.Drawing.Point(487, 23);
             this.RecentDonorsLimit.Maximum = new decimal(new int[] {
             10,
             0,
@@ -1413,7 +1426,7 @@
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(315, 25);
+            this.label15.Location = new System.Drawing.Point(428, 25);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(168, 13);
             this.label15.TabIndex = 66;
@@ -1444,7 +1457,7 @@
             this.Donations_List.RowHeadersVisible = false;
             this.Donations_List.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.Donations_List.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.Donations_List.Size = new System.Drawing.Size(814, 267);
+            this.Donations_List.Size = new System.Drawing.Size(1024, 267);
             this.Donations_List.TabIndex = 60;
             this.Donations_List.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.Donations_List_CellValueChanged);
             this.Donations_List.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.Donations_List_SortCompare);
@@ -1488,7 +1501,7 @@
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
-            this.Notes.Width = 300;
+            this.Notes.Width = 510;
             // 
             // IncludeRecent
             // 
@@ -1543,7 +1556,7 @@
             // 
             this.UpdateRecentDonorsCheckBox.AutoSize = true;
             this.UpdateRecentDonorsCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.UpdateRecentDonorsCheckBox.Location = new System.Drawing.Point(318, 4);
+            this.UpdateRecentDonorsCheckBox.Location = new System.Drawing.Point(431, 5);
             this.UpdateRecentDonorsCheckBox.Name = "UpdateRecentDonorsCheckBox";
             this.UpdateRecentDonorsCheckBox.Size = new System.Drawing.Size(149, 17);
             this.UpdateRecentDonorsCheckBox.TabIndex = 61;
@@ -1564,7 +1577,7 @@
             // 
             this.UpdateLastDonorCheckBox.AutoSize = true;
             this.UpdateLastDonorCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.UpdateLastDonorCheckBox.Location = new System.Drawing.Point(675, 5);
+            this.UpdateLastDonorCheckBox.Location = new System.Drawing.Point(888, 5);
             this.UpdateLastDonorCheckBox.Name = "UpdateLastDonorCheckBox";
             this.UpdateLastDonorCheckBox.Size = new System.Drawing.Size(130, 17);
             this.UpdateLastDonorCheckBox.TabIndex = 62;
@@ -1606,17 +1619,8 @@
             this.AboutWindow.Controls.Add(this.About_UsersLabel);
             this.AboutWindow.Location = new System.Drawing.Point(108, 30);
             this.AboutWindow.Name = "AboutWindow";
-            this.AboutWindow.Size = new System.Drawing.Size(814, 562);
+            this.AboutWindow.Size = new System.Drawing.Size(1024, 562);
             this.AboutWindow.TabIndex = 61;
-            // 
-            // About_UsersLabel
-            // 
-            this.About_UsersLabel.AutoSize = true;
-            this.About_UsersLabel.Location = new System.Drawing.Point(3, 332);
-            this.About_UsersLabel.Name = "About_UsersLabel";
-            this.About_UsersLabel.Size = new System.Drawing.Size(64, 13);
-            this.About_UsersLabel.TabIndex = 62;
-            this.About_UsersLabel.Text = "Other users:";
             // 
             // About_Users
             // 
@@ -1642,7 +1646,7 @@
             this.About_Users.RowHeadersVisible = false;
             this.About_Users.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.About_Users.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.About_Users.Size = new System.Drawing.Size(814, 218);
+            this.About_Users.Size = new System.Drawing.Size(1024, 218);
             this.About_Users.TabIndex = 61;
             this.About_Users.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.About_Users_SortCompare);
             // 
@@ -1663,14 +1667,14 @@
             this.Title.HeaderText = "Title";
             this.Title.Name = "Title";
             this.Title.ReadOnly = true;
-            this.Title.Width = 150;
+            this.Title.Width = 280;
             // 
             // Game
             // 
             this.Game.HeaderText = "Game";
             this.Game.Name = "Game";
             this.Game.ReadOnly = true;
-            this.Game.Width = 120;
+            this.Game.Width = 200;
             // 
             // Status
             // 
@@ -1769,7 +1773,7 @@
             this.AboutImage.Image = global::ModBot.Properties.Resources.AboutImage;
             this.AboutImage.Location = new System.Drawing.Point(0, 0);
             this.AboutImage.Name = "AboutImage";
-            this.AboutImage.Size = new System.Drawing.Size(814, 83);
+            this.AboutImage.Size = new System.Drawing.Size(1024, 83);
             this.AboutImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.AboutImage.TabIndex = 18;
             this.AboutImage.TabStop = false;
@@ -1793,12 +1797,21 @@
             this.label20.TabIndex = 15;
             this.label20.Text = "ModBot © Jonathan \"Keirathi\" Smith, 2013\r\nModified by CoMaNdO";
             // 
+            // About_UsersLabel
+            // 
+            this.About_UsersLabel.AutoSize = true;
+            this.About_UsersLabel.Location = new System.Drawing.Point(3, 332);
+            this.About_UsersLabel.Name = "About_UsersLabel";
+            this.About_UsersLabel.Size = new System.Drawing.Size(64, 13);
+            this.About_UsersLabel.TabIndex = 62;
+            this.About_UsersLabel.Text = "Other users:";
+            // 
             // panel2
             // 
             this.panel2.BackColor = System.Drawing.Color.White;
             this.panel2.Location = new System.Drawing.Point(108, 30);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(814, 562);
+            this.panel2.Size = new System.Drawing.Size(1024, 562);
             this.panel2.TabIndex = 62;
             // 
             // AuthenticationBrowser
@@ -1808,7 +1821,7 @@
             this.AuthenticationBrowser.Name = "AuthenticationBrowser";
             this.AuthenticationBrowser.ScriptErrorsSuppressed = true;
             this.AuthenticationBrowser.ScrollBarsEnabled = false;
-            this.AuthenticationBrowser.Size = new System.Drawing.Size(814, 562);
+            this.AuthenticationBrowser.Size = new System.Drawing.Size(1024, 562);
             this.AuthenticationBrowser.TabIndex = 0;
             this.AuthenticationBrowser.WebBrowserShortcutsEnabled = false;
             this.AuthenticationBrowser.Navigated += new System.Windows.Forms.WebBrowserNavigatedEventHandler(this.AuthenticationBrowser_Navigated);
@@ -1835,6 +1848,11 @@
             // ChannelWindow
             // 
             this.ChannelWindow.BackColor = System.Drawing.Color.White;
+            this.ChannelWindow.Controls.Add(this.Channel_SubscriptionRewardsList);
+            this.ChannelWindow.Controls.Add(this.Channel_SubscriptionsDate);
+            this.ChannelWindow.Controls.Add(this.SubscriptionsLabel);
+            this.ChannelWindow.Controls.Add(this.Channel_SubscriptionRewards);
+            this.ChannelWindow.Controls.Add(this.SubscriptionsSpacer);
             this.ChannelWindow.Controls.Add(this.Channel_SteamID64);
             this.ChannelWindow.Controls.Add(this.Channel_UseSteam);
             this.ChannelWindow.Controls.Add(this.UpdateTitleGameButton);
@@ -1845,8 +1863,86 @@
             this.ChannelWindow.Controls.Add(this.ChannelGameBox);
             this.ChannelWindow.Location = new System.Drawing.Point(108, 30);
             this.ChannelWindow.Name = "ChannelWindow";
-            this.ChannelWindow.Size = new System.Drawing.Size(814, 562);
+            this.ChannelWindow.Size = new System.Drawing.Size(1024, 562);
             this.ChannelWindow.TabIndex = 63;
+            // 
+            // Channel_SubscriptionRewardsList
+            // 
+            this.Channel_SubscriptionRewardsList.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            this.Channel_SubscriptionRewardsList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.Channel_SubscriptionRewardsList.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+            this.Channel_SubscriptionRewardsList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.Channel_SubscriptionRewardsList.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Reward,
+            this.Instructions});
+            this.Channel_SubscriptionRewardsList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke;
+            this.Channel_SubscriptionRewardsList.Enabled = false;
+            this.Channel_SubscriptionRewardsList.Location = new System.Drawing.Point(0, 382);
+            this.Channel_SubscriptionRewardsList.MultiSelect = false;
+            this.Channel_SubscriptionRewardsList.Name = "Channel_SubscriptionRewardsList";
+            this.Channel_SubscriptionRewardsList.RowHeadersVisible = false;
+            this.Channel_SubscriptionRewardsList.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+            this.Channel_SubscriptionRewardsList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.Channel_SubscriptionRewardsList.Size = new System.Drawing.Size(1024, 180);
+            this.Channel_SubscriptionRewardsList.TabIndex = 62;
+            // 
+            // Reward
+            // 
+            this.Reward.HeaderText = "Reward";
+            this.Reward.Name = "Reward";
+            this.Reward.Width = 400;
+            // 
+            // Instructions
+            // 
+            this.Instructions.HeaderText = "Instructions";
+            this.Instructions.Name = "Instructions";
+            this.Instructions.Width = 606;
+            // 
+            // Channel_SubscriptionsDate
+            // 
+            this.Channel_SubscriptionsDate.CustomFormat = "MM/dd/yyyy H:mm:ss";
+            this.Channel_SubscriptionsDate.Enabled = false;
+            this.Channel_SubscriptionsDate.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.Channel_SubscriptionsDate.Location = new System.Drawing.Point(254, 356);
+            this.Channel_SubscriptionsDate.MaxDate = new System.DateTime(2019, 12, 31, 0, 0, 0, 0);
+            this.Channel_SubscriptionsDate.MinDate = new System.DateTime(2014, 1, 1, 0, 0, 0, 0);
+            this.Channel_SubscriptionsDate.Name = "Channel_SubscriptionsDate";
+            this.Channel_SubscriptionsDate.Size = new System.Drawing.Size(149, 20);
+            this.Channel_SubscriptionsDate.TabIndex = 52;
+            this.Channel_SubscriptionsDate.Value = new System.DateTime(2014, 8, 29, 1, 51, 17, 0);
+            // 
+            // SubscriptionsLabel
+            // 
+            this.SubscriptionsLabel.AutoSize = true;
+            this.SubscriptionsLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.SubscriptionsLabel.Location = new System.Drawing.Point(246, 340);
+            this.SubscriptionsLabel.Name = "SubscriptionsLabel";
+            this.SubscriptionsLabel.Size = new System.Drawing.Size(82, 19);
+            this.SubscriptionsLabel.TabIndex = 50;
+            this.SubscriptionsLabel.Text = "Subscriptions";
+            this.SubscriptionsLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // Channel_SubscriptionRewards
+            // 
+            this.Channel_SubscriptionRewards.AutoSize = true;
+            this.Channel_SubscriptionRewards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Channel_SubscriptionRewards.Location = new System.Drawing.Point(6, 357);
+            this.Channel_SubscriptionRewards.Name = "Channel_SubscriptionRewards";
+            this.Channel_SubscriptionRewards.Size = new System.Drawing.Size(394, 17);
+            this.Channel_SubscriptionRewards.TabIndex = 54;
+            this.Channel_SubscriptionRewards.Text = "Subscription rewards for all subscriptions starting                              " +
+    "                  ";
+            this.Channel_SubscriptionRewards.UseVisualStyleBackColor = true;
+            this.Channel_SubscriptionRewards.CheckedChanged += new System.EventHandler(this.Settings_Changed);
+            // 
+            // SubscriptionsSpacer
+            // 
+            this.SubscriptionsSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
+            this.SubscriptionsSpacer.Location = new System.Drawing.Point(-1, 340);
+            this.SubscriptionsSpacer.Name = "SubscriptionsSpacer";
+            this.SubscriptionsSpacer.Size = new System.Drawing.Size(1026, 11);
+            this.SubscriptionsSpacer.TabIndex = 51;
+            this.SubscriptionsSpacer.TabStop = false;
             // 
             // Channel_SteamID64
             // 
@@ -1866,7 +1962,6 @@
             // Channel_UseSteam
             // 
             this.Channel_UseSteam.AutoSize = true;
-            this.Channel_UseSteam.Enabled = false;
             this.Channel_UseSteam.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Channel_UseSteam.Location = new System.Drawing.Point(6, 106);
             this.Channel_UseSteam.Name = "Channel_UseSteam";
@@ -1881,9 +1976,9 @@
             // 
             this.UpdateTitleGameButton.BackColor = System.Drawing.Color.White;
             this.UpdateTitleGameButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.UpdateTitleGameButton.Location = new System.Drawing.Point(665, 41);
+            this.UpdateTitleGameButton.Location = new System.Drawing.Point(876, 41);
             this.UpdateTitleGameButton.Name = "UpdateTitleGameButton";
-            this.UpdateTitleGameButton.Size = new System.Drawing.Size(143, 59);
+            this.UpdateTitleGameButton.Size = new System.Drawing.Size(142, 59);
             this.UpdateTitleGameButton.TabIndex = 32;
             this.UpdateTitleGameButton.Text = "Update";
             this.UpdateTitleGameButton.UseVisualStyleBackColor = false;
@@ -1902,7 +1997,7 @@
             this.CurrencyWindow.Controls.Add(this.Currency_DisableCommand);
             this.CurrencyWindow.Location = new System.Drawing.Point(108, 30);
             this.CurrencyWindow.Name = "CurrencyWindow";
-            this.CurrencyWindow.Size = new System.Drawing.Size(814, 562);
+            this.CurrencyWindow.Size = new System.Drawing.Size(1024, 562);
             this.CurrencyWindow.TabIndex = 63;
             // 
             // CurrencyWindowButton
@@ -1946,6 +2041,9 @@
             // GiveawayWindow
             // 
             this.GiveawayWindow.BackColor = System.Drawing.Color.White;
+            this.GiveawayWindow.Controls.Add(this.Giveaway_UserList);
+            this.GiveawayWindow.Controls.Add(this.GiveawayUsersLabel);
+            this.GiveawayWindow.Controls.Add(this.GiveawayUsersSpacer);
             this.GiveawayWindow.Controls.Add(this.Giveaway_CustomKeyword);
             this.GiveawayWindow.Controls.Add(this.Giveaway_AnnounceWarnedEntries);
             this.GiveawayWindow.Controls.Add(this.Giveaway_WarnFalseEntries);
@@ -1989,10 +2087,40 @@
             this.GiveawayWindow.Controls.Add(this.GiveawayTypeSpacer);
             this.GiveawayWindow.Controls.Add(this.Giveaway_MinCurrency);
             this.GiveawayWindow.Controls.Add(this.Giveaway_TypeActive);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_UserCount);
             this.GiveawayWindow.Location = new System.Drawing.Point(108, 30);
             this.GiveawayWindow.Name = "GiveawayWindow";
-            this.GiveawayWindow.Size = new System.Drawing.Size(814, 562);
+            this.GiveawayWindow.Size = new System.Drawing.Size(1024, 562);
             this.GiveawayWindow.TabIndex = 63;
+            // 
+            // Giveaway_UserList
+            // 
+            this.Giveaway_UserList.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.Giveaway_UserList.FormattingEnabled = true;
+            this.Giveaway_UserList.Location = new System.Drawing.Point(814, 60);
+            this.Giveaway_UserList.Name = "Giveaway_UserList";
+            this.Giveaway_UserList.Size = new System.Drawing.Size(202, 496);
+            this.Giveaway_UserList.TabIndex = 70;
+            // 
+            // GiveawayUsersLabel
+            // 
+            this.GiveawayUsersLabel.AutoSize = true;
+            this.GiveawayUsersLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GiveawayUsersLabel.Location = new System.Drawing.Point(887, 25);
+            this.GiveawayUsersLabel.Name = "GiveawayUsersLabel";
+            this.GiveawayUsersLabel.Size = new System.Drawing.Size(74, 19);
+            this.GiveawayUsersLabel.TabIndex = 68;
+            this.GiveawayUsersLabel.Text = "Users (WiP)";
+            this.GiveawayUsersLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // GiveawayUsersSpacer
+            // 
+            this.GiveawayUsersSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
+            this.GiveawayUsersSpacer.Location = new System.Drawing.Point(813, 25);
+            this.GiveawayUsersSpacer.Name = "GiveawayUsersSpacer";
+            this.GiveawayUsersSpacer.Size = new System.Drawing.Size(212, 11);
+            this.GiveawayUsersSpacer.TabIndex = 69;
+            this.GiveawayUsersSpacer.TabStop = false;
             // 
             // Giveaway_CustomKeyword
             // 
@@ -2034,7 +2162,7 @@
             // Giveaway_MustWatchMinutes
             // 
             this.Giveaway_MustWatchMinutes.Enabled = false;
-            this.Giveaway_MustWatchMinutes.Location = new System.Drawing.Point(318, 214);
+            this.Giveaway_MustWatchMinutes.Location = new System.Drawing.Point(355, 214);
             this.Giveaway_MustWatchMinutes.Maximum = new decimal(new int[] {
             60,
             0,
@@ -2058,7 +2186,7 @@
             // Giveaway_MustWatchHours
             // 
             this.Giveaway_MustWatchHours.Enabled = false;
-            this.Giveaway_MustWatchHours.Location = new System.Drawing.Point(232, 214);
+            this.Giveaway_MustWatchHours.Location = new System.Drawing.Point(269, 214);
             this.Giveaway_MustWatchHours.Maximum = new decimal(new int[] {
             24,
             0,
@@ -2077,7 +2205,7 @@
             // Giveaway_MustWatchDays
             // 
             this.Giveaway_MustWatchDays.Enabled = false;
-            this.Giveaway_MustWatchDays.Location = new System.Drawing.Point(157, 214);
+            this.Giveaway_MustWatchDays.Location = new System.Drawing.Point(193, 214);
             this.Giveaway_MustWatchDays.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -2094,10 +2222,10 @@
             this.Giveaway_MustWatch.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Giveaway_MustWatch.Location = new System.Drawing.Point(6, 214);
             this.Giveaway_MustWatch.Name = "Giveaway_MustWatch";
-            this.Giveaway_MustWatch.Size = new System.Drawing.Size(390, 17);
+            this.Giveaway_MustWatch.Size = new System.Drawing.Size(427, 17);
             this.Giveaway_MustWatch.TabIndex = 61;
-            this.Giveaway_MustWatch.Text = "Has watched the stream for                 days,             hours and           " +
-    "  minutes";
+            this.Giveaway_MustWatch.Text = "Has watched the stream for at least                 days,             hours and  " +
+    "           minutes";
             this.Giveaway_MustWatch.UseVisualStyleBackColor = true;
             this.Giveaway_MustWatch.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
@@ -2202,9 +2330,9 @@
             this.GiveawayBansLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.GiveawayBansLabel.Location = new System.Drawing.Point(381, 25);
             this.GiveawayBansLabel.Name = "GiveawayBansLabel";
-            this.GiveawayBansLabel.Size = new System.Drawing.Size(89, 19);
+            this.GiveawayBansLabel.Size = new System.Drawing.Size(35, 19);
             this.GiveawayBansLabel.TabIndex = 53;
-            this.GiveawayBansLabel.Text = "Giveaway bans";
+            this.GiveawayBansLabel.Text = "Bans";
             this.GiveawayBansLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // GiveawayBansSpacer
@@ -2212,7 +2340,7 @@
             this.GiveawayBansSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
             this.GiveawayBansSpacer.Location = new System.Drawing.Point(318, 25);
             this.GiveawayBansSpacer.Name = "GiveawayBansSpacer";
-            this.GiveawayBansSpacer.Size = new System.Drawing.Size(497, 11);
+            this.GiveawayBansSpacer.Size = new System.Drawing.Size(496, 11);
             this.GiveawayBansSpacer.TabIndex = 54;
             this.GiveawayBansSpacer.TabStop = false;
             // 
@@ -2274,12 +2402,21 @@
             this.Giveaway_TypeActive.UseVisualStyleBackColor = true;
             this.Giveaway_TypeActive.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
+            // Giveaway_UserCount
+            // 
+            this.Giveaway_UserCount.AutoSize = true;
+            this.Giveaway_UserCount.Location = new System.Drawing.Point(811, 46);
+            this.Giveaway_UserCount.Name = "Giveaway_UserCount";
+            this.Giveaway_UserCount.Size = new System.Drawing.Size(46, 13);
+            this.Giveaway_UserCount.TabIndex = 71;
+            this.Giveaway_UserCount.Text = "Users: 0";
+            // 
             // AuthenticationLabel
             // 
             this.AuthenticationLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.AuthenticationLabel.Location = new System.Drawing.Point(108, 30);
             this.AuthenticationLabel.Name = "AuthenticationLabel";
-            this.AuthenticationLabel.Size = new System.Drawing.Size(814, 31);
+            this.AuthenticationLabel.Size = new System.Drawing.Size(1024, 31);
             this.AuthenticationLabel.TabIndex = 66;
             this.AuthenticationLabel.Text = "Connect to the bot\'s account";
             this.AuthenticationLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -2314,7 +2451,7 @@
             this.SpamFilterWindow.Controls.Add(this.Spam_CWLSpacer);
             this.SpamFilterWindow.Location = new System.Drawing.Point(108, 30);
             this.SpamFilterWindow.Name = "SpamFilterWindow";
-            this.SpamFilterWindow.Size = new System.Drawing.Size(814, 562);
+            this.SpamFilterWindow.Size = new System.Drawing.Size(1024, 562);
             this.SpamFilterWindow.TabIndex = 68;
             // 
             // Spam_CWLAnnounceTimeouts
@@ -2389,7 +2526,7 @@
             this.SongRequestPlayer.Name = "SongRequestPlayer";
             this.SongRequestPlayer.ScriptErrorsSuppressed = true;
             this.SongRequestPlayer.ScrollBarsEnabled = false;
-            this.SongRequestPlayer.Size = new System.Drawing.Size(814, 562);
+            this.SongRequestPlayer.Size = new System.Drawing.Size(1024, 562);
             this.SongRequestPlayer.TabIndex = 69;
             this.SongRequestPlayer.Visible = false;
             this.SongRequestPlayer.WebBrowserShortcutsEnabled = false;
@@ -2398,7 +2535,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(930, 600);
+            this.ClientSize = new System.Drawing.Size(1140, 600);
             this.Controls.Add(this.SpamFilterWindowButton);
             this.Controls.Add(this.GiveawayWindowButton);
             this.Controls.Add(this.CurrencyWindowButton);
@@ -2406,7 +2543,6 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
-            this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
@@ -2417,11 +2553,13 @@
             this.Controls.Add(this.SpamFilterWindow);
             this.Controls.Add(this.SongRequestPlayer);
             this.Controls.Add(this.panel2);
+            this.Controls.Add(this.AboutWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.SongRequestPlayer, 0);
             this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
@@ -2432,7 +2570,6 @@
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
-            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -2462,6 +2599,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.AboutImage)).EndInit();
             this.ChannelWindow.ResumeLayout(false);
             this.ChannelWindow.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Channel_SubscriptionRewardsList)).EndInit();
             this.CurrencyWindow.ResumeLayout(false);
             this.CurrencyWindow.PerformLayout();
             this.GiveawayWindow.ResumeLayout(false);
@@ -2585,15 +2723,6 @@
         public System.Windows.Forms.Button GenerateBotTokenButton;
         private System.Windows.Forms.WebBrowser AuthenticationBrowser;
         private System.Windows.Forms.Label AuthenticationLabel;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Date;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Donor;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Amount;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Notes;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeRecent;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeLatest;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTop;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTopDonor;
         public System.Windows.Forms.Button GenerateChannelTokenButton;
         public System.Windows.Forms.TextBox ChannelTokenBox;
         private System.Windows.Forms.Label label4;
@@ -2641,6 +2770,29 @@
         private System.Windows.Forms.Label MySQLLabel;
         private System.Windows.Forms.GroupBox MySQLSpacer;
         public FlatNumericUpDown MySQL_Port;
+        private System.Windows.Forms.Label label23;
+        public System.Windows.Forms.TextBox MySQL_Table;
+        public System.Windows.Forms.CheckBox Spam_CWLAnnounceTimeouts;
+        private System.Windows.Forms.Label SubscriptionsLabel;
+        private System.Windows.Forms.GroupBox SubscriptionsSpacer;
+        public System.Windows.Forms.DateTimePicker Channel_SubscriptionsDate;
+        public System.Windows.Forms.CheckBox Channel_SubscriptionRewards;
+        public System.Windows.Forms.DataGridView Channel_SubscriptionRewardsList;
+        public System.Windows.Forms.ListBox Giveaway_UserList;
+        private System.Windows.Forms.Label GiveawayUsersLabel;
+        private System.Windows.Forms.GroupBox GiveawayUsersSpacer;
+        public System.Windows.Forms.Label Giveaway_UserCount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Date;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Donor;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Amount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Notes;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeRecent;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeLatest;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTop;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTopDonor;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Reward;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Instructions;
         private System.Windows.Forms.DataGridViewTextBoxColumn Channel;
         private System.Windows.Forms.DataGridViewTextBoxColumn Bot;
         private System.Windows.Forms.DataGridViewTextBoxColumn Title;
@@ -2649,8 +2801,5 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Viewers;
         private System.Windows.Forms.DataGridViewTextBoxColumn Version;
         private System.Windows.Forms.DataGridViewTextBoxColumn Updated;
-        private System.Windows.Forms.Label label23;
-        public System.Windows.Forms.TextBox MySQL_Table;
-        public System.Windows.Forms.CheckBox Spam_CWLAnnounceTimeouts;
     }
 }

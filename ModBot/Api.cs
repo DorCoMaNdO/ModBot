@@ -12,7 +12,7 @@ namespace ModBot
         public static MainWindow MainForm = Program.MainForm;
         public static Dictionary<string, Thread> dCheckingDisplayName = new Dictionary<string, Thread>();
         private static iniUtil ini = Program.ini;
-        private static StreamWriter errorLog = new StreamWriter("Error_Log.txt", true);
+        private static StreamWriter errorLog = new StreamWriter(@"Data\Logs\ErrorsLog.txt", true);
 
         public static int GetUnixTimeNow()
         {
@@ -145,7 +145,35 @@ namespace ModBot
             return bSubscriber;
         }
 
-        public static bool UpdateTitleGame(string title, string game, int delay=0)
+        public static Dictionary<string, DateTime> GetLastSubscribers(DateTime startingat, int count = 25)
+        {
+            Dictionary<string, DateTime> Subscribers = new Dictionary<string, DateTime>();
+            if (Irc.partnered)
+            {
+                using (WebClient w = new WebClient())
+                {
+                    w.Proxy = null;
+                    try
+                    {
+                        foreach(JToken subscription in JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1) + "/subscriptions?direction=desc&limit=" + count + "&oauth_token=" + Irc.channeltoken))["subscriptions"])
+                        {
+                            //XmlConvert.ToTimeSpan(subscription["created_at"])
+                            DateTime date = DateTime.Parse(subscription["created_at"].ToString());
+                            if (startingat.CompareTo(date) > -1)
+                            {
+                                Subscribers.Add(subscription["user"]["name"].ToString(), date);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+            return Subscribers;
+        }
+
+        public static bool UpdateMetadata(string title, string game, int delay=0)
         {
             using (WebClient w = new WebClient())
             {
@@ -279,16 +307,16 @@ namespace ModBot
         {
             if (!error.Contains("System.Threading.ThreadAbortException"))
             {
-                for (int attempts = 0; attempts < 5; attempts++)
+                for (int attempts = 0; attempts < 10; attempts++)
                 {
                     try
                     {
                         errorLog.WriteLine(error);
                         break;
                     }
-                    catch (IOException)
+                    catch
                     {
-                        System.Threading.Thread.Sleep(100);
+                        System.Threading.Thread.Sleep(250);
                     }
                 }
             }

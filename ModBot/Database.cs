@@ -20,7 +20,7 @@ namespace ModBot
             MainForm = Program.MainForm;
             
             if (DB != null) DB.Close();
-            if (MySqlDB != null) MySqlDB.Close();
+            MySqlDB = null;
 
             Console.WriteLine("Setting up the database...");
 
@@ -28,22 +28,24 @@ namespace ModBot
 
             if (MainForm.MySQL_Host.Text == "" || MainForm.MySQL_Database.Text == "" || MainForm.MySQL_Username.Text == "")
             {
-                if (!File.Exists("ModBot.sqlite"))
+                if (!Directory.Exists(@"Data\Users")) Directory.CreateDirectory(@"Data\Users");
+
+                if (!File.Exists(@"Data\Users\ModBot.sqlite"))
                 {
-                    SQLiteConnection.CreateFile("ModBot.sqlite");
+                    SQLiteConnection.CreateFile(@"Data\Users\ModBot.sqlite");
                 }
 
-                while (ModBot.Api.IsFileLocked("ModBot.sqlite", FileShare.Read) && File.Exists("ModBot.sqlite"))
+                while (ModBot.Api.IsFileLocked(@"Data\Users\ModBot.sqlite", FileShare.Read) && File.Exists(@"Data\Users\ModBot.sqlite"))
                 {
                     if (MessageBox.Show("ModBot's database file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
                 }
 
-                if (!File.Exists("ModBot.sqlite"))
+                if (!File.Exists(@"Data\Users\ModBot.sqlite"))
                 {
-                    SQLiteConnection.CreateFile("ModBot.sqlite");
+                    SQLiteConnection.CreateFile(@"Data\Users\ModBot.sqlite");
                 }
 
-                DB = new SQLiteConnection("Data Source=ModBot.sqlite;Version=3;");
+                DB = new SQLiteConnection(@"Data Source=Data\Users\ModBot.sqlite;Version=3;");
                 DB.Open();
 
                 using (SQLiteCommand query = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'commands' (id INTEGER PRIMARY KEY AUTOINCREMENT, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", DB)) query.ExecuteNonQuery();
@@ -110,20 +112,25 @@ namespace ModBot
             }
             else
             {
-                Console.WriteLine("Connecting to MySQL server...");
+                Console.WriteLine("Creating connection string to MySQL server...");
 
                 if (MainForm.MySQL_Table.Text != "") table = MainForm.MySQL_Table.Text.ToLower();
 
                 try
                 {
                     MySqlDB = new MySqlConnection("Server=" + MainForm.MySQL_Host.Text + ";Port=" + MainForm.MySQL_Port.Value + ";Database=" + MainForm.MySQL_Database.Text + ";Uid=" + MainForm.MySQL_Username.Text + ";Pwd=" + MainForm.MySQL_Password.Text + ";");
-                    MySqlDB.Open();
+                    MySqlDB.Open(); // Test connection.
+                    MySqlDB.Close();
 
-                    Console.WriteLine("Connected to MySQL server.");
+                    Console.WriteLine("Created connection string to MySQL server.");
 
-                    using (MySqlCommand query = new MySqlCommand("CREATE TABLE IF NOT EXISTS commands (id INTEGER PRIMARY KEY AUTO_INCREMENT, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlConnection con = MySqlDB.Clone())
+                    {
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("CREATE TABLE IF NOT EXISTS commands (id INTEGER PRIMARY KEY AUTO_INCREMENT, command TEXT, level INTEGER DEFAULT 0, output TEXT DEFAULT null);", con)) query.ExecuteNonQuery();
 
-                    using (MySqlCommand query = new MySqlCommand("CREATE TABLE IF NOT EXISTS " + table + " (id INTEGER PRIMARY KEY AUTO_INCREMENT, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", MySqlDB)) query.ExecuteNonQuery();
+                        using (MySqlCommand query = new MySqlCommand("CREATE TABLE IF NOT EXISTS " + table + " (id INTEGER PRIMARY KEY AUTO_INCREMENT, user TEXT, currency INTEGER DEFAULT 0, subscriber INTEGER DEFAULT 0, btag TEXT DEFAULT null, userlevel INTEGER DEFAULT 0, display_name TEXT DEFAULT null, time_watched INTEGER DEFAULT 0);", con)) query.ExecuteNonQuery();
+                    }
 
                     /*if (tableExists("transfers") && !tableHasData(channel))
                     {
@@ -164,7 +171,7 @@ namespace ModBot
         public static void newUser(string user, bool bCheckDisplayName = true)
         {
             if (user == "") return;
-            user = Api.capName(user);
+            user = user.ToLower();
             if (!userExists(user))
             {
                 if (DB != null)
@@ -173,7 +180,11 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("INSERT INTO " + table + " (user) VALUES ('" + user + "');", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlConnection con = MySqlDB.Clone())
+                    {
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("INSERT INTO " + table + " (user) VALUES ('" + user + "');", con)) query.ExecuteNonQuery();
+                    }
                 }
                 if (bCheckDisplayName)
                 {
@@ -200,13 +211,17 @@ namespace ModBot
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + ";", MySqlDB))
+                using (MySqlConnection con = MySqlDB.Clone())
                 {
-                    using (MySqlDataReader r = query.ExecuteReader())
+                    con.Open();
+                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + ";", con))
                     {
-                        while (r.Read())
+                        using (MySqlDataReader r = query.ExecuteReader())
                         {
-                            if (!users.Contains(r["user"].ToString())) users.Add(r["user"].ToString());
+                            while (r.Read())
+                            {
+                                if (!users.Contains(r["user"].ToString())) users.Add(r["user"].ToString());
+                            }
                         }
                     }
                 }
@@ -216,7 +231,7 @@ namespace ModBot
 
         public static void setDisplayName(string user, string name)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
@@ -224,13 +239,17 @@ namespace ModBot
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET display_name = '" + name + "' WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlConnection con = MySqlDB.Clone())
+                {
+                    con.Open();
+                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET display_name = '" + name + "' WHERE user = '" + user + "';", con)) query.ExecuteNonQuery();
+                }
             }
         }
 
         public static string getDisplayName(string user)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (userExists(user))
             {
                 if (DB != null)
@@ -248,13 +267,17 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", con))
                         {
-                            if (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                return r["display_name"].ToString();
+                                if (r.Read())
+                                {
+                                    return r["display_name"].ToString();
+                                }
                             }
                         }
                     }
@@ -269,7 +292,7 @@ namespace ModBot
 
         public static void setCurrency(string user, int amount)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (amount < 0) amount = 0;
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
@@ -278,13 +301,17 @@ namespace ModBot
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET currency = " + amount + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlConnection con = MySqlDB.Clone())
+                {
+                    con.Open();
+                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET currency = " + amount + " WHERE user = '" + user + "';", con)) query.ExecuteNonQuery();
+                }
             }
         }
 
         public static int checkCurrency(string user)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (userExists(user))
             {
                 if (DB != null)
@@ -309,19 +336,23 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", con))
                         {
-                            if (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                int currency = int.Parse(r["currency"].ToString());
-                                if (currency < 0)
+                                if (r.Read())
                                 {
-                                    setCurrency(user, 0);
-                                    return 0;
+                                    int currency = int.Parse(r["currency"].ToString());
+                                    if (currency < 0)
+                                    {
+                                        setCurrency(user, 0);
+                                        return 0;
+                                    }
+                                    return currency;
                                 }
-                                return currency;
                             }
                         }
                     }
@@ -336,7 +367,7 @@ namespace ModBot
 
         public static void addCurrency(string user, int amount)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (amount < 0) amount = -amount;
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
@@ -345,13 +376,17 @@ namespace ModBot
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET currency = currency + " + amount + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlConnection con = MySqlDB.Clone())
+                {
+                    con.Open();
+                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET currency = currency + " + amount + " WHERE user = '" + user + "';", con)) query.ExecuteNonQuery();
+                }
             }
         }
 
         public static void removeCurrency(string user, int amount)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (amount < 0) amount = -amount;
             if (amount > checkCurrency(user)) amount = checkCurrency(user);
             if (!userExists(user)) newUser(user, false);
@@ -361,13 +396,17 @@ namespace ModBot
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET currency = currency - " + amount + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlConnection con = MySqlDB.Clone())
+                {
+                    con.Open();
+                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET currency = currency - " + amount + " WHERE user = '" + user + "';", con)) query.ExecuteNonQuery();
+                }
             }
         }
 
         public static bool userExists(string user)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             try
             {
                 if (DB != null)
@@ -378,7 +417,7 @@ namespace ModBot
                         {
                             while (r.Read())
                             {
-                                if (r["user"].ToString().Equals(user))
+                                if (r["user"].ToString().ToLower().Equals(user))
                                 {
                                     return true;
                                 }
@@ -388,15 +427,19 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", con))
                         {
-                            while (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                if (r["user"].ToString().Equals(user))
+                                while (r.Read())
                                 {
-                                    return true;
+                                    if (r["user"].ToString().ToLower().Equals(user))
+                                    {
+                                        return true;
+                                    }
                                 }
                             }
                         }
@@ -411,7 +454,7 @@ namespace ModBot
 
         public static string getBtag(string user)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (userExists(user))
             {
                 if (DB != null)
@@ -436,13 +479,17 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", con))
                         {
-                            if (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                return r["btag"].ToString();
+                                if (r.Read())
+                                {
+                                    return r["btag"].ToString();
+                                }
                             }
                         }
                     }
@@ -457,7 +504,7 @@ namespace ModBot
 
         public static void setBtag(string user, string btag)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
@@ -465,13 +512,17 @@ namespace ModBot
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET btag = '" + btag + "' WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlConnection con = MySqlDB.Clone())
+                {
+                    con.Open();
+                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET btag = '" + btag + "' WHERE user = '" + user + "';", con)) query.ExecuteNonQuery();
+                }
             }
         }
 
         public static bool isSubscriber(string user)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (!userExists(user))
             {
                 newUser(user);
@@ -493,13 +544,17 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", con))
                         {
-                            if (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                return (int.Parse(r["subscriber"].ToString()) == 1);
+                                if (r.Read())
+                                {
+                                    return (int.Parse(r["subscriber"].ToString()) == 1);
+                                }
                             }
                         }
                     }
@@ -510,7 +565,7 @@ namespace ModBot
 
         public static bool addSub(string user)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (userExists(user))
             {
                 if (DB != null)
@@ -519,7 +574,11 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET subscriber = 1 WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlConnection con = MySqlDB.Clone())
+                    {
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET subscriber = 1 WHERE user = '" + user + "';", con)) query.ExecuteNonQuery();
+                    }
                 }
                 return true;
             }
@@ -528,7 +587,7 @@ namespace ModBot
 
         public static bool removeSub(string user)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (userExists(user))
             {
                 if (DB != null)
@@ -537,7 +596,11 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET subscriber = 0 WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlConnection con = MySqlDB.Clone())
+                    {
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET subscriber = 0 WHERE user = '" + user + "';", con)) query.ExecuteNonQuery();
+                    }
                 }
                 return true;
             }
@@ -546,7 +609,7 @@ namespace ModBot
 
         public static int getUserLevel(string user)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (!userExists(user))
             {
                 newUser(user);
@@ -568,13 +631,17 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", con))
                         {
-                            if (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                return int.Parse(r["userlevel"].ToString());
+                                if (r.Read())
+                                {
+                                    return int.Parse(r["userlevel"].ToString());
+                                }
                             }
                         }
                     }
@@ -585,7 +652,7 @@ namespace ModBot
 
         public static void setUserLevel(string user, int level)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
@@ -593,13 +660,17 @@ namespace ModBot
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET userlevel = " + level + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlConnection con = MySqlDB.Clone())
+                {
+                    con.Open();
+                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET userlevel = " + level + " WHERE user = '" + user + "';", con)) query.ExecuteNonQuery();
+                }
             }
         }
 
         public static TimeSpan getTimeWatched(string user)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (!userExists(user))
             {
                 newUser(user);
@@ -621,13 +692,17 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + table + " WHERE user = '" + user + "';", con))
                         {
-                            if (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                return TimeSpan.FromMinutes(int.Parse(r["time_watched"].ToString()));
+                                if (r.Read())
+                                {
+                                    return TimeSpan.FromMinutes(int.Parse(r["time_watched"].ToString()));
+                                }
                             }
                         }
                     }
@@ -638,7 +713,7 @@ namespace ModBot
 
         public static void addTimeWatched(string user, int time)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (!userExists(user)) newUser(user, false);
             if (DB != null)
             {
@@ -646,7 +721,11 @@ namespace ModBot
             }
             else if (MySqlDB != null)
             {
-                using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", MySqlDB)) query.ExecuteNonQuery();
+                using (MySqlConnection con = MySqlDB.Clone())
+                {
+                    con.Open();
+                    using (MySqlCommand query = new MySqlCommand("UPDATE " + table + " SET time_watched = time_watched + " + time + " WHERE user = '" + user + "';", con)) query.ExecuteNonQuery();
+                }
             }
         }
 
@@ -715,6 +794,7 @@ namespace ModBot
         {
             public static bool cmdExists(string command)
             {
+                command = command.ToLower();
                 if (DB != null)
                 {
                     using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM commands", DB))
@@ -723,7 +803,7 @@ namespace ModBot
                         {
                             while (r.Read())
                             {
-                                if (r["command"].ToString().Equals(command, StringComparison.OrdinalIgnoreCase))
+                                if (r["command"].ToString().ToLower().Equals(command))
                                 {
                                     return true;
                                 }
@@ -733,15 +813,19 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM commands", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM commands", con))
                         {
-                            while (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                if (r["command"].ToString().Equals(command, StringComparison.OrdinalIgnoreCase))
+                                while (r.Read())
                                 {
-                                    return true;
+                                    if (r["command"].ToString().ToLower().Equals(command))
+                                    {
+                                        return true;
+                                    }
                                 }
                             }
                         }
@@ -758,7 +842,11 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("INSERT INTO commands (command, level, output) VALUES ('" + command + "', " + level + ", '" + output + "');", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlConnection con = MySqlDB.Clone())
+                    {
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("INSERT INTO commands (command, level, output) VALUES ('" + command + "', " + level + ", '" + output + "');", con)) query.ExecuteNonQuery();
+                    }
                 }
             }
 
@@ -770,7 +858,11 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("DELETE FROM commands WHERE command = '" + command + "';", MySqlDB)) query.ExecuteNonQuery();
+                    using (MySqlConnection con = MySqlDB.Clone())
+                    {
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("DELETE FROM commands WHERE command = '" + command + "';", con)) query.ExecuteNonQuery();
+                    }
                 }
             }
 
@@ -791,13 +883,17 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM commands WHERE command = '" + command + "';", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM commands WHERE command = '" + command + "';", con))
                         {
-                            while (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                return int.Parse(r["level"].ToString());
+                                while (r.Read())
+                                {
+                                    return int.Parse(r["level"].ToString());
+                                }
                             }
                         }
                     }
@@ -823,13 +919,17 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM commands;", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM commands;", con))
                         {
-                            while (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                commands += r["command"].ToString() + ", ";
+                                while (r.Read())
+                                {
+                                    commands += r["command"].ToString() + ", ";
+                                }
                             }
                         }
                     }
@@ -854,13 +954,17 @@ namespace ModBot
                 }
                 else if (MySqlDB != null)
                 {
-                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM commands WHERE command = '" + command + "';", MySqlDB))
+                    using (MySqlConnection con = MySqlDB.Clone())
                     {
-                        using (MySqlDataReader r = query.ExecuteReader())
+                        con.Open();
+                        using (MySqlCommand query = new MySqlCommand("SELECT * FROM commands WHERE command = '" + command + "';", con))
                         {
-                            while (r.Read())
+                            using (MySqlDataReader r = query.ExecuteReader())
                             {
-                                return r["output"].ToString();
+                                while (r.Read())
+                                {
+                                    return r["output"].ToString();
+                                }
                             }
                         }
                     }

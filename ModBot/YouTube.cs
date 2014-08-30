@@ -64,12 +64,12 @@ namespace ModBot
                 if (song.duration.TotalSeconds <= 900)
                 {
                     List<string> songs = new List<string>();
-                    if (File.Exists("songs.txt"))
+                    if (File.Exists(@"Data\Songs.txt"))
                     {
-                        songs = File.ReadAllLines("songs.txt").ToList();
+                        songs = File.ReadAllLines(@"Data\Songs.txt").ToList();
                     }
                     songs.Add(song.id + "|" + song.title + "|" + song.requester);
-                    File.WriteAllLines("songs.txt", songs.ToArray());
+                    File.WriteAllLines(@"Data\Songs.txt", songs.ToArray());
                     return 1;
                 }
                 return 0;
@@ -98,9 +98,9 @@ namespace ModBot
 
         public static void ReorderQueue(bool Remove = false, int start = 1)
         {
-            if (File.Exists("songs.txt"))
+            if (File.Exists(@"Data\Songs.txt"))
             {
-                List<string> OldSongs = File.ReadAllLines("songs.txt").ToList(), songs = new List<string>();
+                List<string> OldSongs = File.ReadAllLines(@"Data\Songs.txt").ToList(), songs = new List<string>();
                 for (int i = start; i < OldSongs.Count; i++)
                 {
                     songs.Add(OldSongs[i]);
@@ -114,7 +114,7 @@ namespace ModBot
                     }
                 }
 
-                File.WriteAllLines("songs.txt", songs.ToArray());
+                File.WriteAllLines(@"Data\Songs.txt", songs.ToArray());
             }
         }
 
@@ -122,7 +122,7 @@ namespace ModBot
         {
             if (song == null)
             {
-                foreach (string sSong in File.ReadAllLines("songs.txt"))
+                foreach (string sSong in File.ReadAllLines(@"Data\Songs.txt"))
                 {
                     if (sSong != "" && (song = YouTube.GetSong(sSong.Split('|')[0])) != null)
                     {

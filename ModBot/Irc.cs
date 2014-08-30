@@ -46,7 +46,8 @@ namespace ModBot
         public static List<string> IgnoredUsers = new List<string>(), Moderators = new List<string>(), usersToLookup = new List<string>();
         public static Timer currencyQueue, auctionLoop, giveawayQueue, warningsRemoval;
         public static List<Thread> Threads = new List<Thread>();
-        private static StreamWriter log = new StreamWriter("CommandLog.log", true);
+        private static StreamWriter log = new StreamWriter(@"Data\Logs\CommandsLog.txt", true);
+        private static StreamWriter rewardslog = new StreamWriter(@"Data\Logs\RewardsLog.txt", true);
 
         public static event OnInitialize OnInitialize = ((InitializationStep step) => { });
 
@@ -202,13 +203,13 @@ namespace ModBot
                                     int scopes = 0;
                                     foreach (JToken x in json["token"]["authorization"]["scopes"])
                                     {
-                                        if (x.ToString() == "user_read" || x.ToString() == "channel_editor" || x.ToString() == "channel_commercial" || x.ToString() == "channel_check_subscription" || x.ToString() == "chat_login")
+                                        if (x.ToString() == "user_read" || x.ToString() == "channel_editor" || x.ToString() == "channel_commercial" || x.ToString() == "channel_check_subscription" || x.ToString() == "channel_subscriptions" || x.ToString() == "chat_login")
                                         {
                                             scopes++;
                                         }
                                     }
 
-                                    if (scopes == 5)
+                                    if (scopes == 6)
                                     {
                                         Console.WriteLine("Channel's access token has been validated.\r\n\r\nChecking partnership status...");
 
@@ -217,12 +218,13 @@ namespace ModBot
 
                                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
-                                            MainForm.Channel_UseSteam.Enabled = true;
-                                            ini.SetValue("Settings", "Channel_UseSteam", (MainForm.Channel_UseSteam.Checked = (ini.GetValue("Settings", "Channel_UseSteam", "0") == "1")) ? "1" : "0");
+                                            ini.SetValue("Settings", "Channel_UseSteam", (MainForm.Channel_SteamID64.Enabled = MainForm.Channel_UseSteam.Checked = (ini.GetValue("Settings", "Channel_UseSteam", "0") == "1")) ? "1" : "0");
 
-                                            if(partnered)
+                                            MainForm.Giveaway_MustSubscribe.Enabled = partnered;
+                                            MainForm.Channel_SubscriptionRewards.Enabled = partnered;
+                                            if(!partnered)
                                             {
-                                                MainForm.Giveaway_MustSubscribe.Enabled = true;
+                                                MainForm.Channel_SubscriptionRewards.Checked = false;
                                             }
                                         });
                                         break;
@@ -437,7 +439,8 @@ namespace ModBot
                         nick = Api.GetDisplayName(nick);
                         admin = Api.GetDisplayName(admin);
 
-                        Console.WriteLine("Joined the channel.\r\n\r\nSending lame entrance line...\r\n");
+                        Console.WriteLine("Joined the channel.\r\n");
+                        /*Console.WriteLine("Joined the channel.\r\n\r\nSending lame entrance line...\r\n");
 
                         List<string> lLines = new List<string>();
                         lLines.Add("ModBot has entered the building.");
@@ -445,7 +448,7 @@ namespace ModBot
                         lLines.Add("ModBot with style.");
                         lLines.Add("Fear not, here's the (Mod)Bot.");
                         lLines.Add("ModBot's in the HOUSE!");
-                        sendMessage(lLines[new Random().Next(0, lLines.Count)], "", false);
+                        sendMessage(lLines[new Random().Next(0, lLines.Count)], "", false);*/
 
                         RegisterCommands();
 
@@ -455,7 +458,10 @@ namespace ModBot
                         {
                             foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
                             {
-                                btn.Enabled = true;
+                                if (btn != MainForm.DonationsWindowButton && btn != MainForm.SpamFilterWindowButton)
+                                {
+                                    btn.Enabled = true;
+                                }
                             }
 
                             MainForm.ChannelWindowButton.Text = admin;
@@ -463,10 +469,6 @@ namespace ModBot
                             {
                                 MainForm.ChannelWindowButton.Font = new Font(MainForm.ChannelWindowButton.Font.Name, MainForm.ChannelWindowButton.Font.Size - 1, FontStyle.Bold);
                             }
-
-                            MainForm.DonationsWindowButton.Enabled = false;
-
-                            MainForm.SpamFilterWindowButton.Enabled = Moderators.Contains(Api.capName(nick));
 
                             MainForm.DisconnectButton.Enabled = true;
 
@@ -682,7 +684,7 @@ namespace ModBot
             if (Database.MySqlDB != null)
             {
                 if (log) Console.WriteLine("Closing MySQL connection...");
-                Database.MySqlDB.Close();
+                //Database.MySqlDB.Close();
                 Database.MySqlDB = null;
                 if (log) Console.WriteLine("MySQL connection closed.\r\n");
             }
@@ -931,6 +933,71 @@ namespace ModBot
                 thread.Start();
             }
 
+            if(partnered)
+            {
+            Console.Write("DONE\r\nSubscription rewards thread... ");
+
+            thread = new Thread(() =>
+            {
+                Dictionary<string, DateTime> LastSubscription = Api.GetLastSubscribers(new DateTime(), 1);
+                if (LastSubscription.Count > 0)
+                {
+                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    {
+                        MainForm.Channel_SubscriptionsDate.Value = LastSubscription.ElementAt(0).Value;
+                    });
+                }
+
+                while (true)
+                {
+                    new Thread(() =>
+                    {
+                        Dictionary<string, DateTime> Subscriptions = Api.GetLastSubscribers(MainForm.Channel_SubscriptionsDate.Value);
+                        if (Subscriptions.Count > 0)
+                        {
+                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                            {
+                                MainForm.Channel_SubscriptionsDate.Value = Subscriptions.ElementAt(0).Value;
+                            });
+                            lock (MainForm.SubscriptionRewards)
+                            {
+                                foreach (string subscriber in Subscriptions.Keys)
+                                {
+                                    string reward = MainForm.SubscriptionRewards.ElementAt(new Random().Next(0, MainForm.SubscriptionRewards.Count)).Key;
+                                    string text = "[" + DateTime.Now + " via subscription rewards] " + subscriber + " has won " + reward;
+                                    for (int attempts = 0; attempts < 10; attempts++)
+                                    {
+                                        try
+                                        {
+                                            rewardslog.WriteLine(text);
+                                            break;
+                                        }
+                                        catch
+                                        {
+                                            System.Threading.Thread.Sleep(250);
+                                        }
+                                    }
+                                    sendMessage(subscriber + " has subscribed and won " + reward + "!");
+                                    if (MainForm.SubscriptionRewards[reward] != "")
+                                    {
+                                        Thread.Sleep(1000);
+                                        sendMessage(subscriber + ", please " + MainForm.SubscriptionRewards[reward]);
+                                    }
+                                    //sendMessage(subscriber + " has subscribed and won " +  + "!");
+                                    //sendMessage(subscriber + " has just subscribed and won " +  + "!");
+                                    Thread.Sleep(1000);
+                                }
+                            }
+                        }
+                    }).Start();
+                    Thread.Sleep(5000);
+                }
+            });
+            Threads.Add(thread);
+            thread.Name = "Subscription rewards";
+            thread.Start();
+            }
+
             Console.Write("DONE\r\nInput listening thread... ");
 
             //Listen();
@@ -1080,6 +1147,7 @@ namespace ModBot
 
         private static void parseMessage(string message)
         {
+            if (message == null || message == "") return;
             new Thread(() =>
             {
                 //Console.WriteLine(message);
@@ -1128,6 +1196,27 @@ namespace ModBot
                                 MainForm.SpamFilterWindowButton.Enabled = Moderators.Contains(Api.capName(nick));
                             });
                             return;
+                        }
+                        else
+                        {
+                            for (int attempts = 0; attempts < 5; attempts++)
+                            {
+                                try
+                                {
+                                    rewardslog.WriteLine("*DEBUG [" + DateTime.Now + "] " + message);
+                                    break;
+                                }
+                                catch (IOException)
+                                {
+                                    System.Threading.Thread.Sleep(100);
+                                }
+                                catch (Exception e)
+                                {
+                                    //Console.WriteLine(e);
+                                    Api.LogError("*************Error Message (via Test()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+                                    break;
+                                }
+                            }
                         }
                     }
                     string name = Api.GetDisplayName(user);
@@ -1548,16 +1637,20 @@ namespace ModBot
                             }
                             else if(Database.MySqlDB != null)
                             {
-                                using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + Database.table + " ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", Database.MySqlDB))
+                                using (MySqlConnection con = Database.MySqlDB.Clone())
                                 {
-                                    using (MySqlDataReader r = query.ExecuteReader())
+                                    con.Open();
+                                    using (MySqlCommand query = new MySqlCommand("SELECT * FROM " + Database.table + " ORDER BY currency DESC LIMIT " + (max + IgnoredUsers.Count) + ";", con))
                                     {
-                                        while (r.Read())
+                                        using (MySqlDataReader r = query.ExecuteReader())
                                         {
-                                            string usr = Api.capName(r["user"].ToString());
-                                            if (!IgnoredUsers.Any(c => c.Equals(usr.ToLower())) && !TopPoints.ContainsKey(usr))
+                                            while (r.Read())
                                             {
-                                                TopPoints.Add(usr, int.Parse(r["currency"].ToString()));
+                                                string usr = Api.capName(r["user"].ToString());
+                                                if (!IgnoredUsers.Any(c => c.Equals(usr.ToLower())) && !TopPoints.ContainsKey(usr))
+                                                {
+                                                    TopPoints.Add(usr, int.Parse(r["currency"].ToString()));
+                                                }
                                             }
                                         }
                                     }
@@ -2743,22 +2836,17 @@ namespace ModBot
 
         private static void Log(string output)
         {
-            for (int attempts = 0; attempts < 5; attempts++)
+            output = "[" + DateTime.Now + "] " + output;
+            for (int attempts = 0; attempts < 10; attempts++)
             {
                 try
                 {
-                    log.WriteLine("[" + DateTime.Now + "] " + output);
+                    log.WriteLine(output);
                     break;
                 }
-                catch (IOException)
+                catch
                 {
-                    System.Threading.Thread.Sleep(100);
-                }
-                catch (Exception e)
-                {
-                    //Console.WriteLine(e);
-                    Api.LogError("*************Error Message (via Log()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                    break;
+                    System.Threading.Thread.Sleep(250);
                 }
             }
         }

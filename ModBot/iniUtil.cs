@@ -1,4 +1,5 @@
 ﻿using System.Collections.Specialized;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -24,12 +25,23 @@ public class iniUtil
     /// .ctor with INI file name
     /// </summary>
     /// <param name="fileName">Fullpath to the INI file</param>
-    public iniUtil(string fileName, string sDefault="\r\n")
+    public iniUtil(string fileName, string sDefault = "\r\n")
     {
         m_sIniFile = fileName;
-        if (!System.IO.File.Exists(fileName))
+        if (!File.Exists(fileName))
         {
-            System.IO.File.WriteAllText(fileName, sDefault);
+            File.WriteAllText(fileName, sDefault);
+        }
+    }
+
+    public iniUtil(string path, string fileName, string sDefault = "\r\n")
+    {
+        fileName = path + fileName;
+        m_sIniFile = fileName;
+        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+        if (!File.Exists(fileName))
+        {
+            File.WriteAllText(fileName, sDefault);
         }
     }
 

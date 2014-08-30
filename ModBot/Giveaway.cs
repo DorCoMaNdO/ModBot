@@ -242,6 +242,28 @@ namespace ModBot
                 {
                     Database.addCurrency(user, paid);
                     Database.removeCurrency(user, tickets * Cost);
+
+                    /*lock (MainForm.Giveaway_UserList.Items)
+                    {
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            List<string> delete = new List<string>();
+                            foreach (string name in MainForm.Giveaway_UserList.Items)
+                            {
+                                if ((MainForm.Giveaway_TypeTickets.Checked ? name.Split(' ')[0] : name) == user)
+                                {
+                                    delete.Add(name);
+                                }
+                            }
+                            foreach (string name in delete)
+                            {
+                                MainForm.Giveaway_UserList.Items.Remove(name);
+                            }
+                            MainForm.Giveaway_UserList.Items.Add(user + (MainForm.Giveaway_TypeTickets.Checked ?  " (" + tickets + ")" : ""));
+                            MainForm.Giveaway_UserCount.Text = "Users: " + MainForm.Giveaway_UserList.Items.Count;
+                        });
+                    }*/
+
                     if (Users.ContainsKey(user))
                     {
                         Users[user] = tickets;
@@ -342,6 +364,30 @@ namespace ModBot
                                             Users.Remove(user);
                                         }
                                     }
+
+                                    /*lock (MainForm.Giveaway_UserList.Items)
+                                    {
+                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                        {
+                                            foreach (string user in ValidUsers)
+                                            {
+                                                List<string> delete = new List<string>();
+                                                foreach (string name in MainForm.Giveaway_UserList.Items)
+                                                {
+                                                    if ((MainForm.Giveaway_TypeTickets.Checked ? name.Split(' ')[0] : name) == user)
+                                                    {
+                                                        delete.Add(name);
+                                                    }
+                                                }
+                                                foreach (string name in delete)
+                                                {
+                                                    MainForm.Giveaway_UserList.Items.Remove(name);
+                                                }
+                                                MainForm.Giveaway_UserList.Items.Add(user + (MainForm.Giveaway_TypeTickets.Checked ? Users.ContainsKey(user) ? " (" + Users[user] + ")" : "" : ""));
+                                            }
+                                            MainForm.Giveaway_UserCount.Text = "Users: " + MainForm.Giveaway_UserList.Items.Count;
+                                        });
+                                    }*/
                                 }
                             }
                         }

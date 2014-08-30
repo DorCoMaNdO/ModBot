@@ -17,7 +17,7 @@ namespace ModBot
     {
         private iniUtil ini = Program.ini;
         public Dictionary<string, Dictionary<string, string>> dSettings = new Dictionary<string, Dictionary<string, string>>();
-        private bool bIgnoreUpdates = false;
+        private bool bIgnoreUpdates, MetadataModified;
         public int iSettingsPresent = -2;
         //private bool g_bLoaded = false;
         public Dictionary<CheckBox, Panel> Windows = new Dictionary<CheckBox, Panel>();
@@ -25,7 +25,7 @@ namespace ModBot
         private List<Thread> Threads = new List<Thread>();
         private string AuthenticationScopes;
         public string ChannelTitle, ChannelGame;
-        private bool TitleGameModified;
+        public Dictionary<string, string> SubscriptionRewards = new Dictionary<string, string>();
 
         public MainWindow()
         {
@@ -135,8 +135,8 @@ namespace ModBot
             About_Users.Sort(About_Users.Columns["Status"], System.ComponentModel.ListSortDirection.Ascending);
             //About_Users.Columns["Version"].Visible = false;
             //About_Users.Columns["Updated"].Visible = false;
-            About_Users.Columns["Title"].Width += 120;
-            About_Users.Columns["Game"].Width += 80;
+            //About_Users.Columns["Title"].Width += 120;
+            //About_Users.Columns["Game"].Width += 80;
 
             /*new Thread(() =>
             {
@@ -182,7 +182,7 @@ namespace ModBot
                     }
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        File.WriteAllLines("games.txt", games.ToArray());
+                        File.WriteAllLines(@"Settings\Games.txt", games.ToArray());
                         Games.AddRange(games.ToArray());
                         ChannelGameBox.AutoCompleteCustomSource = Games;
                     });
@@ -191,10 +191,10 @@ namespace ModBot
             thread.Name = "Download games list";
             thread.Start();
             Threads.Add(thread);*/
-            if (File.Exists("games.txt"))
+            if (File.Exists(@"Settings\Games.txt"))
             {
                 AutoCompleteStringCollection Games = new AutoCompleteStringCollection();
-                Games.AddRange(File.ReadAllLines("games.txt"));
+                Games.AddRange(File.ReadAllLines(@"Settings\Games.txt"));
                 ChannelGameBox.AutoCompleteCustomSource = Games;
             }
 
@@ -206,12 +206,19 @@ namespace ModBot
             CenterSpacer(GiveawayTypeLabel, GiveawayTypeSpacer);
             CenterSpacer(GiveawayRulesLabel, GiveawayRulesSpacer, false, true);
             CenterSpacer(GiveawayBansLabel, GiveawayBansSpacer);
+            CenterSpacer(GiveawayUsersLabel, GiveawayUsersSpacer);
             CenterSpacer(Spam_CWLLabel, Spam_CWLSpacer, false, true);
             CenterSpacer(MySQLLabel, MySQLSpacer, true, false);
+            CenterSpacer(SubscribersLabel, SubscribersSpacer);
 
             Panel panel = new Panel();
             panel.Size = new Size(1, 1);
             panel.Location = new Point(GiveawayTypeSpacer.Location.X + GiveawayTypeSpacer.Size.Width - 1, GiveawayTypeSpacer.Location.Y + 9);
+            GiveawayWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.Size = new Size(1, 1);
+            panel.Location = new Point(GiveawayBansSpacer.Location.X + GiveawayBansSpacer.Size.Width - 1, GiveawayBansSpacer.Location.Y + 9);
             GiveawayWindow.Controls.Add(panel);
             panel.BringToFront();
 
@@ -295,6 +302,8 @@ namespace ModBot
             CurrentWindow = SettingsWindow;
             SettingsWindow.BringToFront();
 
+            SettingsErrorLabel.Text = "";
+
             bIgnoreUpdates = true;
 
             ini.SetValue("Settings", "BOT_Name", BotNameBox.Text = ini.GetValue("Settings", "BOT_Name", "ModBot"));
@@ -303,6 +312,19 @@ namespace ModBot
             ini.SetValue("Settings", "Channel_Name", ChannelBox.Text = ini.GetValue("Settings", "Channel_Name", "ModChannel"));
             ini.SetValue("Settings", "Channel_Token", ChannelTokenBox.Text = ini.GetValue("Settings", "Channel_Token", ""));
             ini.SetValue("Settings", "Channel_SteamID64", Channel_SteamID64.Text = ini.GetValue("Settings", "Channel_SteamID64", "SteamID64"));
+            ini.SetValue("Settings", "Channel_SubscriptionRewards", (Channel_SubscriptionRewards.Checked = (ini.GetValue("Settings", "Channel_SubscriptionRewards", "0") == "1")) ? "1" : "0");
+            if (!Directory.Exists(@"Data\Subscriptions")) Directory.CreateDirectory(@"Data\Subscriptions");
+            if (File.Exists(@"Data\Subscriptions\Rewards.txt"))
+            {
+                foreach (string line in File.ReadAllLines(@"Data\Subscriptions\Rewards.txt"))
+                {
+                    string[] reward = line.Split(';');
+                    Channel_SubscriptionRewardsList.Rows.Add(reward[0], reward[1]);
+                }
+            }
+            Channel_SubscriptionRewardsList.CellValueChanged += new DataGridViewCellEventHandler(Channel_SubscriptionRewardsList_Changed);
+            Channel_SubscriptionRewardsList.RowsAdded += new DataGridViewRowsAddedEventHandler(Channel_SubscriptionRewardsList_Changed);
+            Channel_SubscriptionRewardsList.RowsRemoved += new DataGridViewRowsRemovedEventHandler(Channel_SubscriptionRewardsList_Changed);
 
             ini.SetValue("Settings", "Currency_Name", CurrencyNameBox.Text = ini.GetValue("Settings", "Currency_Name", "Mod Coins"));
             ini.SetValue("Settings", "Currency_Command", CurrencyCommandBox.Text = ini.GetValue("Settings", "Currency_Command", "ModCoins"));
@@ -385,23 +407,13 @@ namespace ModBot
             ini.SetValue("Settings", "MySQL_Password", MySQL_Password.Text = ini.GetValue("Settings", "MySQL_Password", ""));
             ini.SetValue("Settings", "MySQL_Table", MySQL_Table.Text = ini.GetValue("Settings", "MySQL_Table", ""));
 
+            Channel_SubscriptionsDate.Value = DateTime.Now;
+            //Channel_SubscriptionsDate.CustomFormat = "dddd, MMMM M, yyyy H:mm:ss";
+            //Channel_SubscriptionsDate.CustomFormat = "d/MM/yy H:mm:ss";
+
             bIgnoreUpdates = false;
 
             SongRequestPlayer.Navigated += YouTube.SongRequestPlayer_Navigated;
-
-            //string[] lines = File.ReadAllLines("modbot.txt");
-            //Dictionary<string, string> dict = lines.Select(l => l.Split('=')).ToDictionary(a => a[0], a => a[1]);
-            //iniUtil ini = new iniUtil(@"C:\program files (x86)\myapp\myapp.ini");
-
-            /*Type colorType = typeof(System.Drawing.Color);
-            // We take only static property to avoid properties like Name, IsSystemColor ...
-            PropertyInfo[] propInfos = colorType.GetProperties(BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.Public);
-            foreach (PropertyInfo propInfo in propInfos)
-            {
-                Console.WriteLine(propInfo.Name);
-            }*/
-
-            //GetSettings();
         }
 
         private void MainWindow_Load(object sender, EventArgs e)
@@ -506,11 +518,6 @@ namespace ModBot
 
         public void GetSettings()
         {
-            /*if (!File.Exists("ModBot.ini"))
-            {
-                File.WriteAllText("ModBot.ini", "\r\n[Default]");
-            }*/
-
             if (!bIgnoreUpdates)
             {
                 bIgnoreUpdates = true;
@@ -779,6 +786,8 @@ namespace ModBot
                         }
                     });
 
+                    if (!Directory.Exists(@"Data\Donations")) Directory.CreateDirectory(@"Data\Donations");
+
                     int count = Convert.ToInt32(RecentDonorsLimit.Value), iCount = 0;
                     if (transactions.Count < count) count = transactions.Count;
                     string sTopDonors = "", sRecentDonors = "", sLatestDonor = "";
@@ -799,7 +808,7 @@ namespace ModBot
                         }
                         if (UpdateLastDonorCheckBox.Checked && !sLatestIgnores.Contains(transaction.id) && sLatestDonor == "")
                         {
-                            File.WriteAllText("LatestDonation.txt", (sLatestDonor = transaction.ToString("$AMOUNT - DONOR")));
+                            File.WriteAllText(@"Data\Donations\LatestDonation.txt", (sLatestDonor = transaction.ToString("$AMOUNT - DONOR")));
                         }
 
                         if (UpdateTopDonorsCheckBox.Checked)
@@ -827,7 +836,7 @@ namespace ModBot
 
                     if (UpdateRecentDonorsCheckBox.Checked)
                     {
-                        File.WriteAllText("RecentDonors.txt", sRecentDonors);
+                        File.WriteAllText(@"Data\Donations\RecentDonors.txt", sRecentDonors);
                     }
 
                     transactions = Donors.OrderByDescending(key => float.Parse(key.amount)).ToList();
@@ -851,7 +860,7 @@ namespace ModBot
                                 iCount++;
                             }
                         }
-                        File.WriteAllText("TopDonors.txt", sTopDonors);
+                        File.WriteAllText(@"Data\Donations\TopDonors.txt", sTopDonors);
                     }
                 }
 
@@ -880,7 +889,7 @@ namespace ModBot
                     }
                 }
 
-                if (!TitleGameModified)
+                if (!MetadataModified)
                 {
                     using (WebClient w = new WebClient())
                     {
@@ -904,18 +913,18 @@ namespace ModBot
 
                                 if (stream["game"].ToString() != ChannelGame)
                                 {
-                                    Api.UpdateTitleGame(ChannelTitle, ChannelGame);
+                                    Api.UpdateMetadata(ChannelTitle, ChannelGame);
                                 }
                             }
 
                             BeginInvoke((MethodInvoker)delegate
                             {
-                                if (!TitleGameModified)
+                                if (!MetadataModified)
                                 {
                                     ChannelTitleBox.Text = ChannelTitle;
                                     ChannelGameBox.Text = ChannelGame;
 
-                                    TitleGameModified = false;
+                                    MetadataModified = false;
                                 }
                             });
                         }
@@ -1387,7 +1396,7 @@ namespace ModBot
 
             if(CurrentWindow != ChannelWindow)
             {
-                TitleGameModified = false;
+                MetadataModified = false;
             }
         }
 
@@ -1522,9 +1531,9 @@ namespace ModBot
             {
                 AuthenticationScopes = "chat_login";
             }
-            else
+            else if ((Button)sender == GenerateChannelTokenButton)
             {
-                AuthenticationScopes = "user_read channel_editor channel_commercial channel_check_subscription chat_login";
+                AuthenticationScopes = "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login";
             }
             AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
         }
@@ -1538,7 +1547,7 @@ namespace ModBot
                 {
                     AuthenticationLabel.Text = "Connect to the bot's account";
                 }
-                else
+                else if (AuthenticationScopes == "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login")
                 {
                     AuthenticationLabel.Text = "Connect to your account (channel)";
                 }
@@ -1550,7 +1559,7 @@ namespace ModBot
                 {
                     BotPasswordBox.Text = "oauth:" + e.Url.Fragment.Substring(14).Split('&')[0];
                 }
-                else
+                else if (AuthenticationScopes == "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login")
                 {
                     ChannelTokenBox.Text = e.Url.Fragment.Substring(14).Split('&')[0];
                 }
@@ -1605,16 +1614,16 @@ namespace ModBot
         {
             new Thread(() =>
             {
-                if(Api.UpdateTitleGame(ChannelTitleBox.Text, ChannelGameBox.Text))
+                if(Api.UpdateMetadata(ChannelTitleBox.Text, ChannelGameBox.Text))
                 {
-                    if (TitleGameModified) TitleGameModified = false;
+                    if (MetadataModified) MetadataModified = false;
                 }
             }).Start();
         }
 
         private void TitleGame_Modified(object sender, EventArgs e)
         {
-            TitleGameModified = true;
+            MetadataModified = true;
         }
 
         private void DonateImage_Click(object sender, EventArgs e)
@@ -1639,17 +1648,17 @@ namespace ModBot
                 e.SortResult = (int.Parse(e.CellValue2.ToString())).CompareTo(int.Parse(e.CellValue1.ToString()));
                 if (e.SortResult == 0)
                 {
-                    e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
+                    e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
                     if (e.SortResult == 0)
                     {
-                        string[] cell1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString().Split('.'), cell2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString().Split('.');
-                        e.SortResult = TimeSpan.FromDays(int.Parse(cell1[2])).Add(TimeSpan.FromSeconds(int.Parse(cell1[3]))).CompareTo(TimeSpan.FromDays(int.Parse(cell2[2])).Add(TimeSpan.FromSeconds(int.Parse(cell2[3]))));
+                        e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" && About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() != "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" && About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() != "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
                         if (e.SortResult == 0)
                         {
-                            e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
+                            e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
                             if (e.SortResult == 0)
                             {
-                                e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
+                                string[] cell1 = About_Users.Rows[e.RowIndex2].Cells["Version"].Value.ToString().Split('.'), cell2 = About_Users.Rows[e.RowIndex1].Cells["Version"].Value.ToString().Split('.');
+                                e.SortResult = TimeSpan.FromDays(int.Parse(cell1[2])).Add(TimeSpan.FromSeconds(int.Parse(cell1[3]))).CompareTo(TimeSpan.FromDays(int.Parse(cell2[2])).Add(TimeSpan.FromSeconds(int.Parse(cell2[3]))));
                             }
                         }
                     }
@@ -1668,10 +1677,10 @@ namespace ModBot
                         e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
                         if (e.SortResult == 0)
                         {
-                            e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
+                            e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
                             if (e.SortResult == 0)
                             {
-                                e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                                e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" && About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() != "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" && About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() != "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
                             }
                         }
                     }
@@ -1687,10 +1696,10 @@ namespace ModBot
                     e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
                     if (e.SortResult == 0)
                     {
-                        e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
+                        e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
                         if (e.SortResult == 0)
                         {
-                            e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                            e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" && About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() != "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" && About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() != "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
                             if (e.SortResult == 0)
                             {
                                 e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
@@ -1705,10 +1714,10 @@ namespace ModBot
                 e.SortResult = e.CellValue2.ToString().CompareTo(e.CellValue1.ToString());
                 if (e.SortResult == 0)
                 {
-                    e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
+                    e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
                     if (e.SortResult == 0)
                     {
-                        e.SortResult = int.Parse(About_Users.Rows[e.RowIndex2].Cells["Viewers"].Value.ToString()).CompareTo(int.Parse(About_Users.Rows[e.RowIndex1].Cells["Viewers"].Value.ToString()));
+                        e.SortResult = About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() == "" && About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() != "" ? 1 : About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString().ToString() == "" && About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().ToString() != "" ? -1 : About_Users.Rows[e.RowIndex1].Cells["Game"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex2].Cells["Game"].Value.ToString());
                         if (e.SortResult == 0)
                         {
                             e.SortResult = Convert.ToDateTime(About_Users.Rows[e.RowIndex2].Cells["Updated"].Value.ToString()).CompareTo(Convert.ToDateTime(About_Users.Rows[e.RowIndex1].Cells["Updated"].Value.ToString()));
@@ -1724,7 +1733,7 @@ namespace ModBot
             }
             else if (e.Column.Name == "Game")
             {
-                e.SortResult = e.CellValue1.ToString() == "" ? 1 : e.CellValue2.ToString() == "" ? -1 : e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
+                e.SortResult = e.CellValue1.ToString() == "" && e.CellValue2.ToString() != "" ? 1 : e.CellValue2.ToString() == "" && e.CellValue1.ToString() != "" ? -1 : e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
                 if (e.SortResult == 0)
                 {
                     e.SortResult = About_Users.Rows[e.RowIndex2].Cells["Status"].Value.ToString().CompareTo(About_Users.Rows[e.RowIndex1].Cells["Status"].Value.ToString());
@@ -1746,7 +1755,7 @@ namespace ModBot
             }
             else if (e.Column.Name == "Title")
             {
-                e.SortResult = e.CellValue1.ToString() == "" ? 1 : e.CellValue2.ToString() == "" ? -1 : e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
+                e.SortResult = e.CellValue1.ToString() == "" && e.CellValue2.ToString() != "" ? 1 : e.CellValue2.ToString() == "" && e.CellValue1.ToString() != "" ? -1 : e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
             }
         }
 
@@ -1761,21 +1770,21 @@ namespace ModBot
                 }
                 else if (cb == UpdateTopDonorsCheckBox)
                 {
-                    TopDonorsLimit.Enabled = UpdateTopDonorsCheckBox.Checked;
+                    TopDonorsLimit.Enabled = cb.Checked;
                 }
                 else if (cb == UpdateRecentDonorsCheckBox)
                 {
-                    RecentDonorsLimit.Enabled = UpdateRecentDonorsCheckBox.Checked;
+                    RecentDonorsLimit.Enabled = cb.Checked;
                 }
                 else if (cb == Channel_UseSteam)
                 {
-                    Channel_SteamID64.Enabled = Channel_UseSteam.Checked;
+                    Channel_SteamID64.Enabled = cb.Checked;
                     long dummy;
-                    if (!bIgnoreUpdates && Channel_UseSteam.Checked && (Channel_SteamID64.Text.Length < 10 || !long.TryParse(Channel_SteamID64.Text, out dummy))) Process.Start("http://steamidconverter.com/");
+                    if (!bIgnoreUpdates && cb.Checked && (Channel_SteamID64.Text.Length < 10 || !long.TryParse(Channel_SteamID64.Text, out dummy))) Process.Start("http://steamidconverter.com/");
                 }
                 else if (cb == Misc_ShowConsole)
                 {
-                    if (Misc_ShowConsole.Checked)
+                    if (cb.Checked)
                     {
                         Program.ShowConsole();
                     }
@@ -1783,6 +1792,10 @@ namespace ModBot
                     {
                         Program.HideConsole();
                     }
+                }
+                else if (cb == Channel_SubscriptionRewards)
+                {
+                    Channel_SubscriptionsDate.Enabled = Channel_SubscriptionRewardsList.Enabled = cb.Checked;
                 }
                 ini.SetValue("Settings", cb.Name, cb.Checked ? "1" : "0");
             }
@@ -1813,6 +1826,25 @@ namespace ModBot
         private void SettingsErrorLabel_TextChanged(object sender, EventArgs e)
         {
             ConnectButton.Enabled = (SettingsErrorLabel.Text == "");
+        }
+
+        private void Channel_SubscriptionRewardsList_Changed(object sender, EventArgs e)
+        {
+            lock (SubscriptionRewards)
+            {
+                SubscriptionRewards.Clear();
+                string text = "";
+                foreach (DataGridViewRow row in Channel_SubscriptionRewardsList.Rows)
+                {
+                    if (row.Cells["Reward"].Value != null && row.Cells["Instructions"].Value != null && row.Cells["Reward"].Value.ToString() != "")
+                    {
+                        SubscriptionRewards.Add(row.Cells["Reward"].Value.ToString(), row.Cells["Instructions"].Value.ToString());
+                        text += row.Cells["Reward"].Value.ToString() + ";" + row.Cells["Instructions"].Value.ToString() + "\r\n";
+                    }
+                    if (!Directory.Exists(@"Data\Subscriptions")) Directory.CreateDirectory(@"Data\Subscriptions");
+                    File.WriteAllText(@"Data\Subscriptions\Rewards.txt", text);
+                }
+            }
         }
     }
 }

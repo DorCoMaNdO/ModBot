@@ -12,7 +12,7 @@ namespace ModBot
 {
     static class Program
     {
-        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + "ModBot.ini", "\r\n[Default]");
+        public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + @"Settings\", "ModBot.ini", "\r\n[Default]");
         public static MainWindow MainForm;
         public static List<string> args = new List<string>();
         //private static FileStream stream = null;
@@ -123,15 +123,21 @@ namespace ModBot
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
-            /*while (File.Exists("ModBot.ini") && Api.IsFileLocked("ModBot.ini", FileShare.Read))
+
+            if (!Directory.Exists("Settings")) Directory.CreateDirectory("Settings");
+            if (!Directory.Exists("Data")) Directory.CreateDirectory("Data");
+            if (!Directory.Exists(@"Data\Logs")) Directory.CreateDirectory(@"Data\Logs");
+
+            /*while (File.Exists(@"Settings\ModBot.ini") && Api.IsFileLocked(@"Settings\ModBot.ini", FileShare.Read))
             {
                 MessageBox.Show("ModBot's config file is in use, Please close it in order to let ModBot use it.", "ModBot Updater", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }*/
-            if (!File.Exists("ModBot.ini"))
+            if (!File.Exists(@"Settings\ModBot.ini"))
             {
-                File.WriteAllText("ModBot.ini", "\r\n[Default]");
+                File.WriteAllText(@"Settings\ModBot.ini", "\r\n[Default]");
             }
-            //stream = new FileInfo("ModBot.ini").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+            //stream = new FileInfo(@"Settings\ModBot.ini").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+
             Updates.ExtractUpdater();
             Updates.CheckUpdate();
             Application.Run(MainForm = new MainWindow());
