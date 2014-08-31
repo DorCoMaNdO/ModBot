@@ -1261,7 +1261,6 @@ namespace ModBot
                 else if (msg[1].Equals("JOIN"))
                 {
                     user = getUser(message);
-                    if (user == Api.capName(nick)) return;
 
                     if (!ActiveUsers.ContainsKey(user)) addUserToList(user);
 
@@ -1271,7 +1270,9 @@ namespace ModBot
                         //db.addCurrency(user, payout);
                     }
 
-                    string name = Api.GetDisplayName(user);
+                    if (user == Api.capName(nick) || user == "Jtv") return;
+
+                    /*string name = Api.GetDisplayName(user);
                     Console.WriteLine(name + " joined");
                     if (greetingOn && greeting != "")
                     {
@@ -1285,7 +1286,7 @@ namespace ModBot
                             MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
                             MainForm.Giveaway_WinnerChat.SelectedText = name + " has joined the channel.\r\n";
                         });
-                    }
+                    }*/
                 }
                 else if (msg[1].Equals("PART"))
                 {
@@ -2533,6 +2534,27 @@ namespace ModBot
                 if (!ActiveUsers.ContainsKey(user))
                 {
                     ActiveUsers.Add(user, time);
+
+                    if (user == Api.capName(nick) || user == "Jtv") return;
+
+                    string name = Api.GetDisplayName(user);
+
+                    Console.WriteLine(name + " joined");
+
+                    if (greetingOn && greeting != "")
+                    {
+                        sendMessage(greeting.Replace("@user", name));
+                    }
+
+                    if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                    {
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            MainForm.Giveaway_WinnerChat.SelectionColor = Color.Green;
+                            MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
+                            MainForm.Giveaway_WinnerChat.SelectedText = name + " has joined the channel.\r\n";
+                        });
+                    }
                 }
                 else
                 {
@@ -2615,7 +2637,7 @@ namespace ModBot
                                 {
                                     if (sUser != "" && !ActiveUsers.ContainsKey(Api.capName(sUser)))
                                     {
-                                        Api.GetDisplayName(sUser);
+                                        //Api.GetDisplayName(sUser);
                                         addUserToList(sUser, justjoined ? -1 : 0);
                                     }
                                 }
