@@ -210,6 +210,7 @@ namespace ModBot
             CenterSpacer(Spam_CWLLabel, Spam_CWLSpacer, false, true);
             CenterSpacer(MySQLLabel, MySQLSpacer, true, false);
             CenterSpacer(SubscribersLabel, SubscribersSpacer);
+            CenterSpacer(SubscriptionsLabel, SubscriptionsSpacer);
 
             Panel panel = new Panel();
             panel.Size = new Size(1, 1);
@@ -1071,8 +1072,8 @@ namespace ModBot
             else if (ctrl == Giveaway_TypeActive)
             {
                 Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
-                Giveaway_WarnFalseEntries.Enabled = !Giveaway_TypeActive.Checked;
-                if (Giveaway_TypeActive.Checked) Giveaway_WarnFalseEntries.Checked = false;
+                Giveaway_WarnFalseEntries.Enabled = (!Giveaway_TypeActive.Checked && Irc.Moderators.Contains(Api.capName(Irc.nick)));
+                if (Giveaway_TypeActive.Checked || !Irc.Moderators.Contains(Api.capName(Irc.nick))) Giveaway_WarnFalseEntries.Checked = false;
             }
             else if(ctrl == Giveaway_TypeKeyword)
             {
@@ -1442,7 +1443,7 @@ namespace ModBot
 
         private void WebsiteLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start("https://sourceforge.net/projects/twitchmodbot/");
+            //Process.Start("https://sourceforge.net/projects/twitchmodbot/");
             Process.Start("http://modbot.wordpress.com/");
         }
 

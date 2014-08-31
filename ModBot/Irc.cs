@@ -782,7 +782,7 @@ namespace ModBot
 
             thread = new Thread(() =>
             {
-                buildUserList(0); // Preload the list of users so the currency handout options will work correctly.
+                buildUserList(false); // Preload the list of users so the currency handout options will work correctly.
                 
                 while (true)
                 {
@@ -957,7 +957,7 @@ namespace ModBot
                         {
                             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                             {
-                                MainForm.Channel_SubscriptionsDate.Value = Subscriptions.ElementAt(0).Value;
+                                MainForm.Channel_SubscriptionsDate.Value = Subscriptions.ElementAt(0).Value.AddSeconds(1);
                             });
                             lock (MainForm.SubscriptionRewards)
                             {
@@ -981,7 +981,7 @@ namespace ModBot
                                     if (MainForm.SubscriptionRewards[reward] != "")
                                     {
                                         Thread.Sleep(1000);
-                                        sendMessage(subscriber + ", please " + MainForm.SubscriptionRewards[reward]);
+                                        sendMessage(subscriber + ", please " + MainForm.SubscriptionRewards[reward] + ".");
                                     }
                                     //sendMessage(subscriber + " has subscribed and won " +  + "!");
                                     //sendMessage(subscriber + " has just subscribed and won " +  + "!");
@@ -1194,6 +1194,9 @@ namespace ModBot
                             MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                             {
                                 MainForm.SpamFilterWindowButton.Enabled = Moderators.Contains(Api.capName(nick));
+                                if (!MainForm.SpamFilterWindowButton.Enabled && MainForm.CurrentWindow == MainForm.SpamFilterWindow) MainForm.SettingsWindowButton.Checked = true;
+                                MainForm.Giveaway_WarnFalseEntries.Enabled = (!MainForm.Giveaway_TypeActive.Checked && Moderators.Contains(Api.capName(nick)));
+                                if (MainForm.Giveaway_TypeActive.Checked || !Moderators.Contains(Api.capName(nick))) MainForm.Giveaway_WarnFalseEntries.Checked = false;
                             });
                             return;
                         }
@@ -1259,12 +1262,15 @@ namespace ModBot
                 {
                     user = getUser(message);
                     if (user == Api.capName(nick)) return;
-                    addUserToList(user);
+
+                    if (!ActiveUsers.ContainsKey(user)) addUserToList(user);
+
                     if (!Database.userExists(user))
                     {
                         Database.newUser(user);
                         //db.addCurrency(user, payout);
                     }
+
                     string name = Api.GetDisplayName(user);
                     Console.WriteLine(name + " joined");
                     if (greetingOn && greeting != "")
@@ -2520,7 +2526,7 @@ namespace ModBot
 
         private static void addUserToList(string user, int time = -1)
         {
-            if (time == -1) time = Api.GetUnixTimeNow();
+            if (time < 0) time = Api.GetUnixTimeNow();
             user = Api.capName(user);
             lock (ActiveUsers)
             {
@@ -2560,7 +2566,7 @@ namespace ModBot
             }
         }
 
-        public static void buildUserList(int time = 0)
+        public static void buildUserList(bool justjoined = true)
         {
             //sendRaw("WHO " + channel);
             Thread thread = new Thread(() =>
@@ -2597,20 +2603,20 @@ namespace ModBot
                                 List<string> Delete = new List<string>();
                                 foreach(string sUser in ActiveUsers.Keys)
                                 {
-                                    string user = Api.capName(sUser);
-                                    if (!lUsers.Contains(user)) Delete.Add(user);
+                                    string user = sUser.ToLower();
+                                    if (!IgnoredUsers.Contains(user) && !lUsers.Contains(user)) Delete.Add(user);
                                 }
                                 foreach (string sUser in Delete)
                                 {
                                     removeUserFromList(sUser);
                                 }
+
                                 foreach (string sUser in lUsers)
                                 {
-                                    Api.GetDisplayName(sUser); 
-                                    string user = Api.capName(sUser);
-                                    if (sUser != "" && !ActiveUsers.ContainsKey(user))
+                                    if (sUser != "" && !ActiveUsers.ContainsKey(Api.capName(sUser)))
                                     {
-                                        addUserToList(user, time);
+                                        Api.GetDisplayName(sUser);
+                                        addUserToList(sUser, justjoined ? -1 : 0);
                                     }
                                 }
                             }

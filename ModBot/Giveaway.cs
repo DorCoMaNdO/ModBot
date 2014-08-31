@@ -287,9 +287,9 @@ namespace ModBot
             return 0;
         }
 
-        private static bool CheckUser(string user)
+        private static bool CheckUser(string user, bool checkfollow = true, bool checksubscriber = true, bool checktime = true)
         {
-            return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (!MainForm.Giveaway_MustFollow.Checked || Api.IsFollower(user)) && (!MainForm.Giveaway_MustSubscribe.Checked || Api.IsSubscriber(user)) && (!MainForm.Giveaway_MustWatch.Checked || Api.CompareTimeWatched(user) >= 0));
+            return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (!checkfollow || !MainForm.Giveaway_MustFollow.Checked || Api.IsFollower(user)) && (!checksubscriber || !MainForm.Giveaway_MustSubscribe.Checked || Api.IsSubscriber(user)) && (!checktime || !MainForm.Giveaway_MustWatch.Checked || Api.CompareTimeWatched(user) >= 0));
         }
 
         public static string getWinner()
@@ -328,7 +328,7 @@ namespace ModBot
                             {
                                 foreach (string user in Irc.ActiveUsers.Keys)
                                 {
-                                    if (!ValidUsers.Contains(user) && CurrentTime - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user))
+                                    if (!ValidUsers.Contains(user) && CurrentTime - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, Irc.ActiveUsers.Count < 100))
                                     {
                                         ValidUsers.Add(user);
                                     }
@@ -341,7 +341,18 @@ namespace ModBot
                             {
                                 lock (Irc.ActiveUsers)
                                 {
-                                    List<string> Delete = new List<string>();
+                                    foreach (string user in Users.Keys)
+                                    {
+                                        if (Irc.ActiveUsers.ContainsKey(user))
+                                        {
+                                            for (int i = 0; i < Users[user]; i++)
+                                            {
+                                                ValidUsers.Add(user);
+                                            }
+                                        }
+                                    }
+
+                                    /*List<string> Delete = new List<string>();
                                     foreach (string user in Users.Keys)
                                     {
                                         if (Irc.ActiveUsers.ContainsKey(user) && CheckUser(user))
@@ -363,7 +374,7 @@ namespace ModBot
                                         {
                                             Users.Remove(user);
                                         }
-                                    }
+                                    }*/
 
                                     /*lock (MainForm.Giveaway_UserList.Items)
                                     {
@@ -394,7 +405,14 @@ namespace ModBot
 
                         if (ValidUsers.Count > 0)
                         {
-                            sWinner = Api.GetDisplayName(ValidUsers[new Random().Next(0, ValidUsers.Count)]);
+                            List<string> Ignore = new List<string>();
+                            sWinner = ValidUsers[new Random().Next(0, ValidUsers.Count)];
+                            while (!CheckUser(sWinner) || Ignore.Contains(sWinner))
+                            {
+                                Ignore.Add(sWinner);
+                                sWinner = ValidUsers[new Random().Next(0, ValidUsers.Count)];
+                            }
+                            sWinner = Api.GetDisplayName(sWinner);
                             //Chance = 100F / ValidUsers.Count;
                             int tickets = ValidUsers.Count;
                             int winnertickets = 1;

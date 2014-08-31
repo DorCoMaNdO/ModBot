@@ -29,7 +29,8 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollow = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -157,7 +158,6 @@
             this.EmailLinkLabel = new System.Windows.Forms.LinkLabel();
             this.label17 = new System.Windows.Forms.Label();
             this.WebsiteLinkLabel = new System.Windows.Forms.LinkLabel();
-            this.label18 = new System.Windows.Forms.Label();
             this.AboutImage = new System.Windows.Forms.PictureBox();
             this.VersionLabel = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
@@ -1496,8 +1496,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle2;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1606,13 +1606,12 @@
             // AboutWindow
             // 
             this.AboutWindow.BackColor = System.Drawing.Color.White;
+            this.AboutWindow.Controls.Add(this.WebsiteLinkLabel);
             this.AboutWindow.Controls.Add(this.About_Users);
             this.AboutWindow.Controls.Add(this.DonateImage);
             this.AboutWindow.Controls.Add(this.SupportLinkLabel);
             this.AboutWindow.Controls.Add(this.EmailLinkLabel);
             this.AboutWindow.Controls.Add(this.label17);
-            this.AboutWindow.Controls.Add(this.WebsiteLinkLabel);
-            this.AboutWindow.Controls.Add(this.label18);
             this.AboutWindow.Controls.Add(this.AboutImage);
             this.AboutWindow.Controls.Add(this.VersionLabel);
             this.AboutWindow.Controls.Add(this.label20);
@@ -1719,18 +1718,18 @@
             // SupportLinkLabel
             // 
             this.SupportLinkLabel.AutoSize = true;
-            this.SupportLinkLabel.Location = new System.Drawing.Point(232, 178);
+            this.SupportLinkLabel.Location = new System.Drawing.Point(220, 178);
             this.SupportLinkLabel.Name = "SupportLinkLabel";
-            this.SupportLinkLabel.Size = new System.Drawing.Size(28, 13);
+            this.SupportLinkLabel.Size = new System.Drawing.Size(27, 13);
             this.SupportLinkLabel.TabIndex = 23;
             this.SupportLinkLabel.TabStop = true;
-            this.SupportLinkLabel.Text = "here";
+            this.SupportLinkLabel.Text = "blog";
             this.SupportLinkLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.SupportLinkLabel_LinkClicked);
             // 
             // EmailLinkLabel
             // 
             this.EmailLinkLabel.AutoSize = true;
-            this.EmailLinkLabel.Location = new System.Drawing.Point(176, 178);
+            this.EmailLinkLabel.Location = new System.Drawing.Point(151, 178);
             this.EmailLinkLabel.Name = "EmailLinkLabel";
             this.EmailLinkLabel.Size = new System.Drawing.Size(32, 13);
             this.EmailLinkLabel.TabIndex = 22;
@@ -1743,29 +1742,20 @@
             this.label17.AutoSize = true;
             this.label17.Location = new System.Drawing.Point(3, 178);
             this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(233, 13);
+            this.label17.Size = new System.Drawing.Size(561, 52);
             this.label17.TabIndex = 21;
-            this.label17.Text = "For help/support/feedback send an           or go";
+            this.label17.Text = resources.GetString("label17.Text");
             // 
             // WebsiteLinkLabel
             // 
             this.WebsiteLinkLabel.AutoSize = true;
-            this.WebsiteLinkLabel.Location = new System.Drawing.Point(166, 230);
+            this.WebsiteLinkLabel.Location = new System.Drawing.Point(237, 217);
             this.WebsiteLinkLabel.Name = "WebsiteLinkLabel";
-            this.WebsiteLinkLabel.Size = new System.Drawing.Size(28, 13);
+            this.WebsiteLinkLabel.Size = new System.Drawing.Size(27, 13);
             this.WebsiteLinkLabel.TabIndex = 20;
             this.WebsiteLinkLabel.TabStop = true;
-            this.WebsiteLinkLabel.Text = "here";
+            this.WebsiteLinkLabel.Text = "blog";
             this.WebsiteLinkLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.WebsiteLinkLabel_LinkClicked);
-            // 
-            // label18
-            // 
-            this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(3, 230);
-            this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(282, 13);
-            this.label18.TabIndex = 19;
-            this.label18.Text = "New versions and notes available          and in the updater";
             // 
             // AboutImage
             // 
@@ -1876,13 +1866,12 @@
             this.Reward,
             this.Instructions});
             this.Channel_SubscriptionRewardsList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke;
-            this.Channel_SubscriptionRewardsList.Enabled = false;
             this.Channel_SubscriptionRewardsList.Location = new System.Drawing.Point(0, 382);
             this.Channel_SubscriptionRewardsList.MultiSelect = false;
             this.Channel_SubscriptionRewardsList.Name = "Channel_SubscriptionRewardsList";
             this.Channel_SubscriptionRewardsList.RowHeadersVisible = false;
             this.Channel_SubscriptionRewardsList.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            this.Channel_SubscriptionRewardsList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.Channel_SubscriptionRewardsList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.Channel_SubscriptionRewardsList.Size = new System.Drawing.Size(1024, 180);
             this.Channel_SubscriptionRewardsList.TabIndex = 62;
             // 
@@ -2543,6 +2532,7 @@
             this.Controls.Add(this.AboutWindowButton);
             this.Controls.Add(this.DonationsWindowButton);
             this.Controls.Add(this.SettingsWindowButton);
+            this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
@@ -2553,13 +2543,11 @@
             this.Controls.Add(this.SpamFilterWindow);
             this.Controls.Add(this.SongRequestPlayer);
             this.Controls.Add(this.panel2);
-            this.Controls.Add(this.AboutWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.SongRequestPlayer, 0);
             this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
@@ -2570,6 +2558,7 @@
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
+            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
             this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
             this.Controls.SetChildIndex(this.AboutWindowButton, 0);
@@ -2694,20 +2683,19 @@
         private System.Windows.Forms.Label label16;
         public System.Windows.Forms.CheckBox UpdateLastDonorCheckBox;
         public System.Windows.Forms.CheckBox AboutWindowButton;
-        private System.Windows.Forms.Panel AboutWindow;
+        public System.Windows.Forms.Panel AboutWindow;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.LinkLabel SupportLinkLabel;
         private System.Windows.Forms.LinkLabel EmailLinkLabel;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.LinkLabel WebsiteLinkLabel;
-        private System.Windows.Forms.Label label18;
         private System.Windows.Forms.PictureBox AboutImage;
         private System.Windows.Forms.Label VersionLabel;
         private System.Windows.Forms.Label label20;
         public System.Windows.Forms.Label SettingsErrorLabel;
         public System.Windows.Forms.CheckBox ChannelWindowButton;
-        private System.Windows.Forms.Panel ChannelWindow;
-        private System.Windows.Forms.Panel CurrencyWindow;
+        public System.Windows.Forms.Panel ChannelWindow;
+        public System.Windows.Forms.Panel CurrencyWindow;
         public System.Windows.Forms.CheckBox CurrencyWindowButton;
         public System.Windows.Forms.CheckBox GiveawayWindowButton;
         public System.Windows.Forms.Panel GiveawayWindow;
@@ -2734,7 +2722,7 @@
         public FlatNumericUpDown CurrencySubHandoutAmount;
         private System.Windows.Forms.PictureBox DonateImage;
         public System.Windows.Forms.CheckBox SpamFilterWindowButton;
-        private System.Windows.Forms.Panel SpamFilterWindow;
+        public System.Windows.Forms.Panel SpamFilterWindow;
         private System.Windows.Forms.Label Spam_CWLLabel;
         private System.Windows.Forms.GroupBox Spam_CWLSpacer;
         public System.Windows.Forms.CheckBox Spam_CWL;
