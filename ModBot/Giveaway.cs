@@ -289,7 +289,14 @@ namespace ModBot
 
         private static bool CheckUser(string user, bool checkfollow = true, bool checksubscriber = true, bool checktime = true)
         {
-            return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (!checkfollow || !MainForm.Giveaway_MustFollow.Checked || Api.IsFollower(user)) && (!checksubscriber || !MainForm.Giveaway_MustSubscribe.Checked || Api.IsSubscriber(user)) && (!checktime || !MainForm.Giveaway_MustWatch.Checked || Api.CompareTimeWatched(user) >= 0));
+            //return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (!checkfollow || !MainForm.Giveaway_MustFollow.Checked || Api.IsFollower(user)) && (!checksubscriber || !MainForm.Giveaway_MustSubscribe.Checked || Api.IsSubscriber(user)) && (!checktime || !MainForm.Giveaway_MustWatch.Checked || Api.CompareTimeWatched(user) >= 0));
+            user = Api.capName(user);
+            bool sub = false;
+            lock(Irc.Subscribers)
+            {
+                sub = (!checksubscriber || !MainForm.Giveaway_MustSubscribe.Checked || Irc.Subscribers.Contains(user));
+            }
+            return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (!checkfollow || !MainForm.Giveaway_MustFollow.Checked || Api.IsFollower(user)) && sub && (!checktime || !MainForm.Giveaway_MustWatch.Checked || Api.CompareTimeWatched(user) >= 0));
         }
 
         public static string getWinner()
@@ -323,14 +330,27 @@ namespace ModBot
                         List<string> ValidUsers = new List<string>();
                         if (MainForm.Giveaway_TypeActive.Checked)
                         {
-                            int ActiveTime = Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) * 60, CurrentTime = Api.GetUnixTimeNow();
+                            //int ActiveTime = Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) * 60, RollTime = Api.GetUnixTimeNow();
+                            int ActiveTime = Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) * 60;
                             lock (Irc.ActiveUsers)
                             {
-                                foreach (string user in Irc.ActiveUsers.Keys)
+                                lock (Irc.Subscribers)
                                 {
-                                    if (!ValidUsers.Contains(user) && CurrentTime - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, Irc.ActiveUsers.Count < 100))
+                                    foreach (string user in Irc.ActiveUsers.Keys)
                                     {
-                                        ValidUsers.Add(user);
+                                        //if (!ValidUsers.Contains(user) && RollTime - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, Irc.ActiveUsers.Count < 100))
+                                        if (!ValidUsers.Contains(user) && Api.GetUnixTimeNow() - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, Irc.ActiveUsers.Count < 100))
+                                        //if (!ValidUsers.Contains(user) && RollTime  Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, false, false))
+                                        {
+                                            ValidUsers.Add(user);
+                                            if (MainForm.Giveaway_SubscribersWinMultiplier.Checked && Irc.Subscribers.Contains(user))
+                                            {
+                                                for (int i = 1; i < MainForm.Giveaway_SubscribersWinMultiplierAmount.Value; i++)
+                                                {
+                                                    ValidUsers.Add(user);
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -341,13 +361,18 @@ namespace ModBot
                             {
                                 lock (Irc.ActiveUsers)
                                 {
-                                    foreach (string user in Users.Keys)
+                                    lock (Irc.Subscribers)
                                     {
-                                        if (Irc.ActiveUsers.ContainsKey(user))
+                                        foreach (string user in Users.Keys)
                                         {
-                                            for (int i = 0; i < Users[user]; i++)
+                                            if (Irc.ActiveUsers.ContainsKey(user))
                                             {
-                                                ValidUsers.Add(user);
+                                                if (MainForm.Giveaway_SubscribersWinMultiplier.Checked && Irc.Subscribers.Contains(user)) Users[user] = Users[user] * Convert.ToInt32(MainForm.Giveaway_SubscribersWinMultiplierAmount.Value);
+
+                                                for (int i = 0; i < Users[user]; i++)
+                                                {
+                                                    ValidUsers.Add(user);
+                                                }
                                             }
                                         }
                                     }
@@ -412,7 +437,6 @@ namespace ModBot
                                 Ignore.Add(sWinner);
                                 sWinner = ValidUsers[new Random().Next(0, ValidUsers.Count)];
                             }
-                            sWinner = Api.GetDisplayName(sWinner);
                             //Chance = 100F / ValidUsers.Count;
                             int tickets = ValidUsers.Count;
                             int winnertickets = 1;
@@ -433,9 +457,15 @@ namespace ModBot
                             {
                                 //string WinnerLabel = "Winner : ";
                                 string WinnerLabel = "";
-                                if (Api.IsSubscriber(sWinner)) WinnerLabel += "Subscribing | ";
+                                //if (Api.IsSubscriber(sWinner)) WinnerLabel += "Subscribing | ";
+                                lock (Irc.Subscribers)
+                                {
+                                    if (Irc.Subscribers.Contains(sWinner)) WinnerLabel += "Subscribing | ";
+                                }
                                 if (Api.IsFollower(sWinner)) WinnerLabel += "Following | ";
-                                WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currencyName + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + Chance.ToString("0.00") + "%";
+                                //WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currencyName + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + Chance.ToString("0.00") + "%";
+                                WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currencyName + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m");
+                                sWinner = Api.GetDisplayName(sWinner);
                                 MainForm.Giveaway_WinnerStatusLabel.Text = WinnerLabel;
                                 MainForm.Giveaway_WinnerLabel.Text = sWinner;
                                 MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);
@@ -445,7 +475,7 @@ namespace ModBot
                                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = true;
                                 MainForm.Giveaway_RerollButton.Enabled = true;
                                 LastRoll = Api.GetUnixTimeNow();
-                                if (MainForm.Giveaway_AutoBanWinner.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(sWinner)) MainForm.Giveaway_BanListListBox.Items.Add(Api.capName(sWinner));
+                                if (MainForm.Giveaway_AutoBanWinner.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(Api.capName(sWinner))) MainForm.Giveaway_BanListListBox.Items.Add(Api.capName(sWinner));
                             });
                             thread = new Thread(() =>
                             {

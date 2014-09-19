@@ -20,6 +20,7 @@ namespace ModBotUpdater
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
 
             BetaUpdates.Checked = (Program.ini.GetValue("Settings", "BetaUpdates", "0") == "1");
+            DevUpdates.Checked = (Program.ini.GetValue("Settings", "DevUpdates", "0") == "1");
 
             CheckUpdates();
         }
@@ -278,6 +279,18 @@ namespace ModBotUpdater
                                         }
                                     }
                                 }
+                                if (Program.ini.GetValue("Settings", "DevUpdates", "0") == "1")
+                                {
+                                    string sDevVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotDev.txt");
+                                    if (sDevVersion != "")
+                                    {
+                                        string[] sLatest = sLatestVersion.Split('.'), sDev = sDevVersion.Split('.');
+                                        if (TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sDev[2])).Add(TimeSpan.FromSeconds(int.Parse(sDev[3])))) == -1)
+                                        {
+                                            sLatestVersion = sDevVersion;
+                                        }
+                                    }
+                                }
                             }
                             w.OpenRead("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + sLatestVersion + "/ModBot.exe");
                             dFileSize = Convert.ToDouble(w.ResponseHeaders["Content-Length"]);
@@ -334,6 +347,9 @@ namespace ModBotUpdater
                         LatestVersionLabel.Text = "Error!";
                         StateLabel.Text = "Error while checking for updates!";
                     }
+
+                    BetaUpdates.Enabled = true;
+                    DevUpdates.Enabled = true;
                 });
 
                 if (Program.args.Contains("-force"))
@@ -376,16 +392,22 @@ namespace ModBotUpdater
             {
                 UpdateButton.Enabled = true;
                 CheckUpdatesButton.Enabled = false;
+                BetaUpdates.Enabled = true;
+                DevUpdates.Enabled = true;
             }
-            else if (StateLabel.Text == "Initializing download..." || StateLabel.Text == "Downloading..." || StateLabel.Text == "Checking for updates...")
+            else if (StateLabel.Text == "Initializing download..." || StateLabel.Text == "Downloading..." || StateLabel.Text == "Checking for updates..." || StateLabel.Text == "Moving updated version...")
             {
                 UpdateButton.Enabled = false;
                 CheckUpdatesButton.Enabled = false;
+                BetaUpdates.Enabled = false;
+                DevUpdates.Enabled = false;
             }
             else
             {
                 UpdateButton.Enabled = false;
                 CheckUpdatesButton.Enabled = true;
+                BetaUpdates.Enabled = true;
+                DevUpdates.Enabled = true;
             }
         }
 
@@ -416,22 +438,31 @@ namespace ModBotUpdater
             Thread thread = new Thread(() =>
             {
                 string sData = "";
-                thread = new Thread(() =>
+                using (WebClient w = new WebClient())
                 {
-                    using (WebClient w = new WebClient())
+                    w.Proxy = null;
+                    try
                     {
-                        w.Proxy = null;
-                        try
-                        {
-                            sData = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot-Changelog.txt");
-                        }
-                        catch
-                        {
-                        }
+                        sData = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot-Changelog.txt");
                     }
-                });
-                thread.Start();
-                thread.Join();
+                    catch
+                    {
+                    }
+                }
+
+                Dictionary<string, string> Versions = new Dictionary<string, string>();
+                while (sData != "")
+                {
+                    string Version = sData.Substring(sData.IndexOf("[\"") + 2, sData.IndexOf("\"]\r\n{\"") - sData.IndexOf("[\"") - 2), Changes = sData.Substring(sData.IndexOf("\"]\r\n{\"") + 6, sData.IndexOf("\"}") - sData.IndexOf("\"]\r\n{\"") - 6);
+
+                    sData = sData.Substring(sData.IndexOf("\"}") + 2);
+
+                    if (sData != "") Changes += "\r\n\r\n";
+
+                    if (Versions.ContainsKey(Version)) continue;
+
+                    Versions.Add(Version, Changes);
+                }
 
                 BeginInvoke((MethodInvoker)delegate
                 {
@@ -444,10 +475,9 @@ namespace ModBotUpdater
 
                     changelog.ChangelogNotes.Text = "";
 
-                    while (sData != "")
+                    foreach(string Version in Versions.Keys)
                     {
-                        string sVersion = sData.Substring(sData.IndexOf("[\"") + 2, sData.IndexOf("\"]\r\n{\"") - sData.IndexOf("[\"") - 2), sChanges = sData.Substring(sData.IndexOf("\"]\r\n{\"") + 6, sData.IndexOf("\"}") - sData.IndexOf("\"]\r\n{\"") - 6);
-                        string[] sLogVersion = sVersion.Split('.');
+                        string[] sLogVersion = Version.Split('.');
                         string sDate = "";
                         int iLogMajor = int.Parse(sLogVersion[0]), iLogMinor = sLogVersion[1] != "*" ? int.Parse(sLogVersion[1]) : 0, iLogBuild = sLogVersion.Length > 2 ? sLogVersion[2] != "*" ? int.Parse(sLogVersion[2]) : 0 : 0, iLogRev = sLogVersion.Length > 3 ? sLogVersion[3] != "*" ? int.Parse(sLogVersion[3]) : 0 : 0;
 
@@ -466,7 +496,7 @@ namespace ModBotUpdater
 
                         changelog.ChangelogNotes.SelectionFont = new Font("Segoe Print", 8, FontStyle.Bold);
                         //changelog.ChangelogNotes.SelectedText = sVersion + " " + sDate + " :\r\n";
-                        changelog.ChangelogNotes.SelectedText = sVersion;
+                        changelog.ChangelogNotes.SelectedText = Version;
                         changelog.ChangelogNotes.SelectionColor = Color.Red;
                         changelog.ChangelogNotes.SelectedText = sDate;
                         //changelog.ChangelogNotes.SelectionColor = Color.Red;
@@ -474,13 +504,7 @@ namespace ModBotUpdater
                         changelog.ChangelogNotes.SelectionColor = Color.Black;
                         changelog.ChangelogNotes.SelectedText = " :\r\n";
                         changelog.ChangelogNotes.SelectionFont = new Font("Microsoft Sans Serif", 8);
-                        changelog.ChangelogNotes.SelectedText = sChanges;
-
-                        sData = sData.Substring(sData.IndexOf("\"}") + 2);
-                        if (sData != "")
-                        {
-                            changelog.ChangelogNotes.SelectedText = "\r\n\r\n";
-                        }
+                        changelog.ChangelogNotes.SelectedText = Versions[Version];
                     }
                     changelog.ChangelogNotes.Select(0, 0);
                     changelog.ChangelogNotes.ScrollToCaret();
@@ -500,9 +524,11 @@ namespace ModBotUpdater
             Environment.Exit(0);
         }
 
-        private void BetaUpdates_CheckedChanged(object sender, EventArgs e)
+        private void UpdateChecks_CheckedChanged(object sender, EventArgs e)
         {
-            Program.ini.SetValue("Settings", "BetaUpdates", BetaUpdates.Checked ? "1" : "0");
+            CheckBox cb = (CheckBox)sender;
+            CheckUpdatesButton.Enabled = true;
+            Program.ini.SetValue("Settings", cb.Name, cb.Checked ? "1" : "0");
         }
     }
 }

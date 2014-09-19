@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.IO;
 
 namespace ModBot
 {
@@ -33,18 +34,6 @@ namespace ModBot
                     this.Cmd = Command;
                     Executed += Handler;
                     lCommands.Add(this);
-                }
-            }
-
-            public void Call(string message)
-            {
-                string[] args = message.Contains(" ") ? message.Substring(message.IndexOf(" ") + 1).Split(' ') : new string[0];
-                if (Executed != null)
-                {
-                    new System.Threading.Thread(() =>
-                    {
-                        Executed("", Cmd, args);
-                    }).Start();
                 }
             }
 
@@ -127,33 +116,6 @@ namespace ModBot
             return false;
         }
 
-        public static bool CheckCommand(string message, bool call = false)
-        {
-            while (message.Contains("  "))
-            {
-                message = message.Replace("  ", " ");
-            }
-            if (message.StartsWith(" ")) message = message.Substring(1);
-            if (message.EndsWith(" ")) message = message.Substring(0, message.Length - 1);
-            //message = message.ToLower();
-            string[] cmd = message.Split(' ');
-            lock (lCommands)
-            {
-                foreach (Command Command in lCommands)
-                {
-                    if (Command.Cmd.ToLower() == cmd[0].ToLower())
-                    {
-                        if (call)
-                        {
-                            Command.Call(message);
-                        }
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
         public static bool CheckCommand(string user, string message, bool call = false)
         {
             while (message.Contains("  "))
@@ -172,6 +134,7 @@ namespace ModBot
                     {
                         if (call)
                         {
+                            if (user != "") Log(user + " has used the \"" + Command.Cmd + "\" command.");
                             Command.Call(user, message);
                         }
                         return true;
@@ -182,6 +145,7 @@ namespace ModBot
             {
                 if (call) // ToDo : Convert to the new system
                 {
+                    if (user != "") Log(user + " has used the \"" + cmd[0] + "\" command.");
                     if (Database.getUserLevel(user) >= Database.Commands.LevelRequired(cmd[0]))
                     {
                         if (cmd.Length > 1 && Database.getUserLevel(user) > 0)
@@ -197,6 +161,26 @@ namespace ModBot
                 return true;
             }
             return false;
+        }
+
+        public static void Log(string output)
+        {
+            output = "[" + DateTime.Now + "] " + output;
+            for (int attempts = 0; attempts < 10; attempts++)
+            {
+                try
+                {
+                    using (StreamWriter log = new StreamWriter(@"Data\Logs\Commands.txt", true))
+                    {
+                        log.WriteLine(output);
+                    }
+                    break;
+                }
+                catch
+                {
+                    System.Threading.Thread.Sleep(250);
+                }
+            }
         }
     }
 }

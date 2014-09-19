@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -14,6 +15,7 @@ namespace ModBot
     {
         public static iniUtil ini = new iniUtil(AppDomain.CurrentDomain.BaseDirectory + @"Settings\", "ModBot.ini", "\r\n[Default]");
         public static MainWindow MainForm;
+        public static ImageWindow LoadingScreen;
         public static List<string> args = new List<string>();
         //private static FileStream stream = null;
 
@@ -32,6 +34,15 @@ namespace ModBot
 
         [DllImport("user32.dll")]
         static extern bool DeleteMenu(IntPtr hMenu, uint uPosition, uint uFlags);
+
+        [DllImport("user32.dll")]
+        static extern int SetWindowLong(IntPtr hWnd, int nIndex, uint dwNewLong);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern UInt32 GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll")]
+        static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
 
         /*[DllImport("kernel32.dll")]
         private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
@@ -89,6 +100,12 @@ namespace ModBot
         {
             HideConsole();
 
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            (LoadingScreen = new ImageWindow(Image.FromFile("C:/Users/Dor/Desktop/ModBot Loading.png"))).Show();
+            //new Changelog().Show();
+
             //_handler += new EventHandler(Handler);
             //SetConsoleCtrlHandler(_handler, true);
 
@@ -103,25 +120,50 @@ namespace ModBot
                 return EmbeddedAssembly.Get(e.Name);
             };
 
-            /*string originalTitle = Console.Title;
-            //string uniqueTitle = Guid.NewGuid().ToString();
-            //Console.Title = uniqueTitle;
-            //System.Threading.Thread.Sleep(50);
-            handle = FindWindowByCaption(IntPtr.Zero, Console.Title = Guid.NewGuid().ToString());
-
-            if (handle == IntPtr.Zero)
-            {
-                Console.WriteLine("Oops, cant find main window.");
-                //return;
-            }
-            Console.Title = originalTitle;*/
-
             ServicePointManager.DefaultConnectionLimit = int.MaxValue;
 
             foreach (string arg in args) Program.args.Add(arg);
 
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
+            if (File.Exists("modbot.ini") || File.Exists("modbot.sqlite") || File.Exists("games.txt"))
+            {
+                if (MessageBox.Show("Files from older versions of ModBot have been detected, would you like to update them or delete them?\r\n\r\nYes to update.\r\nNo to delete.", "Old files detected", MessageBoxButtons.YesNo, MessageBoxIcon.Stop, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
+                {
+                    if (File.Exists("modbot.ini"))
+                    {
+                        if (!Directory.Exists("Settings")) Directory.CreateDirectory("Settings");
+                        if (File.Exists(@"Settings\ModBot.ini")) File.Delete(@"Settings\ModBot.ini");
+                        File.Move("modbot.ini", @"Settings\ModBot.ini");
+                    }
+
+                    if (File.Exists("games.txt"))
+                    {
+                        if (!Directory.Exists("Settings")) Directory.CreateDirectory("Settings");
+                        if (File.Exists(@"Settings\Games.txt")) File.Delete(@"Settings\Games.txt");
+                        File.Move("games.txt", @"Settings\Games.txt");
+                    }
+
+                    if (File.Exists("modbot.sqlite"))
+                    {
+                        if (!Directory.Exists("Data")) Directory.CreateDirectory("Data");
+                        if (!Directory.Exists(@"Data\Users")) Directory.CreateDirectory(@"Data\Users");
+                        if (File.Exists(@"Data\Users\ModBot.sqlite")) File.Delete(@"Data\Users\ModBot.sqlite");
+                        File.Move("modbot.sqlite", @"Data\Users\ModBot.sqlite");
+                    }
+
+                    while (File.Exists("modbot.ini") || File.Exists("modbot.sqlite") || File.Exists("games.txt")) Thread.Sleep(100);
+
+                    Process.Start("ModBot.exe");
+
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    if (File.Exists("modbot.ini")) File.Delete("modbot.ini");
+                    if (File.Exists("modbot.sqlite")) File.Delete("modbot.sqlite");
+                    if (File.Exists("games.txt")) File.Delete("games.txt");
+                }
+            }
+
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
 
             if (!Directory.Exists("Settings")) Directory.CreateDirectory("Settings");
@@ -139,8 +181,11 @@ namespace ModBot
             //stream = new FileInfo(@"Settings\ModBot.ini").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
 
             Updates.ExtractUpdater();
-            Updates.CheckUpdate();
+            Updates.CheckUpdate(false, false, true);
             Application.Run(MainForm = new MainWindow());
+
+            //SetWindowLong(MainForm.Handle, -20, GetWindowLong(MainForm.Handle, -20) | 0x80000);
+            //SetLayeredWindowAttributes(MainForm.Handle, 0, 155, 0x2);
         }
 
         public static void HideConsole()
@@ -155,7 +200,7 @@ namespace ModBot
 
         public static void FocusConsole()
         {
-            if(MainForm.Misc_ShowConsole.Checked) SetForegroundWindow(GetConsoleWindow());
+            if (MainForm.Misc_ShowConsole.Checked) SetForegroundWindow(GetConsoleWindow());
         }
 
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
@@ -170,77 +215,81 @@ namespace ModBot
 
         public static class Updates
         {
-            public static bool CheckUpdate(bool bConsole = true, bool bMessageBox = true)
+            public static bool CheckUpdate(bool bConsole = true, bool bMessageBox = true, bool ForceUpdate = false, bool NotifyForce = true)
             {
-                if (File.Exists("ModBotUpdater.exe"))
+                using (WebClient w = new WebClient())
                 {
-                    using (WebClient w = new WebClient())
+                    w.Proxy = null;
+                    try
                     {
-                        w.Proxy = null;
-                        try
+                        string sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString(), sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
+
+                        if (sLatestVersion != "")
                         {
-                            string sCurrentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString(), sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
-                            string sBetaVersion = sLatestVersion;
-
-                            if (sLatestVersion != "")
+                            int UpdateType = 0;
+                            string[] sCurrent = sCurrentVersion.Split('.'), sLatest = sLatestVersion.Split('.');
+                            if (ini.GetValue("Settings", "BetaUpdates", "0") == "1")
                             {
-                                bool Beta = false;
-                                string[] sCurrent = sCurrentVersion.Split('.'), sLatest = sLatestVersion.Split('.');
-                                if (ini.GetValue("Settings", "BetaUpdates", "0") == "1")
+                                string sBetaVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotBeta.txt");
+                                if (sBetaVersion != "")
                                 {
-                                    sBetaVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotBeta.txt");
-                                    if (sBetaVersion != "")
+                                    string[] sBeta = sBetaVersion.Split('.');
+                                    if (TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sBeta[2])).Add(TimeSpan.FromSeconds(int.Parse(sBeta[3])))) == -1)
                                     {
-                                        string[] sBeta = sBetaVersion.Split('.');
-                                        if (TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sBeta[2])).Add(TimeSpan.FromSeconds(int.Parse(sBeta[3])))) == -1)
-                                        {
-                                            Beta = true;
-                                            sLatestVersion = sBetaVersion;
-                                            sLatest = sBeta;
-                                        }
+                                        UpdateType = 1;
+                                        sLatestVersion = sBetaVersion;
+                                        sLatest = sBeta;
                                     }
-                                }
-
-                                if (TimeSpan.FromDays(int.Parse(sCurrent[2])).Add(TimeSpan.FromSeconds(int.Parse(sCurrent[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3])))) == -1)
-                                {
-                                    bool Update = args.Contains("-autoupdate");
-
-                                    if (bConsole)
-                                    {
-                                        Console.WriteLine("\r\n********************************************************************************\r\n" + (Beta ? "A beta" : "An") + " update to ModBot is available, please use the updater to update!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\n\r\n********************************************************************************\r\n");
-                                    }
-
-                                    if (bMessageBox)
-                                    {
-                                        if (MessageBox.Show((Beta ? "A beta" : "An") + " update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Yes)
-                                        {
-                                            if (!File.Exists("ModBotUpdater.exe"))
-                                            {
-                                                ExtractUpdater();
-                                            }
-                                            Update = true;
-                                        }
-                                    }
-
-                                    if(Update)
-                                    {
-                                        Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed ? " -modbotconnect" : "") + (args.Contains("-autoupdate") ? " -modbotupdate" : ""));
-                                        Environment.Exit(0);
-                                    }
-
-                                    return true;
                                 }
                             }
+                            if (ini.GetValue("Settings", "DevUpdates", "0") == "1")
+                            {
+                                string sDevVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotDev.txt");
+                                if (sDevVersion != "")
+                                {
+                                    string[] sDev = sDevVersion.Split('.');
+                                    if (TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sDev[2])).Add(TimeSpan.FromSeconds(int.Parse(sDev[3])))) == -1)
+                                    {
+                                        UpdateType = 2;
+                                        sLatestVersion = sDevVersion;
+                                        sLatest = sDev;
+                                    }
+                                }
+                            }
+
+                            if (TimeSpan.FromDays(int.Parse(sCurrent[2])).Add(TimeSpan.FromSeconds(int.Parse(sCurrent[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3])))) == -1)
+                            {
+                                bool Update = (args.Contains("-autoupdate") || ForceUpdate);
+
+                                if (!Update)
+                                {
+                                    if (bConsole) Console.WriteLine("\r\n********************************************************************************\r\n" + (UpdateType == 1 ? "A beta" : UpdateType == 2 ? "A development" : "An") + " update to ModBot is available, please use the updater to update!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\n\r\n********************************************************************************\r\n");
+
+                                    if (bMessageBox) Update = (MessageBox.Show((UpdateType == 1 ? "A beta" : UpdateType == 2 ? "A development" : "An") + " update to ModBot is available!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nDo you want to update now?", "ModBot", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Yes);
+
+                                }
+
+                                if (ForceUpdate && NotifyForce) if (MessageBox.Show((UpdateType == 1 ? "A beta" : UpdateType == 2 ? "A development" : "An") + " update to ModBot is available!\r\nIn order to use ModBot you have to install the latest version!\r\n(Current version: " + sCurrentVersion + ", Latest version: " + sLatestVersion + ")\r\nClick OK to update now or Cancel to close the application.", "ModBot", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1) == DialogResult.Cancel) Environment.Exit(0);
+
+                                if (Update)
+                                {
+                                    while (!File.Exists("ModBotUpdater.exe")) ExtractUpdater(false);
+                                    Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed ? " -modbotconnect" : "") + (args.Contains("-autoupdate") ? " -modbotupdate" : ""));
+                                    Environment.Exit(0);
+                                }
+
+                                return true;
+                            }
                         }
-                        catch
-                        {
-                        }
+                    }
+                    catch
+                    {
                     }
                 }
                 return false;
             }
 
-            public static void ExtractUpdater()
+            public static void ExtractUpdater(bool Announce = true)
             {
                 byte[] rawUpdater = ModBot.Properties.Resources.ModBotUpdater;
                 string sLatestVersion = Assembly.Load(rawUpdater).GetName().Version.ToString();
@@ -250,10 +299,7 @@ namespace ModBot
                     string[] sCurrent = sCurrentVersion.Split('.'), sLatest = sLatestVersion.Split('.');
                     if (TimeSpan.FromDays(int.Parse(sCurrent[2])).Add(TimeSpan.FromSeconds(int.Parse(sCurrent[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3])))) == -1)
                     {
-                        while (File.Exists("ModBotUpdater.exe") && Api.IsFileLocked("ModBotUpdater.exe"))
-                        {
-                            if (MessageBox.Show("Please close ModBot's Updater, a new version of the updater is available and will be extracted.", "ModBot", MessageBoxButtons.RetryCancel, MessageBoxIcon.Information) == DialogResult.Cancel) Environment.Exit(0);
-                        }
+                        while (File.Exists("ModBotUpdater.exe") && Api.IsFileLocked("ModBotUpdater.exe")) if (MessageBox.Show("Please close ModBot's Updater, a new version of the updater is available and will be extracted.", "ModBot", MessageBoxButtons.RetryCancel, MessageBoxIcon.Information) == DialogResult.Cancel) Environment.Exit(0);
 
                         File.Delete("ModBotUpdater.exe");
                         while (File.Exists("ModBotUpdater.exe")) { }
@@ -262,7 +308,8 @@ namespace ModBot
                         {
                             fsUpdater.Write(rawUpdater, 0, rawUpdater.Length);
                         }
-                        MessageBox.Show("ModBot Updater has been updated from v" + sCurrentVersion + " to v" + sLatestVersion + " sucessfully.", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        if (Announce) MessageBox.Show("ModBot Updater has been updated from v" + sCurrentVersion + " to v" + sLatestVersion + " sucessfully.", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
                 else
@@ -271,7 +318,73 @@ namespace ModBot
                     {
                         fsUpdater.Write(rawUpdater, 0, rawUpdater.Length);
                     }
-                    MessageBox.Show("ModBot Updater has been extracted sucessfully (v" + sLatestVersion + ").", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    if (Announce) MessageBox.Show("ModBot Updater has been extracted sucessfully (v" + sLatestVersion + ").", "ModBot", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+
+            public static void WelcomeMsg()
+            {
+                if (ini.GetValue("Settings", "Notification_Welcome", "0") != "0") return;
+
+                using (WebClient w = new WebClient())
+                {
+                    w.Proxy = null;
+                    try
+                    {
+                        MessageBox.Show(w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/WelcomeMsg.txt"), "Welcome");
+                        ini.SetValue("Settings", "Notification_Welcome", "1");
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
+            public static void MsgOfTheDay()
+            {
+                using (WebClient w = new WebClient())
+                {
+                    w.Proxy = null;
+                    try
+                    {
+                        MessageBox.Show(w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/MsgOfTheDay.txt"), "Message of the day");
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
+            public static void WhatsNew()
+            {
+                if (ini.GetValue("Settings", "Notification_WhatsNew", "") == Assembly.GetExecutingAssembly().GetName().Version.ToString()) return;
+
+                using (WebClient w = new WebClient())
+                {
+                    w.Proxy = null;
+                    string news = "";
+                    try
+                    {
+                        news += "[" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + ".txt");
+                    }
+                    catch
+                    {
+                    }
+
+                    try
+                    {
+                        news += (news != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + "/WhatsNew.txt");
+                    }
+                    catch
+                    {
+                    }
+
+                    if (news != "")
+                    {
+                        MessageBox.Show(news, "What's New in version " + Assembly.GetExecutingAssembly().GetName().Version);
+                        ini.SetValue("Settings", "Notification_WhatsNew", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+                    }
                 }
             }
         }

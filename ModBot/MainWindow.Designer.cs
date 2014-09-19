@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollow = new System.Windows.Forms.CheckBox();
@@ -74,7 +74,7 @@
             this.SettingsWindow = new System.Windows.Forms.Panel();
             this.SettingsErrorLabel = new System.Windows.Forms.Label();
             this.label23 = new System.Windows.Forms.Label();
-            this.MySQL_Table = new System.Windows.Forms.TextBox();
+            this.Database_Table = new System.Windows.Forms.TextBox();
             this.MySQL_Port = new ModBot.FlatNumericUpDown();
             this.label25 = new System.Windows.Forms.Label();
             this.MySQL_Password = new System.Windows.Forms.TextBox();
@@ -144,6 +144,7 @@
             this.UpdateLastDonorCheckBox = new System.Windows.Forms.CheckBox();
             this.AboutWindowButton = new System.Windows.Forms.CheckBox();
             this.AboutWindow = new System.Windows.Forms.Panel();
+            this.WebsiteLinkLabel = new System.Windows.Forms.LinkLabel();
             this.About_Users = new System.Windows.Forms.DataGridView();
             this.Channel = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Bot = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -157,7 +158,6 @@
             this.SupportLinkLabel = new System.Windows.Forms.LinkLabel();
             this.EmailLinkLabel = new System.Windows.Forms.LinkLabel();
             this.label17 = new System.Windows.Forms.Label();
-            this.WebsiteLinkLabel = new System.Windows.Forms.LinkLabel();
             this.AboutImage = new System.Windows.Forms.PictureBox();
             this.VersionLabel = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
@@ -166,6 +166,14 @@
             this.AuthenticationBrowser = new System.Windows.Forms.WebBrowser();
             this.ChannelWindowButton = new System.Windows.Forms.CheckBox();
             this.ChannelWindow = new System.Windows.Forms.Panel();
+            this.label18 = new System.Windows.Forms.Label();
+            this.Channel_WelcomeSubMessage = new System.Windows.Forms.TextBox();
+            this.Channel_ViewersChangeMessage = new System.Windows.Forms.TextBox();
+            this.Channel_ViewersChangeRate = new ModBot.FlatNumericUpDown();
+            this.Channel_ViewersChangeInterval = new ModBot.FlatNumericUpDown();
+            this.Channel_ViewersChange = new System.Windows.Forms.CheckBox();
+            this.MessageTimersLabel = new System.Windows.Forms.Label();
+            this.MessageTimersSpacer = new System.Windows.Forms.GroupBox();
             this.Channel_SubscriptionRewardsList = new System.Windows.Forms.DataGridView();
             this.Reward = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Instructions = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -176,10 +184,12 @@
             this.Channel_SteamID64 = new System.Windows.Forms.TextBox();
             this.Channel_UseSteam = new System.Windows.Forms.CheckBox();
             this.UpdateTitleGameButton = new System.Windows.Forms.Button();
+            this.Channel_WelcomeSub = new System.Windows.Forms.CheckBox();
             this.CurrencyWindow = new System.Windows.Forms.Panel();
             this.CurrencyWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindow = new System.Windows.Forms.Panel();
+            this.Giveaway_SubscribersWinMultiplierAmount = new ModBot.FlatNumericUpDown();
             this.Giveaway_UserList = new System.Windows.Forms.ListBox();
             this.GiveawayUsersLabel = new System.Windows.Forms.Label();
             this.GiveawayUsersSpacer = new System.Windows.Forms.GroupBox();
@@ -204,6 +214,7 @@
             this.Giveaway_TypeKeyword = new System.Windows.Forms.RadioButton();
             this.Giveaway_TypeActive = new System.Windows.Forms.RadioButton();
             this.Giveaway_UserCount = new System.Windows.Forms.Label();
+            this.Giveaway_SubscribersWinMultiplier = new System.Windows.Forms.CheckBox();
             this.AuthenticationLabel = new System.Windows.Forms.Label();
             this.SpamFilterWindowButton = new System.Windows.Forms.CheckBox();
             this.SpamFilterWindow = new System.Windows.Forms.Panel();
@@ -232,9 +243,12 @@
             ((System.ComponentModel.ISupportInitialize)(this.DonateImage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.AboutImage)).BeginInit();
             this.ChannelWindow.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Channel_ViewersChangeRate)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Channel_ViewersChangeInterval)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Channel_SubscriptionRewardsList)).BeginInit();
             this.CurrencyWindow.SuspendLayout();
             this.GiveawayWindow.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_SubscribersWinMultiplierAmount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchMinutes)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchHours)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchDays)).BeginInit();
@@ -717,7 +731,6 @@
             this.SettingsWindowButton.Name = "SettingsWindowButton";
             this.SettingsWindowButton.Size = new System.Drawing.Size(100, 46);
             this.SettingsWindowButton.TabIndex = 56;
-            this.SettingsWindowButton.TabStop = false;
             this.SettingsWindowButton.Text = "Settings";
             this.SettingsWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.SettingsWindowButton.UseVisualStyleBackColor = true;
@@ -736,7 +749,6 @@
             this.DonationsWindowButton.Name = "DonationsWindowButton";
             this.DonationsWindowButton.Size = new System.Drawing.Size(100, 46);
             this.DonationsWindowButton.TabIndex = 57;
-            this.DonationsWindowButton.TabStop = false;
             this.DonationsWindowButton.Text = "Donations";
             this.DonationsWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.DonationsWindowButton.UseVisualStyleBackColor = true;
@@ -747,7 +759,7 @@
             this.SettingsWindow.BackColor = System.Drawing.Color.White;
             this.SettingsWindow.Controls.Add(this.SettingsErrorLabel);
             this.SettingsWindow.Controls.Add(this.label23);
-            this.SettingsWindow.Controls.Add(this.MySQL_Table);
+            this.SettingsWindow.Controls.Add(this.Database_Table);
             this.SettingsWindow.Controls.Add(this.MySQL_Port);
             this.SettingsWindow.Controls.Add(this.label25);
             this.SettingsWindow.Controls.Add(this.MySQL_Password);
@@ -824,15 +836,15 @@
             this.label23.TabIndex = 110;
             this.label23.Text = "Table name (if kept blank the channel name will be used):";
             // 
-            // MySQL_Table
+            // Database_Table
             // 
-            this.MySQL_Table.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.MySQL_Table.Location = new System.Drawing.Point(684, 462);
-            this.MySQL_Table.MaxLength = 128;
-            this.MySQL_Table.Name = "MySQL_Table";
-            this.MySQL_Table.Size = new System.Drawing.Size(334, 20);
-            this.MySQL_Table.TabIndex = 111;
-            this.MySQL_Table.TextChanged += new System.EventHandler(this.Settings_Changed);
+            this.Database_Table.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.Database_Table.Location = new System.Drawing.Point(684, 462);
+            this.Database_Table.MaxLength = 128;
+            this.Database_Table.Name = "Database_Table";
+            this.Database_Table.Size = new System.Drawing.Size(334, 20);
+            this.Database_Table.TabIndex = 111;
+            this.Database_Table.TextChanged += new System.EventHandler(this.Settings_Changed);
             // 
             // MySQL_Port
             // 
@@ -1496,8 +1508,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle1;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1597,7 +1609,6 @@
             this.AboutWindowButton.Name = "AboutWindowButton";
             this.AboutWindowButton.Size = new System.Drawing.Size(100, 46);
             this.AboutWindowButton.TabIndex = 60;
-            this.AboutWindowButton.TabStop = false;
             this.AboutWindowButton.Text = "About";
             this.AboutWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.AboutWindowButton.UseVisualStyleBackColor = true;
@@ -1620,6 +1631,17 @@
             this.AboutWindow.Name = "AboutWindow";
             this.AboutWindow.Size = new System.Drawing.Size(1024, 562);
             this.AboutWindow.TabIndex = 61;
+            // 
+            // WebsiteLinkLabel
+            // 
+            this.WebsiteLinkLabel.AutoSize = true;
+            this.WebsiteLinkLabel.Location = new System.Drawing.Point(237, 246);
+            this.WebsiteLinkLabel.Name = "WebsiteLinkLabel";
+            this.WebsiteLinkLabel.Size = new System.Drawing.Size(27, 13);
+            this.WebsiteLinkLabel.TabIndex = 20;
+            this.WebsiteLinkLabel.TabStop = true;
+            this.WebsiteLinkLabel.Text = "blog";
+            this.WebsiteLinkLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.WebsiteLinkLabel_LinkClicked);
             // 
             // About_Users
             // 
@@ -1718,7 +1740,7 @@
             // SupportLinkLabel
             // 
             this.SupportLinkLabel.AutoSize = true;
-            this.SupportLinkLabel.Location = new System.Drawing.Point(220, 178);
+            this.SupportLinkLabel.Location = new System.Drawing.Point(220, 207);
             this.SupportLinkLabel.Name = "SupportLinkLabel";
             this.SupportLinkLabel.Size = new System.Drawing.Size(27, 13);
             this.SupportLinkLabel.TabIndex = 23;
@@ -1729,7 +1751,7 @@
             // EmailLinkLabel
             // 
             this.EmailLinkLabel.AutoSize = true;
-            this.EmailLinkLabel.Location = new System.Drawing.Point(151, 178);
+            this.EmailLinkLabel.Location = new System.Drawing.Point(151, 207);
             this.EmailLinkLabel.Name = "EmailLinkLabel";
             this.EmailLinkLabel.Size = new System.Drawing.Size(32, 13);
             this.EmailLinkLabel.TabIndex = 22;
@@ -1740,38 +1762,27 @@
             // label17
             // 
             this.label17.AutoSize = true;
-            this.label17.Location = new System.Drawing.Point(3, 178);
+            this.label17.Location = new System.Drawing.Point(3, 207);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(561, 52);
             this.label17.TabIndex = 21;
             this.label17.Text = resources.GetString("label17.Text");
             // 
-            // WebsiteLinkLabel
-            // 
-            this.WebsiteLinkLabel.AutoSize = true;
-            this.WebsiteLinkLabel.Location = new System.Drawing.Point(237, 217);
-            this.WebsiteLinkLabel.Name = "WebsiteLinkLabel";
-            this.WebsiteLinkLabel.Size = new System.Drawing.Size(27, 13);
-            this.WebsiteLinkLabel.TabIndex = 20;
-            this.WebsiteLinkLabel.TabStop = true;
-            this.WebsiteLinkLabel.Text = "blog";
-            this.WebsiteLinkLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.WebsiteLinkLabel_LinkClicked);
-            // 
             // AboutImage
             // 
             this.AboutImage.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.AboutImage.Image = global::ModBot.Properties.Resources.AboutImage;
+            this.AboutImage.Image = global::ModBot.Properties.Resources.ModBot;
             this.AboutImage.Location = new System.Drawing.Point(0, 0);
             this.AboutImage.Name = "AboutImage";
-            this.AboutImage.Size = new System.Drawing.Size(1024, 83);
-            this.AboutImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.AboutImage.Size = new System.Drawing.Size(1024, 114);
+            this.AboutImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.AboutImage.TabIndex = 18;
             this.AboutImage.TabStop = false;
             // 
             // VersionLabel
             // 
             this.VersionLabel.AutoSize = true;
-            this.VersionLabel.Location = new System.Drawing.Point(3, 135);
+            this.VersionLabel.Location = new System.Drawing.Point(3, 164);
             this.VersionLabel.Name = "VersionLabel";
             this.VersionLabel.Size = new System.Drawing.Size(45, 13);
             this.VersionLabel.TabIndex = 16;
@@ -1781,7 +1792,7 @@
             // 
             this.label20.AutoSize = true;
             this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label20.Location = new System.Drawing.Point(3, 86);
+            this.label20.Location = new System.Drawing.Point(3, 115);
             this.label20.Name = "label20";
             this.label20.Size = new System.Drawing.Size(250, 26);
             this.label20.TabIndex = 15;
@@ -1829,7 +1840,6 @@
             this.ChannelWindowButton.Name = "ChannelWindowButton";
             this.ChannelWindowButton.Size = new System.Drawing.Size(100, 46);
             this.ChannelWindowButton.TabIndex = 63;
-            this.ChannelWindowButton.TabStop = false;
             this.ChannelWindowButton.Text = "Channel";
             this.ChannelWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.ChannelWindowButton.UseVisualStyleBackColor = true;
@@ -1838,6 +1848,14 @@
             // ChannelWindow
             // 
             this.ChannelWindow.BackColor = System.Drawing.Color.White;
+            this.ChannelWindow.Controls.Add(this.label18);
+            this.ChannelWindow.Controls.Add(this.Channel_WelcomeSubMessage);
+            this.ChannelWindow.Controls.Add(this.Channel_ViewersChangeMessage);
+            this.ChannelWindow.Controls.Add(this.Channel_ViewersChangeRate);
+            this.ChannelWindow.Controls.Add(this.Channel_ViewersChangeInterval);
+            this.ChannelWindow.Controls.Add(this.Channel_ViewersChange);
+            this.ChannelWindow.Controls.Add(this.MessageTimersLabel);
+            this.ChannelWindow.Controls.Add(this.MessageTimersSpacer);
             this.ChannelWindow.Controls.Add(this.Channel_SubscriptionRewardsList);
             this.ChannelWindow.Controls.Add(this.Channel_SubscriptionsDate);
             this.ChannelWindow.Controls.Add(this.SubscriptionsLabel);
@@ -1851,10 +1869,123 @@
             this.ChannelWindow.Controls.Add(this.ChannelTitleBox);
             this.ChannelWindow.Controls.Add(this.label3);
             this.ChannelWindow.Controls.Add(this.ChannelGameBox);
+            this.ChannelWindow.Controls.Add(this.Channel_WelcomeSub);
             this.ChannelWindow.Location = new System.Drawing.Point(108, 30);
             this.ChannelWindow.Name = "ChannelWindow";
             this.ChannelWindow.Size = new System.Drawing.Size(1024, 562);
             this.ChannelWindow.TabIndex = 63;
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(817, 336);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(201, 13);
+            this.label18.TabIndex = 71;
+            this.label18.Text = "\"@user\" is replaced with the user\'s name";
+            // 
+            // Channel_WelcomeSubMessage
+            // 
+            this.Channel_WelcomeSubMessage.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+            this.Channel_WelcomeSubMessage.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            this.Channel_WelcomeSubMessage.BackColor = System.Drawing.Color.White;
+            this.Channel_WelcomeSubMessage.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.Channel_WelcomeSubMessage.Enabled = false;
+            this.Channel_WelcomeSubMessage.Location = new System.Drawing.Point(281, 334);
+            this.Channel_WelcomeSubMessage.Name = "Channel_WelcomeSubMessage";
+            this.Channel_WelcomeSubMessage.Size = new System.Drawing.Size(533, 20);
+            this.Channel_WelcomeSubMessage.TabIndex = 69;
+            this.Channel_WelcomeSubMessage.Text = "Welcome to the team @user!";
+            this.Channel_WelcomeSubMessage.TextChanged += new System.EventHandler(this.Settings_Changed);
+            // 
+            // Channel_ViewersChangeMessage
+            // 
+            this.Channel_ViewersChangeMessage.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+            this.Channel_ViewersChangeMessage.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            this.Channel_ViewersChangeMessage.BackColor = System.Drawing.Color.White;
+            this.Channel_ViewersChangeMessage.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.Channel_ViewersChangeMessage.Enabled = false;
+            this.Channel_ViewersChangeMessage.Location = new System.Drawing.Point(501, 146);
+            this.Channel_ViewersChangeMessage.Name = "Channel_ViewersChangeMessage";
+            this.Channel_ViewersChangeMessage.Size = new System.Drawing.Size(517, 20);
+            this.Channel_ViewersChangeMessage.TabIndex = 66;
+            this.Channel_ViewersChangeMessage.Text = "New viewers remember to follow the channel!";
+            this.Channel_ViewersChangeMessage.TextChanged += new System.EventHandler(this.Settings_Changed);
+            // 
+            // Channel_ViewersChangeRate
+            // 
+            this.Channel_ViewersChangeRate.Enabled = false;
+            this.Channel_ViewersChangeRate.Location = new System.Drawing.Point(239, 146);
+            this.Channel_ViewersChangeRate.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.Channel_ViewersChangeRate.Name = "Channel_ViewersChangeRate";
+            this.Channel_ViewersChangeRate.Size = new System.Drawing.Size(38, 20);
+            this.Channel_ViewersChangeRate.TabIndex = 65;
+            this.Channel_ViewersChangeRate.Value = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.Channel_ViewersChangeRate.ValueChanged += new System.EventHandler(this.Settings_Changed);
+            // 
+            // Channel_ViewersChangeInterval
+            // 
+            this.Channel_ViewersChangeInterval.Enabled = false;
+            this.Channel_ViewersChangeInterval.Location = new System.Drawing.Point(53, 146);
+            this.Channel_ViewersChangeInterval.Maximum = new decimal(new int[] {
+            60,
+            0,
+            0,
+            0});
+            this.Channel_ViewersChangeInterval.Minimum = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.Channel_ViewersChangeInterval.Name = "Channel_ViewersChangeInterval";
+            this.Channel_ViewersChangeInterval.Size = new System.Drawing.Size(34, 20);
+            this.Channel_ViewersChangeInterval.TabIndex = 64;
+            this.Channel_ViewersChangeInterval.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.Channel_ViewersChangeInterval.ValueChanged += new System.EventHandler(this.Settings_Changed);
+            // 
+            // Channel_ViewersChange
+            // 
+            this.Channel_ViewersChange.AutoSize = true;
+            this.Channel_ViewersChange.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Channel_ViewersChange.Location = new System.Drawing.Point(6, 146);
+            this.Channel_ViewersChange.Name = "Channel_ViewersChange";
+            this.Channel_ViewersChange.Size = new System.Drawing.Size(1009, 17);
+            this.Channel_ViewersChange.TabIndex = 63;
+            this.Channel_ViewersChange.Text = resources.GetString("Channel_ViewersChange.Text");
+            this.Channel_ViewersChange.UseVisualStyleBackColor = true;
+            this.Channel_ViewersChange.CheckedChanged += new System.EventHandler(this.Settings_Changed);
+            // 
+            // MessageTimersLabel
+            // 
+            this.MessageTimersLabel.AutoSize = true;
+            this.MessageTimersLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.MessageTimersLabel.Location = new System.Drawing.Point(246, 129);
+            this.MessageTimersLabel.Name = "MessageTimersLabel";
+            this.MessageTimersLabel.Size = new System.Drawing.Size(95, 19);
+            this.MessageTimersLabel.TabIndex = 67;
+            this.MessageTimersLabel.Text = "Message Timers";
+            this.MessageTimersLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // MessageTimersSpacer
+            // 
+            this.MessageTimersSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
+            this.MessageTimersSpacer.Location = new System.Drawing.Point(-1, 129);
+            this.MessageTimersSpacer.Name = "MessageTimersSpacer";
+            this.MessageTimersSpacer.Size = new System.Drawing.Size(1026, 11);
+            this.MessageTimersSpacer.TabIndex = 68;
+            this.MessageTimersSpacer.TabStop = false;
             // 
             // Channel_SubscriptionRewardsList
             // 
@@ -1866,6 +1997,7 @@
             this.Reward,
             this.Instructions});
             this.Channel_SubscriptionRewardsList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke;
+            this.Channel_SubscriptionRewardsList.Enabled = false;
             this.Channel_SubscriptionRewardsList.Location = new System.Drawing.Point(0, 382);
             this.Channel_SubscriptionRewardsList.MultiSelect = false;
             this.Channel_SubscriptionRewardsList.Name = "Channel_SubscriptionRewardsList";
@@ -1904,7 +2036,7 @@
             // 
             this.SubscriptionsLabel.AutoSize = true;
             this.SubscriptionsLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SubscriptionsLabel.Location = new System.Drawing.Point(246, 340);
+            this.SubscriptionsLabel.Location = new System.Drawing.Point(246, 317);
             this.SubscriptionsLabel.Name = "SubscriptionsLabel";
             this.SubscriptionsLabel.Size = new System.Drawing.Size(82, 19);
             this.SubscriptionsLabel.TabIndex = 50;
@@ -1914,6 +2046,7 @@
             // Channel_SubscriptionRewards
             // 
             this.Channel_SubscriptionRewards.AutoSize = true;
+            this.Channel_SubscriptionRewards.Enabled = false;
             this.Channel_SubscriptionRewards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Channel_SubscriptionRewards.Location = new System.Drawing.Point(6, 357);
             this.Channel_SubscriptionRewards.Name = "Channel_SubscriptionRewards";
@@ -1927,7 +2060,7 @@
             // SubscriptionsSpacer
             // 
             this.SubscriptionsSpacer.Font = new System.Drawing.Font("Segoe Script", 8.25F, System.Drawing.FontStyle.Bold);
-            this.SubscriptionsSpacer.Location = new System.Drawing.Point(-1, 340);
+            this.SubscriptionsSpacer.Location = new System.Drawing.Point(-1, 317);
             this.SubscriptionsSpacer.Name = "SubscriptionsSpacer";
             this.SubscriptionsSpacer.Size = new System.Drawing.Size(1026, 11);
             this.SubscriptionsSpacer.TabIndex = 51;
@@ -1973,6 +2106,19 @@
             this.UpdateTitleGameButton.UseVisualStyleBackColor = false;
             this.UpdateTitleGameButton.Click += new System.EventHandler(this.UpdateTitleGameButton_Click);
             // 
+            // Channel_WelcomeSub
+            // 
+            this.Channel_WelcomeSub.AutoSize = true;
+            this.Channel_WelcomeSub.Enabled = false;
+            this.Channel_WelcomeSub.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Channel_WelcomeSub.Location = new System.Drawing.Point(6, 334);
+            this.Channel_WelcomeSub.Name = "Channel_WelcomeSub";
+            this.Channel_WelcomeSub.Size = new System.Drawing.Size(807, 17);
+            this.Channel_WelcomeSub.TabIndex = 70;
+            this.Channel_WelcomeSub.Text = resources.GetString("Channel_WelcomeSub.Text");
+            this.Channel_WelcomeSub.UseVisualStyleBackColor = true;
+            this.Channel_WelcomeSub.CheckedChanged += new System.EventHandler(this.Settings_Changed);
+            // 
             // CurrencyWindow
             // 
             this.CurrencyWindow.BackColor = System.Drawing.Color.White;
@@ -2002,7 +2148,6 @@
             this.CurrencyWindowButton.Name = "CurrencyWindowButton";
             this.CurrencyWindowButton.Size = new System.Drawing.Size(100, 46);
             this.CurrencyWindowButton.TabIndex = 64;
-            this.CurrencyWindowButton.TabStop = false;
             this.CurrencyWindowButton.Text = "Currency";
             this.CurrencyWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.CurrencyWindowButton.UseVisualStyleBackColor = true;
@@ -2021,7 +2166,6 @@
             this.GiveawayWindowButton.Name = "GiveawayWindowButton";
             this.GiveawayWindowButton.Size = new System.Drawing.Size(100, 46);
             this.GiveawayWindowButton.TabIndex = 65;
-            this.GiveawayWindowButton.TabStop = false;
             this.GiveawayWindowButton.Text = "Giveaway";
             this.GiveawayWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.GiveawayWindowButton.UseVisualStyleBackColor = true;
@@ -2030,6 +2174,7 @@
             // GiveawayWindow
             // 
             this.GiveawayWindow.BackColor = System.Drawing.Color.White;
+            this.GiveawayWindow.Controls.Add(this.Giveaway_SubscribersWinMultiplierAmount);
             this.GiveawayWindow.Controls.Add(this.Giveaway_UserList);
             this.GiveawayWindow.Controls.Add(this.GiveawayUsersLabel);
             this.GiveawayWindow.Controls.Add(this.GiveawayUsersSpacer);
@@ -2077,10 +2222,30 @@
             this.GiveawayWindow.Controls.Add(this.Giveaway_MinCurrency);
             this.GiveawayWindow.Controls.Add(this.Giveaway_TypeActive);
             this.GiveawayWindow.Controls.Add(this.Giveaway_UserCount);
+            this.GiveawayWindow.Controls.Add(this.Giveaway_SubscribersWinMultiplier);
             this.GiveawayWindow.Location = new System.Drawing.Point(108, 30);
             this.GiveawayWindow.Name = "GiveawayWindow";
             this.GiveawayWindow.Size = new System.Drawing.Size(1024, 562);
             this.GiveawayWindow.TabIndex = 63;
+            // 
+            // Giveaway_SubscribersWinMultiplierAmount
+            // 
+            this.Giveaway_SubscribersWinMultiplierAmount.Enabled = false;
+            this.Giveaway_SubscribersWinMultiplierAmount.Location = new System.Drawing.Point(144, 283);
+            this.Giveaway_SubscribersWinMultiplierAmount.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.Giveaway_SubscribersWinMultiplierAmount.Name = "Giveaway_SubscribersWinMultiplierAmount";
+            this.Giveaway_SubscribersWinMultiplierAmount.Size = new System.Drawing.Size(38, 20);
+            this.Giveaway_SubscribersWinMultiplierAmount.TabIndex = 73;
+            this.Giveaway_SubscribersWinMultiplierAmount.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.Giveaway_SubscribersWinMultiplierAmount.ValueChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
             // Giveaway_UserList
             // 
@@ -2097,9 +2262,9 @@
             this.GiveawayUsersLabel.Font = new System.Drawing.Font("Segoe Print", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.GiveawayUsersLabel.Location = new System.Drawing.Point(887, 25);
             this.GiveawayUsersLabel.Name = "GiveawayUsersLabel";
-            this.GiveawayUsersLabel.Size = new System.Drawing.Size(74, 19);
+            this.GiveawayUsersLabel.Size = new System.Drawing.Size(97, 19);
             this.GiveawayUsersLabel.TabIndex = 68;
-            this.GiveawayUsersLabel.Text = "Users (WiP)";
+            this.GiveawayUsersLabel.Text = "Users (Disabled)";
             this.GiveawayUsersLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // GiveawayUsersSpacer
@@ -2400,6 +2565,19 @@
             this.Giveaway_UserCount.TabIndex = 71;
             this.Giveaway_UserCount.Text = "Users: 0";
             // 
+            // Giveaway_SubscribersWinMultiplier
+            // 
+            this.Giveaway_SubscribersWinMultiplier.AutoSize = true;
+            this.Giveaway_SubscribersWinMultiplier.Enabled = false;
+            this.Giveaway_SubscribersWinMultiplier.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Giveaway_SubscribersWinMultiplier.Location = new System.Drawing.Point(6, 283);
+            this.Giveaway_SubscribersWinMultiplier.Name = "Giveaway_SubscribersWinMultiplier";
+            this.Giveaway_SubscribersWinMultiplier.Size = new System.Drawing.Size(173, 17);
+            this.Giveaway_SubscribersWinMultiplier.TabIndex = 72;
+            this.Giveaway_SubscribersWinMultiplier.Text = "Subscribers win multiplier           ";
+            this.Giveaway_SubscribersWinMultiplier.UseVisualStyleBackColor = true;
+            this.Giveaway_SubscribersWinMultiplier.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
+            // 
             // AuthenticationLabel
             // 
             this.AuthenticationLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -2423,7 +2601,6 @@
             this.SpamFilterWindowButton.Name = "SpamFilterWindowButton";
             this.SpamFilterWindowButton.Size = new System.Drawing.Size(100, 46);
             this.SpamFilterWindowButton.TabIndex = 67;
-            this.SpamFilterWindowButton.TabStop = false;
             this.SpamFilterWindowButton.Text = "Spam Filter";
             this.SpamFilterWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.SpamFilterWindowButton.UseVisualStyleBackColor = true;
@@ -2588,11 +2765,14 @@
             ((System.ComponentModel.ISupportInitialize)(this.AboutImage)).EndInit();
             this.ChannelWindow.ResumeLayout(false);
             this.ChannelWindow.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Channel_ViewersChangeRate)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Channel_ViewersChangeInterval)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Channel_SubscriptionRewardsList)).EndInit();
             this.CurrencyWindow.ResumeLayout(false);
             this.CurrencyWindow.PerformLayout();
             this.GiveawayWindow.ResumeLayout(false);
             this.GiveawayWindow.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Giveaway_SubscribersWinMultiplierAmount)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchMinutes)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchHours)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MustWatchDays)).EndInit();
@@ -2759,7 +2939,7 @@
         private System.Windows.Forms.GroupBox MySQLSpacer;
         public FlatNumericUpDown MySQL_Port;
         private System.Windows.Forms.Label label23;
-        public System.Windows.Forms.TextBox MySQL_Table;
+        public System.Windows.Forms.TextBox Database_Table;
         public System.Windows.Forms.CheckBox Spam_CWLAnnounceTimeouts;
         private System.Windows.Forms.Label SubscriptionsLabel;
         private System.Windows.Forms.GroupBox SubscriptionsSpacer;
@@ -2789,5 +2969,16 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Viewers;
         private System.Windows.Forms.DataGridViewTextBoxColumn Version;
         private System.Windows.Forms.DataGridViewTextBoxColumn Updated;
+        public FlatNumericUpDown Giveaway_SubscribersWinMultiplierAmount;
+        public System.Windows.Forms.CheckBox Giveaway_SubscribersWinMultiplier;
+        public System.Windows.Forms.TextBox Channel_ViewersChangeMessage;
+        public FlatNumericUpDown Channel_ViewersChangeRate;
+        public FlatNumericUpDown Channel_ViewersChangeInterval;
+        public System.Windows.Forms.CheckBox Channel_ViewersChange;
+        private System.Windows.Forms.Label MessageTimersLabel;
+        private System.Windows.Forms.GroupBox MessageTimersSpacer;
+        public System.Windows.Forms.TextBox Channel_WelcomeSubMessage;
+        public System.Windows.Forms.CheckBox Channel_WelcomeSub;
+        private System.Windows.Forms.Label label18;
     }
 }

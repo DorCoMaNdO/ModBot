@@ -43,11 +43,11 @@ namespace ModBot
         public static string greeting;
         public static int LastCurrencyDisabledAnnounce, LastUsedTop5, LastUsedBotInfo;
         public static Dictionary<string, int> ActiveUsers = new Dictionary<string, int>(), Warnings = new Dictionary<string, int>(), giveawayFalseEntries = new Dictionary<string, int>();
-        public static List<string> IgnoredUsers = new List<string>(), Moderators = new List<string>(), usersToLookup = new List<string>();
-        public static Timer currencyQueue, auctionLoop, giveawayQueue, warningsRemoval;
+        public static List<string> IgnoredUsers = new List<string>(), Moderators = new List<string>(), usersToLookup = new List<string>(), Subscribers = new List<string>(), Users = new List<string>();
+        public static Dictionary<string, string> UserColors = new Dictionary<string, string>();
+        public static Timer currencyQueue, auctionLoop, giveawayQueue, warningsRemoval, newViewers;
         public static List<Thread> Threads = new List<Thread>();
-        private static StreamWriter log = new StreamWriter(@"Data\Logs\CommandsLog.txt", true);
-        private static StreamWriter rewardslog = new StreamWriter(@"Data\Logs\RewardsLog.txt", true);
+        //private static StreamWriter log = new StreamWriter(@"Data\Logs\Messages.txt", true);
 
         public static event OnInitialize OnInitialize = ((InitializationStep step) => { });
 
@@ -85,7 +85,6 @@ namespace ModBot
                     }
                 }
             });
-
 
             Console.WriteLine("Validating bot's access token...");
 
@@ -138,7 +137,7 @@ namespace ModBot
                 Thread.Sleep(100);
             }
 
-            if(!bAbort)
+            if (!bAbort)
             {
                 Console.WriteLine("Confirming channel's existence in Twitch...");
 
@@ -218,13 +217,18 @@ namespace ModBot
 
                                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
-                                            ini.SetValue("Settings", "Channel_UseSteam", (MainForm.Channel_SteamID64.Enabled = MainForm.Channel_UseSteam.Checked = (ini.GetValue("Settings", "Channel_UseSteam", "0") == "1")) ? "1" : "0");
+                                            ini.SetValue("Settings", "Channel_UseSteam", (MainForm.Channel_UseSteam.Checked = (ini.GetValue("Settings", "Channel_UseSteam", "0") == "1")) ? "1" : "0");
 
                                             MainForm.Giveaway_MustSubscribe.Enabled = partnered;
+                                            MainForm.Giveaway_SubscribersWinMultiplier.Enabled = partnered;
                                             MainForm.Channel_SubscriptionRewards.Enabled = partnered;
-                                            if(!partnered)
+                                            MainForm.Channel_WelcomeSub.Enabled = partnered;
+                                            if (!partnered)
                                             {
+                                                MainForm.Giveaway_MustSubscribe.Checked = false;
+                                                MainForm.Giveaway_SubscribersWinMultiplier.Checked = false;
                                                 MainForm.Channel_SubscriptionRewards.Checked = false;
+                                                MainForm.Channel_WelcomeSub.Checked = false;
                                             }
                                         });
                                         break;
@@ -313,6 +317,7 @@ namespace ModBot
                 ini.SetValue("Settings", "Channel_Greeting", greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!"));
 
                 IgnoredUsers.Add("jtv");
+                IgnoredUsers.Add("twitchnotify");
                 IgnoredUsers.Add("moobot");
                 IgnoredUsers.Add("nightbot");
                 IgnoredUsers.Add(nick.ToLower());
@@ -427,6 +432,7 @@ namespace ModBot
 
                     Console.WriteLine("Input/output configured.\r\n\r\nJoining the channel...");
 
+                    sendRaw("TWITCHCLIENT 3");
                     sendRaw("PASS " + password);
                     sendRaw("NICK " + nick);
                     sendRaw("USER " + nick + " 8 * :" + nick);
@@ -449,6 +455,8 @@ namespace ModBot
                         lLines.Add("Fear not, here's the (Mod)Bot.");
                         lLines.Add("ModBot's in the HOUSE!");
                         sendMessage(lLines[new Random().Next(0, lLines.Count)], "", false);*/
+
+                        //sendMessage("/twitchclient 3", "", false, false);
 
                         RegisterCommands();
 
@@ -616,8 +624,6 @@ namespace ModBot
                 MainForm.ChannelStatusLabel.ForeColor = Color.Red;
                 MainForm.DonationsWindowButton.Text = "Donations";
 
-                MainForm.Channel_UseSteam.Enabled = false;
-
                 foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
                 {
                     if (btn != MainForm.SettingsWindowButton && btn != MainForm.AboutWindowButton)
@@ -727,13 +733,37 @@ namespace ModBot
                 //Console.WriteLine("Threads list clear.");
             }
 
-            Console.WriteLine("Creating and starting threads and timers...");
+            Console.WriteLine("Creating and starting timers and threads...");
 
             OnInitialize(InitializationStep.ThreadsCreation);
 
-            bool Running = false;
+            Console.Write("Currency check queue timer... ");
 
-            Console.Write("Time watched and currency handout thread... ");
+            if (currencyQueue == null) currencyQueue = new Timer(handleCurrencyQueue, null, Timeout.Infinite, Timeout.Infinite);
+            currencyQueue.Change(Timeout.Infinite, Timeout.Infinite);
+
+            Console.Write("DONE\r\nAuction highest bidder timer... ");
+
+            if (auctionLoop == null) auctionLoop = new Timer(auctionLoopHandler, null, Timeout.Infinite, Timeout.Infinite);
+            auctionLoop.Change(Timeout.Infinite, Timeout.Infinite);
+
+            Console.Write("DONE\r\nGiveaway joining report timer... ");
+
+            if (giveawayQueue == null) giveawayQueue = new Timer(giveawayQueueHandler, null, Timeout.Infinite, Timeout.Infinite);
+            giveawayQueue.Change(Timeout.Infinite, Timeout.Infinite);
+
+            Console.Write("DONE\r\nWarnings removal timer... ");
+
+            if (warningsRemoval == null) warningsRemoval = new Timer(warningsRemovalHandler, null, 900000, 900000);
+            warningsRemoval.Change(900000, 900000);
+
+            Console.Write("DONE\r\nNew viewers timer... ");
+            if (newViewers == null) newViewers = new Timer(newViewersHandler, null, (int)MainForm.Channel_ViewersChangeInterval.Value * 60000, (int)MainForm.Channel_ViewersChangeInterval.Value * 60000);
+            newViewers.Change((int)MainForm.Channel_ViewersChangeInterval.Value * 60000, (int)MainForm.Channel_ViewersChangeInterval.Value * 60000);
+
+            Console.Write("DONE\r\nTime watched and currency handout thread... ");
+
+            bool Running = false;
 
             Thread thread = new Thread(() =>
             {
@@ -745,7 +775,7 @@ namespace ModBot
                         new Thread(() =>
                         {
                             List<string> spreadsheetSubs = Api.checkSpreadsheetSubs();
-                            buildUserList();
+                            //buildUserList();
                             lock (ActiveUsers)
                             {
                                 foreach (string user in ActiveUsers.Keys)
@@ -758,7 +788,8 @@ namespace ModBot
                                         while (old == Database.checkCurrency(user))
                                         {
                                             //old = Database.checkCurrency(user);
-                                            if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Api.IsSubscriber(user))
+                                            //if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Api.IsSubscriber(user))
+                                            if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Subscribers.Contains(user))
                                             {
                                                 Database.addCurrency(user, subpayout);
                                             }
@@ -783,16 +814,99 @@ namespace ModBot
             thread = new Thread(() =>
             {
                 buildUserList(false); // Preload the list of users so the currency handout options will work correctly.
-                
+
+                Users = ActiveUsers.Keys.ToList();
+
                 while (true)
                 {
                     buildUserList();
-                    Thread.Sleep(10000);
+
+                    if (partnered)
+                    {
+                        new Thread(() =>
+                        {
+                            List<string> subs = Api.GetAllSubscribers(true);
+                            lock (Subscribers)
+                            {
+                                Subscribers = subs;
+                            }
+                        }).Start();
+                    }
+
+                    Thread.Sleep(60000);
                 }
             });
             Threads.Add(thread);
             thread.Name = "User list";
             thread.Start();
+
+            if (partnered)
+            {
+                Console.Write("DONE\r\nSubscriber rewards thread... ");
+
+                thread = new Thread(() =>
+                {
+                    Dictionary<string, DateTime> LastSubscription = Api.GetLastSubscribers(new DateTime(), 1);
+                    if (LastSubscription.Count > 0)
+                    {
+                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        {
+                            MainForm.Channel_SubscriptionsDate.Value = LastSubscription.ElementAt(0).Value;
+                        });
+                    }
+
+                    while (true)
+                    {
+                        Dictionary<string, DateTime> Subscriptions = Api.GetLastSubscribers(MainForm.Channel_SubscriptionsDate.Value);
+                        if (Subscriptions.Count > 0)
+                        {
+                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                            {
+                                MainForm.Channel_SubscriptionsDate.Value = Subscriptions.ElementAt(0).Value.AddSeconds(1);
+                            });
+                            lock (MainForm.SubscriptionRewards)
+                            {
+                                if (MainForm.Channel_SubscriptionRewards.Checked && MainForm.SubscriptionRewards.Count > 0)
+                                {
+                                    for (int i = Subscriptions.Count; i > 0; i--)
+                                    {
+                                        string subscriber = Subscriptions.ElementAt(i).Key;
+                                        string reward = MainForm.SubscriptionRewards.ElementAt(new Random().Next(0, MainForm.SubscriptionRewards.Count)).Key;
+                                        string text = "[" + DateTime.Now + " via subscription rewards] " + subscriber + " has won " + reward;
+                                        for (int attempts = 0; attempts < 10; attempts++)
+                                        {
+                                            try
+                                            {
+                                                using (StreamWriter log = new StreamWriter(@"Data\Logs\Rewards.txt", true))
+                                                {
+                                                    log.WriteLine(text);
+                                                }
+                                                break;
+                                            }
+                                            catch
+                                            {
+                                                System.Threading.Thread.Sleep(250);
+                                            }
+                                        }
+                                        sendMessage(subscriber + " has subscribed and won " + reward + "!");
+                                        if (MainForm.SubscriptionRewards[reward] != "")
+                                        {
+                                            Thread.Sleep(1000);
+                                            sendMessage(subscriber + ", please " + MainForm.SubscriptionRewards[reward] + ".");
+                                        }
+                                        Thread.Sleep(1000);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (Subscriptions.Count < 10) Thread.Sleep(5000);
+                    }
+                });
+                Threads.Add(thread);
+                thread.Name = "Subscriber rewards";
+                thread.Start();
+            }
 
             Console.Write("DONE\r\nStream status thread... ");
 
@@ -870,46 +984,6 @@ namespace ModBot
             thread.Name = "Connection ping";
             thread.Start();
 
-            Console.Write("DONE\r\nCurrency check queue timer... ");
-
-            if (currencyQueue == null)
-            {
-                currencyQueue = new Timer(handleCurrencyQueue, null, Timeout.Infinite, Timeout.Infinite);
-            }
-            else
-            {
-                currencyQueue.Change(Timeout.Infinite, Timeout.Infinite);
-            }
-
-            Console.Write("DONE\r\nAuction highest bidder timer... ");
-
-            if (auctionLoop == null)
-            {
-                auctionLoop = new Timer(auctionLoopHandler, null, Timeout.Infinite, Timeout.Infinite);
-            }
-            else
-            {
-                auctionLoop.Change(Timeout.Infinite, Timeout.Infinite);
-            }
-
-            Console.Write("DONE\r\nGiveaway joining report timer... ");
-
-            if (giveawayQueue == null)
-            {
-                giveawayQueue = new Timer(giveawayQueueHandler, null, Timeout.Infinite, Timeout.Infinite);
-            }
-            else
-            {
-                giveawayQueue.Change(Timeout.Infinite, Timeout.Infinite);
-            }
-
-            Console.Write("DONE\r\nWarnings removal timer... ");
-
-            if (warningsRemoval == null)
-            {
-                warningsRemoval = new Timer(warningsRemovalHandler, null, 900000, 900000);
-            }
-
             Console.Write("DONE\r\nChannel data updating thread... ");
 
             thread = new Thread(() =>
@@ -931,71 +1005,6 @@ namespace ModBot
                 Threads.Add(thread);
                 thread.Name = "Donations updating";
                 thread.Start();
-            }
-
-            if(partnered)
-            {
-            Console.Write("DONE\r\nSubscription rewards thread... ");
-
-            thread = new Thread(() =>
-            {
-                Dictionary<string, DateTime> LastSubscription = Api.GetLastSubscribers(new DateTime(), 1);
-                if (LastSubscription.Count > 0)
-                {
-                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                    {
-                        MainForm.Channel_SubscriptionsDate.Value = LastSubscription.ElementAt(0).Value;
-                    });
-                }
-
-                while (true)
-                {
-                    new Thread(() =>
-                    {
-                        Dictionary<string, DateTime> Subscriptions = Api.GetLastSubscribers(MainForm.Channel_SubscriptionsDate.Value);
-                        if (Subscriptions.Count > 0)
-                        {
-                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
-                            {
-                                MainForm.Channel_SubscriptionsDate.Value = Subscriptions.ElementAt(0).Value.AddSeconds(1);
-                            });
-                            lock (MainForm.SubscriptionRewards)
-                            {
-                                foreach (string subscriber in Subscriptions.Keys)
-                                {
-                                    string reward = MainForm.SubscriptionRewards.ElementAt(new Random().Next(0, MainForm.SubscriptionRewards.Count)).Key;
-                                    string text = "[" + DateTime.Now + " via subscription rewards] " + subscriber + " has won " + reward;
-                                    for (int attempts = 0; attempts < 10; attempts++)
-                                    {
-                                        try
-                                        {
-                                            rewardslog.WriteLine(text);
-                                            break;
-                                        }
-                                        catch
-                                        {
-                                            System.Threading.Thread.Sleep(250);
-                                        }
-                                    }
-                                    sendMessage(subscriber + " has subscribed and won " + reward + "!");
-                                    if (MainForm.SubscriptionRewards[reward] != "")
-                                    {
-                                        Thread.Sleep(1000);
-                                        sendMessage(subscriber + ", please " + MainForm.SubscriptionRewards[reward] + ".");
-                                    }
-                                    //sendMessage(subscriber + " has subscribed and won " +  + "!");
-                                    //sendMessage(subscriber + " has just subscribed and won " +  + "!");
-                                    Thread.Sleep(1000);
-                                }
-                            }
-                        }
-                    }).Start();
-                    Thread.Sleep(5000);
-                }
-            });
-            Threads.Add(thread);
-            thread.Name = "Subscription rewards";
-            thread.Start();
             }
 
             Console.Write("DONE\r\nInput listening thread... ");
@@ -1036,11 +1045,11 @@ namespace ModBot
                         {
                             if (attempt == 0)
                             {
-                                Console.WriteLine("Uh oh, there was an error! Attempts to keep everything running are being executed, if the attempts fail or if you keep seeing this message, email your Error_log.txt file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
+                                Console.WriteLine("Uh oh, there was an error! Attempts to keep everything running are being executed, if the attempts fail or if you keep seeing this message, email your error log (Data/Logs/Errors.txt) file to CoMaNdO.ModBot@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
                             }
                             else
                             {
-                                Console.WriteLine("Failed to listen to input... Please try reconnecting... If this issue keeps occouring, please email your Error_log.txt file to DorCoMaNdO@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
+                                Console.WriteLine("Failed to listen to input... Please try reconnecting... If this issue keeps occouring, please email your error log (Data/Logs/Errors.txt) file to CoMaNdO.ModBot@gmail.com with the title \"ModBot - Error\" (Other titles will most likely be ignored).");
                             }
                             Api.LogError("*************Error Message (via Listen()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                         }
@@ -1056,7 +1065,38 @@ namespace ModBot
             thread.Name = "Input listening";
             thread.Start();
 
-            Console.Write("DONE\r\nSuccessfully created and started all threads and timers!\r\n\r\n");
+            Console.Write("DONE\r\nSuccessfully created and started all timers and threads!\r\n\r\n");
+        }
+
+        private static void newViewersHandler(object state)
+        {
+            if (!DetailsConfirmed || !irc.Connected || !IsStreaming || !MainForm.Channel_ViewersChange.Checked) return;
+
+            lock (Users)
+            {
+                lock (ActiveUsers)
+                {
+                    int difference = 0;
+                    List<string> TotalUsers = new List<string>();
+                    foreach (string user in ActiveUsers.Keys)
+                    {
+                        if (!Users.Contains(user)) difference++;
+                        if (!TotalUsers.Contains(user)) TotalUsers.Add(user);
+                    }
+                    foreach (string user in Users)
+                    {
+                        if (!ActiveUsers.Keys.Contains(user)) difference++;
+                        if (!TotalUsers.Contains(user)) TotalUsers.Add(user);
+                    }
+
+                    if ((float)TotalUsers.Count / difference * 100 >= (float)MainForm.Channel_ViewersChangeRate.Value)
+                    {
+                        sendMessage(MainForm.Channel_ViewersChangeMessage.Text);
+                    }
+
+                    Users = ActiveUsers.Keys.ToList();
+                }
+            }
         }
 
         private static void warningsRemovalHandler(object state)
@@ -1081,7 +1121,7 @@ namespace ModBot
 
         private static void giveawayQueueHandler(object state)
         {
-            if(Giveaway.Started)
+            if (Giveaway.Started)
             {
                 sendMessage("Total of " + Giveaway.Users.Count + " people joined the giveaway.");
                 Thread.Sleep(1000);
@@ -1105,7 +1145,8 @@ namespace ModBot
                         {
                             msg = "you don't follow the channel!";
                         }
-                        else if (MainForm.Giveaway_MustSubscribe.Checked && !Api.IsSubscriber(user))
+                        //else if (MainForm.Giveaway_MustSubscribe.Checked && !Api.IsSubscriber(user))
+                        else if (MainForm.Giveaway_MustSubscribe.Checked && !Subscribers.Contains(user))
                         {
                             msg = "you are not subscribed to the channel!";
                         }
@@ -1151,6 +1192,24 @@ namespace ModBot
             new Thread(() =>
             {
                 //Console.WriteLine(message);
+
+                /*Console.WriteLine("*** DEBUG " + message);
+                for (int attempts = 0; attempts < 10; attempts++)
+                {
+                    try
+                    {
+                        using (StreamWriter log = new StreamWriter(@"Data\Logs\Rewards.txt", true))
+                        {
+                            log.WriteLine("*DEBUG [" + DateTime.Now + "] " + message);
+                        }
+                        break;
+                    }
+                    catch
+                    {
+                        System.Threading.Thread.Sleep(250);
+                    }
+                }*/
+
                 string[] msg = message.Split(' ');
                 string user;
 
@@ -1164,24 +1223,37 @@ namespace ModBot
                     user = getUser(message);
                     addUserToList(user);
                     //Console.WriteLine(message);
-                    string temp = message.Substring(message.IndexOf(":", 1) + 1);
+                    string text = message.Substring(message.IndexOf(":", 1) + 1);
+
                     if (user == "Jtv")
                     {
-                        if (temp.StartsWith("HISTORYEND"))
+                        if (text.StartsWith("HISTORYEND"))
                         {
                             Console.WriteLine("Everything should be set and ready!\r\nModBot is good to go!\r\n");
-                            return;
                         }
-                        else if (temp.StartsWith("You have banned") || temp.StartsWith("Your message was not sent"))
+                        else if (text.StartsWith("USERCOLOR"))
+                        {
+                            msg = text.Split(' ');
+                            user = Api.capName(msg[1]);
+                            if (!UserColors.ContainsKey(user))
+                            {
+                                UserColors.Add(user, msg[2]);
+                            }
+                            else
+                            {
+                                UserColors[user] = msg[2];
+                            }
+                        }
+                        /*else if (temp.StartsWith("You have banned") || temp.StartsWith("Your message was not sent"))
                         {
                             return;
-                        }
-                        else if (temp.StartsWith("The moderators of this room are: "))
+                        }*/
+                        else if (text.StartsWith("The moderators of this room are: "))
                         {
                             lock (Moderators)
                             {
                                 Moderators.Clear();
-                                foreach (string mod in temp.Substring(33).Replace(" ", "").Split(','))
+                                foreach (string mod in text.Substring(33).Replace(" ", "").Split(','))
                                 {
                                     user = Api.capName(mod);
                                     if (mod != "" && !Moderators.Contains(user))
@@ -1198,36 +1270,41 @@ namespace ModBot
                                 MainForm.Giveaway_WarnFalseEntries.Enabled = (!MainForm.Giveaway_TypeActive.Checked && Moderators.Contains(Api.capName(nick)));
                                 if (MainForm.Giveaway_TypeActive.Checked || !Moderators.Contains(Api.capName(nick))) MainForm.Giveaway_WarnFalseEntries.Checked = false;
                             });
-                            return;
                         }
-                        else
-                        {
-                            for (int attempts = 0; attempts < 5; attempts++)
-                            {
-                                try
-                                {
-                                    rewardslog.WriteLine("*DEBUG [" + DateTime.Now + "] " + message);
-                                    break;
-                                }
-                                catch (IOException)
-                                {
-                                    System.Threading.Thread.Sleep(100);
-                                }
-                                catch (Exception e)
-                                {
-                                    //Console.WriteLine(e);
-                                    Api.LogError("*************Error Message (via Test()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
-                                    break;
-                                }
-                            }
-                        }
+                        return;
                     }
+                    else if (user == "Twitchnotify")
+                    {
+                        /*Console.WriteLine("*** DEBUG " + message);
+                        for (int attempts = 0; attempts < 10; attempts++)
+                        {
+                            try
+                            {
+                                using (StreamWriter log = new StreamWriter(@"Data\Logs\Rewards.txt", true))
+                                {
+                                    log.WriteLine("*DEBUG [" + DateTime.Now + "] " + message);
+                                }
+                                break;
+                            }
+                            catch
+                            {
+                                System.Threading.Thread.Sleep(250);
+                            }
+                        }*/
+                        Console.WriteLine(text);
+                        user = Api.GetDisplayName(msg[0]);
+                        sendMessage(MainForm.Channel_WelcomeSubMessage.Text.Replace("@user", user));
+                        return;
+                    }
+
                     string name = Api.GetDisplayName(user);
-                    Console.WriteLine(name + ": " + temp);
+                    Console.WriteLine(name + ": " + text);
                     //handleMessage(temp);
+                    if (text.StartsWith("☺ACTION ") && text.EndsWith("☺")) text.Substring(8, text.Length - 1);
+
                     if (IsModerator && MainForm.Spam_CWL.Checked)
                     {
-                        foreach (char character in temp)
+                        foreach (char character in text)
                         {
                             if (!"`~!@#$%^&*()-_=+'\"\\/.,?[]{}<>|:; ".Contains(character) && !MainForm.Spam_CWLBox.Text.ToLower().Contains(character.ToString().ToLower()))
                             {
@@ -1236,22 +1313,26 @@ namespace ModBot
                             }
                         }
                     }
-                    if (MainForm.Giveaway_TypeKeyword.Checked && temp.ToLower() == MainForm.Giveaway_CustomKeyword.Text.ToLower())
+
+                    if (MainForm.Giveaway_TypeKeyword.Checked && text.ToLower() == MainForm.Giveaway_CustomKeyword.Text.ToLower())
                     {
                         Command_Ticket(name, "Custom", new string[0]);
                         return;
                     }
-                    Commands.CheckCommand(name, temp, true);
+
+                    Commands.CheckCommand(name, text, true);
+
                     if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                     {
                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             MainForm.Giveaway_WinnerChat.SelectionColor = Color.Blue;
+                            if (UserColors.ContainsKey(user)) MainForm.Giveaway_WinnerChat.SelectionColor = ColorTranslator.FromHtml(UserColors[user]);
                             MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
                             MainForm.Giveaway_WinnerChat.SelectedText = name;
                             MainForm.Giveaway_WinnerChat.SelectionColor = Color.Black;
                             MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Microsoft Sans Serif", 8);
-                            MainForm.Giveaway_WinnerChat.SelectedText = ": " + temp + "\r\n";
+                            MainForm.Giveaway_WinnerChat.SelectedText = ": " + text + "\r\n";
                             MainForm.Giveaway_WinnerChat.Select(MainForm.Giveaway_WinnerChat.Text.Length, MainForm.Giveaway_WinnerChat.Text.Length);
                             MainForm.Giveaway_WinnerChat.ScrollToCaret();
                             MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);
@@ -1332,7 +1413,9 @@ namespace ModBot
                             IsModerator = false;
                         }
                     }
-                    buildUserList();
+
+                    //buildUserList();
+                    //sendMessage("/mods", "", false, false);
                 }
                 else if (msg[1].Equals("352"))
                 {
@@ -1388,7 +1471,9 @@ namespace ModBot
                                     if (winner != "")
                                     {
                                         TimeSpan t = Database.getTimeWatched(winner);
-                                        sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+                                        //sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+                                        //sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
+                                        sendMessage(winner + " has won the giveaway! (" + (Irc.Subscribers.Contains(Api.capName(winner)) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
                                     }
                                     else
                                     {
@@ -1430,10 +1515,10 @@ namespace ModBot
                         {
                             if (!Giveaway.Started)
                             {
-                                if(MainForm.Giveaway_TypeTickets.Checked)
+                                if (MainForm.Giveaway_TypeTickets.Checked)
                                 {
                                     int ticketcost = 0, maxtickets = 1;
-                                    if(args.Length > 1)
+                                    if (args.Length > 1)
                                     {
                                         int.TryParse(args[1], out ticketcost);
                                         if (args.Length > 2)
@@ -1443,7 +1528,7 @@ namespace ModBot
                                     }
                                     if (ticketcost >= 0 && maxtickets > 0)
                                     {
-                                        Giveaway.startGiveaway(ticketcost, maxtickets);;
+                                        Giveaway.startGiveaway(ticketcost, maxtickets); ;
                                     }
                                     else
                                     {
@@ -1563,17 +1648,18 @@ namespace ModBot
                     {
                         if (!Giveaway.HasBoughtTickets(user))
                         {
+                            user = Api.capName(user);
                             lock (giveawayFalseEntries)
                             {
                                 if (Giveaway.BuyTickets(user))
                                 {
-                                    if (giveawayFalseEntries.ContainsKey(Api.capName(user))) giveawayFalseEntries.Remove(Api.capName(user));
+                                    if (giveawayFalseEntries.ContainsKey(user)) giveawayFalseEntries.Remove(user);
                                     giveawayQueue.Change(5000, Timeout.Infinite);
                                 }
                                 else
                                 {
-                                    if (!giveawayFalseEntries.ContainsKey(Api.capName(user))) giveawayFalseEntries.Add(Api.capName(user), 1);
-                                    if(giveawayFalseEntries.Count == 1) giveawayQueue.Change(5000, Timeout.Infinite);
+                                    if (!giveawayFalseEntries.ContainsKey(user)) giveawayFalseEntries.Add(user, 1);
+                                    if (giveawayFalseEntries.Count == 1) giveawayQueue.Change(5000, Timeout.Infinite);
                                 }
                             }
                         }
@@ -1586,17 +1672,18 @@ namespace ModBot
                     {
                         if (args.Length > 0)
                         {
+                            user = Api.capName(user);
                             lock (giveawayFalseEntries)
                             {
                                 int tickets;
                                 if (int.TryParse(args[0], out tickets) && tickets > 0 && Giveaway.BuyTickets(user, tickets))
                                 {
-                                    if (giveawayFalseEntries.ContainsKey(Api.capName(user))) giveawayFalseEntries.Remove(Api.capName(user));
+                                    if (giveawayFalseEntries.ContainsKey(user)) giveawayFalseEntries.Remove(user);
                                     giveawayQueue.Change(5000, Timeout.Infinite);
                                 }
                                 else
                                 {
-                                    if (!giveawayFalseEntries.ContainsKey(Api.capName(user))) giveawayFalseEntries.Add(Api.capName(user), tickets);
+                                    if (!giveawayFalseEntries.ContainsKey(user)) giveawayFalseEntries.Add(user, tickets);
                                     if (giveawayFalseEntries.Count == 1) giveawayQueue.Change(5000, Timeout.Infinite);
                                 }
                             }
@@ -1642,7 +1729,7 @@ namespace ModBot
                                     }
                                 }
                             }
-                            else if(Database.MySqlDB != null)
+                            else if (Database.MySqlDB != null)
                             {
                                 using (MySqlConnection con = Database.MySqlDB.Clone())
                                 {
@@ -2364,7 +2451,7 @@ namespace ModBot
                         if (int.TryParse(args[1], out level) && level >= 0 && level <= 4)
                         {
                             string command = args[2].ToLower();
-                            if (!Commands.CheckCommand(command))
+                            if (!Commands.CheckCommand("", command, false))
                             {
                                 string output = "";
                                 for (int i = 3; i < args.Length; i++)
@@ -2460,15 +2547,15 @@ namespace ModBot
 
         private static void Command_Warnings(string user, string command, string[] args)
         {
-            if(Database.getUserLevel(user) > 0)
+            if (Database.getUserLevel(user) > 0)
             {
                 string name = Api.capName(user);
-                if(args.Length > 0)
+                if (args.Length > 0)
                 {
                     name = Api.capName(args[0]);
                 }
 
-                if(Warnings.ContainsKey(name))
+                if (Warnings.ContainsKey(name))
                 {
                     sendMessage(Api.GetDisplayName(name) + " has " + Warnings[name] + " warnings.");
                 }
@@ -2521,7 +2608,7 @@ namespace ModBot
             if (Api.GetUnixTimeNow() - LastUsedBotInfo >= 300)
             {
                 LastUsedBotInfo = Api.GetUnixTimeNow();
-                sendMessage("This channel is using CoMaNdO's modified version of ModBot (v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + "), downloadable from http://modbot.wordpress.com/ :)");
+                sendMessage("This channel is using CoMaNdO's modified version of ModBot (v" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + "), downloadable from http://modbot.wordpress.com/ :)");
             }
         }
 
@@ -2539,7 +2626,9 @@ namespace ModBot
 
                     string name = Api.GetDisplayName(user);
 
-                    Console.WriteLine(name + " joined");
+                    if (time == 0) return;
+
+                    Console.WriteLine(name + " joined.");
 
                     if (greetingOn && greeting != "")
                     {
@@ -2601,29 +2690,14 @@ namespace ModBot
                     try
                     {
                         json_data = w.DownloadString("http://tmi.twitch.tv/group/user/" + channel.Substring(1) + "/chatters");
-                        //users.Clear();
                         if (json_data.Replace("\"", "") != "")
                         {
                             JObject stream = JObject.Parse(JObject.Parse(json_data)["chatters"].ToString());
-                            /*string[] sMods = stream["moderators"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "").Split(',');
-                            lock (Moderators)
-                            {
-                                Moderators.Clear();
-                                foreach (string sMod in sMods)
-                                {
-                                    string user = Api.capName(sMod);
-                                    if (sMod != "" && !Moderators.Contains(user))
-                                    {
-                                        Moderators.Add(user);
-                                    }
-                                }
-                            }*/
-
                             List<string> lUsers = (stream["moderators"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["staff"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["admins"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "") + "," + stream["viewers"].ToString().Replace(" ", "").Replace("\"", "").Replace("\r\n", "").Replace("[", "").Replace("]", "")).Split(',').ToList();
                             lock (ActiveUsers)
                             {
                                 List<string> Delete = new List<string>();
-                                foreach(string sUser in ActiveUsers.Keys)
+                                foreach (string sUser in ActiveUsers.Keys)
                                 {
                                     string user = sUser.ToLower();
                                     if (!IgnoredUsers.Contains(user) && !lUsers.Contains(user)) Delete.Add(user);
@@ -2637,7 +2711,6 @@ namespace ModBot
                                 {
                                     if (sUser != "" && !ActiveUsers.ContainsKey(Api.capName(sUser)))
                                     {
-                                        //Api.GetDisplayName(sUser);
                                         addUserToList(sUser, justjoined ? -1 : 0);
                                     }
                                 }
@@ -2691,7 +2764,7 @@ namespace ModBot
             sendRaw("PRIVMSG " + channel + " :" + (usemecommand ? "/me " : "") + message);
             if (log != "")
             {
-                Log(log);
+                Commands.Log(log);
             }
             if (logtoconsole)
             {
@@ -2733,7 +2806,7 @@ namespace ModBot
             return 0;
         }
 
-        public static bool timeoutUser(string user, int interval=10, string reason="", bool console = true, bool chat = true)
+        public static bool timeoutUser(string user, int interval = 10, string reason = "", bool console = true, bool chat = true)
         {
             user = user.ToLower();
             if (!ActiveUsers.ContainsKey(Api.capName(user)) || Moderators.Contains(Api.capName(user)) || IgnoredUsers.Contains(user) || Database.getUserLevel(user) > 0 || !IsModerator) return false;
@@ -2748,7 +2821,7 @@ namespace ModBot
             {
                 Console.WriteLine(user + " has been timed out for " + interval + " seconds." + (reason != "" ? " Reason: " + reason : ""));
             }
-            Log(user + " has been timed out for " + interval + " seconds." + (reason != "" ? " Reason: " + reason : ""));
+            TimeOutLog(user + " has been timed out for " + interval + " seconds." + (reason != "" ? " Reason: " + reason : ""));
             return true;
         }
 
@@ -2862,7 +2935,7 @@ namespace ModBot
             }
         }
 
-        private static void Log(string output)
+        /*private static void Log(string output)
         {
             output = "[" + DateTime.Now + "] " + output;
             for (int attempts = 0; attempts < 10; attempts++)
@@ -2870,6 +2943,26 @@ namespace ModBot
                 try
                 {
                     log.WriteLine(output);
+                    break;
+                }
+                catch
+                {
+                    System.Threading.Thread.Sleep(250);
+                }
+            }
+        }*/
+
+        private static void TimeOutLog(string output)
+        {
+            output = "[" + DateTime.Now + "] " + output;
+            for (int attempts = 0; attempts < 10; attempts++)
+            {
+                try
+                {
+                    using (StreamWriter log = new StreamWriter(@"Data\Logs\Timeouts.txt", true))
+                    {
+                        log.WriteLine(output);
+                    }
                     break;
                 }
                 catch

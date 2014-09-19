@@ -12,11 +12,21 @@ namespace ModBot
         public static MainWindow MainForm = Program.MainForm;
         public static Dictionary<string, Thread> dCheckingDisplayName = new Dictionary<string, Thread>();
         private static iniUtil ini = Program.ini;
-        private static StreamWriter errorLog = new StreamWriter(@"Data\Logs\ErrorsLog.txt", true);
 
         public static int GetUnixTimeNow()
         {
             return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        }
+
+        public static int GetUnixFromTime(DateTime time)
+        {
+            return (Int32)(time.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        }
+
+        public static DateTime GetTimeFromUnix(int unix, bool tolocal = true)
+        {
+            if(tolocal) return new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(unix).ToLocalTime();
+            return new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(unix);
         }
 
         public static bool IsFileLocked(string FileLocation, FileShare fs = FileShare.None)
@@ -123,7 +133,7 @@ namespace ModBot
             return bFollower;
         }
 
-        public static bool IsSubscriber(string user)
+        /*public static bool IsSubscriber(string user)
         {
             bool bSubscriber = false;
             if (Irc.partnered)
@@ -143,7 +153,7 @@ namespace ModBot
                 }
             }
             return bSubscriber;
-        }
+        }*/
 
         public static Dictionary<string, DateTime> GetLastSubscribers(DateTime startingat, int count = 25)
         {
@@ -161,7 +171,36 @@ namespace ModBot
                             DateTime date = DateTime.Parse(subscription["created_at"].ToString());
                             if (startingat.CompareTo(date) > -1)
                             {
-                                Subscribers.Add(subscription["user"]["name"].ToString(), date);
+                                Subscribers.Add(subscription["user"]["display_name"].ToString(), date);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+            return Subscribers;
+        }
+
+        public static List<string> GetAllSubscribers(bool CapName = false)
+        {
+            List<string> Subscribers = new List<string>();
+            if (Irc.partnered)
+            {
+                using (WebClient w = new WebClient())
+                {
+                    w.Proxy = null;
+                    try
+                    {
+                        int count = 100;
+                        while (Subscribers.Count < count)
+                        {
+                            JObject json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1) + "/subscriptions?limit=100&offset=" + Subscribers.Count + "&oauth_token=" + Irc.channeltoken));
+                            count = Convert.ToInt32(json["_total"]);
+                            foreach (JToken subscription in json["subscriptions"])
+                            {
+                                Subscribers.Add(CapName ? Api.capName(subscription["user"]["display_name"].ToString()) : subscription["user"]["display_name"].ToString());
                             }
                         }
                     }
@@ -311,7 +350,10 @@ namespace ModBot
                 {
                     try
                     {
-                        errorLog.WriteLine(error);
+                        using (StreamWriter log = new StreamWriter(@"Data\Logs\Errors.txt", true))
+                        {
+                            log.WriteLine(error);
+                        }
                         break;
                     }
                     catch

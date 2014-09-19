@@ -30,7 +30,13 @@ namespace ModBot
         public MainWindow()
         {
             InitializeComponent();
-            Text = "ModBot v" + (VersionLabel.Text = "Version: " + Assembly.GetExecutingAssembly().GetName().Version.ToString()).Substring(9);
+
+            /*foreach (Control ctrl in Controls)
+            {
+                ctrl.TabStop = false;
+            }*/
+
+            Text = "ModBot v" + (VersionLabel.Text = "Version: " + Assembly.GetExecutingAssembly().GetName().Version).Substring(9);
 
             Thread thread = new Thread(() =>
             {
@@ -87,7 +93,7 @@ namespace ModBot
                                         }
                                     }
                                     //Channels.Add(new Tuple<string, string, string, int, string>(JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/users/" + json["Channel"].ToString()))["display_name"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToString()));
-                                    Channels.Add(new Tuple<string, string, string, string, string>(json["Channel"].ToString(), json["Bot"].ToString(), sStatus, json["Version"].ToString(), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToLocalTime().ToString()), new Tuple<string,string,int>(json["Title"].ToString(), json["Game"].ToString(), int.Parse(json["Viewers"].ToString())));
+                                    Channels.Add(new Tuple<string, string, string, string, string>(json["Channel"].ToString(), json["Bot"].ToString(), sStatus, json["Version"].ToString(), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToLocalTime().ToString()), new Tuple<string, string, int>(json["Title"].ToString(), json["Game"].ToString(), int.Parse(json["Viewers"].ToString())));
                                 }
                             }
                             while (!IsHandleCreated) Thread.Sleep(100);
@@ -150,22 +156,18 @@ namespace ModBot
             /*thread = new Thread(() =>
             {
                 AutoCompleteStringCollection Games = new AutoCompleteStringCollection();
-                int max = Games.Count + 100;
-                int count = Games.Count;
+                int count = 0, max = 100;
                 List<string> games = new List<string>();
-                count = 0;
-                max = 43400;
-                while (count < max)
+                using (WebClient w = new WebClient())
                 {
-                    using (WebClient w = new WebClient())
+                    w.Proxy = null;
+                    try
                     {
-                        w.Proxy = null;
-                        try
+                        while (count < max)
                         {
-                            XElement xml = XElement.Parse(w.DownloadString("http://www.giantbomb.com/api/games/?api_key=1b38477055d29fcf3e5d5ca264ea20e25d457c31&limit=100&offset=" + count + "&sort=date_added:asc"));
-                            int total = int.Parse(xml.Element("number_of_total_results").Value);
-                            if (total > 43000) max = total;
-                            foreach (XElement game in xml.Element("results").Elements())
+                            System.Xml.Linq.XElement xml = System.Xml.Linq.XElement.Parse(w.DownloadString("http://www.giantbomb.com/api/games/?api_key=1b38477055d29fcf3e5d5ca264ea20e25d457c31&limit=100&offset=" + count + "&sort=date_added:asc"));
+                            max = int.Parse(xml.Element("number_of_total_results").Value);
+                            foreach (System.Xml.Linq.XElement game in xml.Element("results").Elements())
                             {
                                 if (!games.Contains(game.Element("name").Value))
                                 {
@@ -173,20 +175,19 @@ namespace ModBot
                                 }
                             }
                             count += 100;
-                            Console.WriteLine(count);
-                            Console.WriteLine(games.Count);
-                        }
-                        catch
-                        {
+                            Console.WriteLine(count + "/" + max);
                         }
                     }
-                    BeginInvoke((MethodInvoker)delegate
+                    catch
                     {
-                        File.WriteAllLines(@"Settings\Games.txt", games.ToArray());
-                        Games.AddRange(games.ToArray());
-                        ChannelGameBox.AutoCompleteCustomSource = Games;
-                    });
+                    }
                 }
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    File.WriteAllLines(@"Settings\Games.txt", games.ToArray());
+                    Games.AddRange(games.ToArray());
+                    ChannelGameBox.AutoCompleteCustomSource = Games;
+                });
             });
             thread.Name = "Download games list";
             thread.Start();
@@ -211,6 +212,7 @@ namespace ModBot
             CenterSpacer(MySQLLabel, MySQLSpacer, true, false);
             CenterSpacer(SubscribersLabel, SubscribersSpacer);
             CenterSpacer(SubscriptionsLabel, SubscriptionsSpacer);
+            CenterSpacer(MessageTimersLabel, MessageTimersSpacer);
 
             Panel panel = new Panel();
             panel.Size = new Size(1, 1);
@@ -284,7 +286,7 @@ namespace ModBot
             {
                 btn.Size = new Size(100, (Height - 38) / Windows.Keys.Count);
             }
-            while(y > 0)
+            while (y > 0)
             {
                 foreach (CheckBox btn in Windows.Keys)
                 {
@@ -294,7 +296,7 @@ namespace ModBot
                 }
             }
             y = 30;
-            foreach(CheckBox btn in Windows.Keys)
+            foreach (CheckBox btn in Windows.Keys)
             {
                 btn.Location = new Point(8, y);
                 y += btn.Size.Height;
@@ -313,6 +315,22 @@ namespace ModBot
             ini.SetValue("Settings", "Channel_Name", ChannelBox.Text = ini.GetValue("Settings", "Channel_Name", "ModChannel"));
             ini.SetValue("Settings", "Channel_Token", ChannelTokenBox.Text = ini.GetValue("Settings", "Channel_Token", ""));
             ini.SetValue("Settings", "Channel_SteamID64", Channel_SteamID64.Text = ini.GetValue("Settings", "Channel_SteamID64", "SteamID64"));
+            ini.SetValue("Settings", "Channel_ViewersChange", (Channel_ViewersChange.Checked = (ini.GetValue("Settings", "Channel_ViewersChange", "0") == "1")) ? "1" : "0");
+            int variable = Convert.ToInt32(ini.GetValue("Settings", "Channel_ViewersChangeInterval", "5"));
+            if (variable > Channel_ViewersChangeInterval.Maximum || variable < Channel_ViewersChangeInterval.Minimum)
+            {
+                variable = 5;
+            }
+            ini.SetValue("Settings", "Channel_ViewersChangeInterval", (Channel_ViewersChangeInterval.Value = variable).ToString());
+            variable = Convert.ToInt32(ini.GetValue("Settings", "Channel_ViewersChangeRate", "10"));
+            if (variable > Channel_ViewersChangeRate.Maximum || variable < Channel_ViewersChangeRate.Minimum)
+            {
+                variable = 10;
+            }
+            ini.SetValue("Settings", "Channel_ViewersChangeRate", (Channel_ViewersChangeRate.Value = variable).ToString());
+            ini.SetValue("Settings", "Channel_ViewersChangeMessage", Channel_ViewersChangeMessage.Text = ini.GetValue("Settings", "Channel_ViewersChangeMessage", "New viewers remember to follow the channel!"));
+            ini.SetValue("Settings", "Channel_WelcomeSub", (Channel_WelcomeSub.Checked = (ini.GetValue("Settings", "Channel_WelcomeSub", "0") == "1")) ? "1" : "0");
+            ini.SetValue("Settings", "Channel_WelcomeSubMessage", Channel_WelcomeSubMessage.Text = ini.GetValue("Settings", "Channel_WelcomeSubMessage", "Welcome to the team @user!"));
             ini.SetValue("Settings", "Channel_SubscriptionRewards", (Channel_SubscriptionRewards.Checked = (ini.GetValue("Settings", "Channel_SubscriptionRewards", "0") == "1")) ? "1" : "0");
             if (!Directory.Exists(@"Data\Subscriptions")) Directory.CreateDirectory(@"Data\Subscriptions");
             if (File.Exists(@"Data\Subscriptions\Rewards.txt"))
@@ -329,7 +347,7 @@ namespace ModBot
 
             ini.SetValue("Settings", "Currency_Name", CurrencyNameBox.Text = ini.GetValue("Settings", "Currency_Name", "Mod Coins"));
             ini.SetValue("Settings", "Currency_Command", CurrencyCommandBox.Text = ini.GetValue("Settings", "Currency_Command", "ModCoins"));
-            int variable = Convert.ToInt32(ini.GetValue("Settings", "Currency_Interval", "5"));
+            variable = Convert.ToInt32(ini.GetValue("Settings", "Currency_Interval", "5"));
             if (variable > CurrencyHandoutInterval.Maximum || variable < CurrencyHandoutInterval.Minimum)
             {
                 variable = 5;
@@ -406,7 +424,8 @@ namespace ModBot
             ini.SetValue("Settings", "MySQL_Database", MySQL_Database.Text = ini.GetValue("Settings", "MySQL_Database", ""));
             ini.SetValue("Settings", "MySQL_Username", MySQL_Username.Text = ini.GetValue("Settings", "MySQL_Username", ""));
             ini.SetValue("Settings", "MySQL_Password", MySQL_Password.Text = ini.GetValue("Settings", "MySQL_Password", ""));
-            ini.SetValue("Settings", "MySQL_Table", MySQL_Table.Text = ini.GetValue("Settings", "MySQL_Table", ""));
+
+            ini.SetValue("Settings", "Database_Table", Database_Table.Text = ini.GetValue("Settings", "Database_Table", ""));
 
             Channel_SubscriptionsDate.Value = DateTime.Now;
             //Channel_SubscriptionsDate.CustomFormat = "dddd, MMMM M, yyyy H:mm:ss";
@@ -455,6 +474,8 @@ namespace ModBot
             });
             tLoad.Start();*/
 
+            Program.LoadingScreen.Hide();
+
             //Update checking
             Thread thread = new Thread(() =>
             {
@@ -493,7 +514,26 @@ namespace ModBot
             thread.Name = "Update checking";
             thread.Start();
 
-            if (Program.args.Contains("-connect") && ConnectButton.Enabled) ConnectButton.PerformClick();
+            if (Program.args.Contains("-connect") && ConnectButton.Enabled)
+            {
+                ConnectButton.PerformClick();
+            }
+            else
+            {
+                new Thread(() =>
+                {
+                    Program.Updates.WelcomeMsg();
+                    Program.Updates.WhatsNew();
+                    if (!Program.args.Contains("-skipmotd")) Program.Updates.MsgOfTheDay();
+                }).Start();
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Tab || keyData == (Keys.Shift | Keys.Tab)) return true;
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
 
         private void CenterSpacer(Label label, GroupBox spacer, bool hideleft = false, bool hideright = false)
@@ -597,6 +637,12 @@ namespace ModBot
                             sVariable = ini.GetValue(section, "Giveaway_AnnounceWarnedEntries", "0");
                             ini.SetValue(section, "Giveaway_AnnounceWarnedEntries", sVariable);
                             dSectionSettings.Add("Giveaway_AnnounceWarnedEntries", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_SubscribersWinMultiplier", "0");
+                            ini.SetValue(section, "Giveaway_SubscribersWinMultiplier", sVariable);
+                            dSectionSettings.Add("Giveaway_SubscribersWinMultiplier", sVariable);
+                            sVariable = ini.GetValue(section, "Giveaway_SubscribersWinMultiplierAmount", "1");
+                            ini.SetValue(section, "Giveaway_SubscribersWinMultiplierAmount", sVariable);
+                            dSectionSettings.Add("Giveaway_SubscribersWinMultiplierAmount", sVariable);
                             sVariable = ini.GetValue(section, "Giveaway_CustomKeyword", "");
                             ini.SetValue(section, "Giveaway_CustomKeyword", sVariable);
                             dSectionSettings.Add("Giveaway_CustomKeyword", sVariable);
@@ -728,7 +774,15 @@ namespace ModBot
                                     {
                                         Giveaway_AnnounceWarnedEntries.Checked = (KeyValue.Value == "1");
                                     }
-                                    else if(KeyValue.Key.Equals("Giveaway_CustomKeyword"))
+                                    else if (KeyValue.Key.Equals("Giveaway_SubscribersWinMultiplier"))
+                                    {
+                                        Giveaway_SubscribersWinMultiplier.Checked = (KeyValue.Value == "1");
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_SubscribersWinMultiplierAmount"))
+                                    {
+                                        Giveaway_SubscribersWinMultiplierAmount.Value = Convert.ToInt32(KeyValue.Value);
+                                    }
+                                    else if (KeyValue.Key.Equals("Giveaway_CustomKeyword"))
                                     {
                                         Giveaway_CustomKeyword.Text = KeyValue.Value;
                                     }
@@ -783,7 +837,7 @@ namespace ModBot
                         {
                             bool found = false;
                             foreach (DataGridViewRow row in Donations_List.Rows) if (row.Cells["ID"].Value.ToString() == transaction.id) found = true;
-                            if(!found) Donations_List.Rows.Add(transaction.date, transaction.donor, transaction.amount, transaction.id, transaction.notes, !sRecentIgnores.Contains(transaction.id), !sLatestIgnores.Contains(transaction.id), !sTopIgnores.Contains(transaction.id), true);
+                            if (!found) Donations_List.Rows.Add(transaction.date, transaction.donor, transaction.amount, transaction.id, transaction.notes, !sRecentIgnores.Contains(transaction.id), !sLatestIgnores.Contains(transaction.id), !sTopIgnores.Contains(transaction.id), true);
                         }
                     });
 
@@ -902,7 +956,7 @@ namespace ModBot
                             ChannelGame = stream["game"].ToString();
                             ChannelTitle = stream["status"].ToString();
 
-                            if(Channel_UseSteam.Checked)
+                            if (Channel_UseSteam.Checked)
                             {
                                 JObject SteamData = JObject.Parse(w.DownloadString("http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=5C18EE317A1E58DD98BCAF4872977055&steamids=" + Channel_SteamID64.Text));
 
@@ -1014,7 +1068,9 @@ namespace ModBot
         {
             TimeSpan t = Database.getTimeWatched(Giveaway_WinnerLabel.Text);
             string winner = Giveaway_WinnerLabel.Text;
-            Irc.sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+            //Irc.sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
+            //Irc.sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
+            Irc.sendMessage(winner + " has won the giveaway! (" + (Irc.Subscribers.Contains(Api.capName(winner)) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
         }
 
         private void Giveaway_AddBanTextBox_TextChanged(object sender, EventArgs e)
@@ -1031,7 +1087,7 @@ namespace ModBot
 
         private void Giveaway_BanListListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if(Giveaway_BanListListBox.SelectedIndex >= 0) Giveaway_UnbanButton.Enabled = true;
+            if (Giveaway_BanListListBox.SelectedIndex >= 0) Giveaway_UnbanButton.Enabled = true;
         }
 
         private void Giveaway_CopyWinnerButton_Click(object sender, EventArgs e)
@@ -1075,7 +1131,7 @@ namespace ModBot
                 Giveaway_WarnFalseEntries.Enabled = (!Giveaway_TypeActive.Checked && Irc.Moderators.Contains(Api.capName(Irc.nick)));
                 if (Giveaway_TypeActive.Checked || !Irc.Moderators.Contains(Api.capName(Irc.nick))) Giveaway_WarnFalseEntries.Checked = false;
             }
-            else if(ctrl == Giveaway_TypeKeyword)
+            else if (ctrl == Giveaway_TypeKeyword)
             {
                 Giveaway_CustomKeyword.Enabled = Giveaway_TypeKeyword.Checked;
             }
@@ -1093,7 +1149,7 @@ namespace ModBot
             {
                 if (Giveaway_MustWatchHours.Value == -1)
                 {
-                    if(Giveaway_MustWatchDays.Value > 0)
+                    if (Giveaway_MustWatchDays.Value > 0)
                     {
                         Giveaway_MustWatchHours.Value = 23;
                         Giveaway_MustWatchDays.Value--;
@@ -1107,9 +1163,9 @@ namespace ModBot
             }
             else if (ctrl == Giveaway_MustWatchMinutes)
             {
-                if(Giveaway_MustWatchMinutes.Value == -1)
+                if (Giveaway_MustWatchMinutes.Value == -1)
                 {
-                    if(Giveaway_MustWatchHours.Value > 0 || Giveaway_MustWatchDays.Value > 0)
+                    if (Giveaway_MustWatchHours.Value > 0 || Giveaway_MustWatchDays.Value > 0)
                     {
                         Giveaway_MustWatchMinutes.Value = 59;
                         Giveaway_MustWatchHours.Value--;
@@ -1130,10 +1186,14 @@ namespace ModBot
                 Giveaway_AnnounceWarnedEntries.Enabled = Giveaway_WarnFalseEntries.Checked;
                 if (!Giveaway_WarnFalseEntries.Checked) Giveaway_AnnounceWarnedEntries.Checked = false;
             }
+            else if (ctrl == Giveaway_SubscribersWinMultiplier)
+            {
+                Giveaway_SubscribersWinMultiplierAmount.Enabled = Giveaway_SubscribersWinMultiplier.Checked;
+            }
             SaveSettings();
         }
 
-        public void SaveSettings(int SettingsPresent=-2, bool ReloadSettings=false)
+        public void SaveSettings(int SettingsPresent = -2, bool ReloadSettings = false)
         {
             new Thread(() =>
             {
@@ -1180,6 +1240,8 @@ namespace ModBot
                             ini.SetValue(Present, "Giveaway_AutoBanWinner", Giveaway_AutoBanWinner.Checked ? "1" : "0");
                             ini.SetValue(Present, "Giveaway_WarnFalseEntries", Giveaway_WarnFalseEntries.Checked ? "1" : "0");
                             ini.SetValue(Present, "Giveaway_AnnounceWarnedEntries", Giveaway_AnnounceWarnedEntries.Checked ? "1" : "0");
+                            ini.SetValue(Present, "Giveaway_SubscribersWinMultiplier", Giveaway_SubscribersWinMultiplier.Checked ? "1" : "0");
+                            ini.SetValue(Present, "Giveaway_SubscribersWinMultiplierAmount", Giveaway_SubscribersWinMultiplierAmount.Value.ToString());
                             ini.SetValue(Present, "Giveaway_CustomKeyword", Giveaway_CustomKeyword.Text);
                             string items = "";
                             foreach (object item in Giveaway_BanListListBox.Items)
@@ -1190,7 +1252,7 @@ namespace ModBot
                             ini.SetValue(Present, "Giveaway_BanList", items);
                         }
                     }
-                    if(ReloadSettings) GetSettings();
+                    if (ReloadSettings) GetSettings();
                 }
             }).Start();
         }
@@ -1388,14 +1450,14 @@ namespace ModBot
             }
             else
             {
-                if(Windows[CB] == CurrentWindow)
+                if (Windows[CB] == CurrentWindow)
                 {
                     CB.Checked = true;
                     Windows[CB].BringToFront();
                 }
             }
 
-            if(CurrentWindow != ChannelWindow)
+            if (CurrentWindow != ChannelWindow)
             {
                 MetadataModified = false;
             }
@@ -1410,7 +1472,7 @@ namespace ModBot
             Irc.admin = ChannelBox.Text.Replace("#", "");
             Irc.channel = "#" + ChannelBox.Text.Replace("#", "").ToLower();
             ini.SetValue("Settings", "Channel_Token", Irc.channeltoken = ChannelTokenBox.Text);
-            if(Irc.channeltoken.StartsWith("oauth:")) Irc.channeltoken = ChannelTokenBox.Text.Substring(6);
+            if (Irc.channeltoken.StartsWith("oauth:")) Irc.channeltoken = ChannelTokenBox.Text.Substring(6);
             ini.SetValue("Settings", "Currency_Name", Irc.currencyName = CurrencyNameBox.Text);
             ini.SetValue("Settings", "Currency_Command", Irc.currency = CurrencyCommandBox.Text.StartsWith("!") ? CurrencyCommandBox.Text.Substring(1) : CurrencyCommandBox.Text);
             ini.SetValue("Settings", "Currency_Interval", CurrencyHandoutInterval.Value.ToString());
@@ -1449,38 +1511,32 @@ namespace ModBot
 
         private void SupportLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start("http://modbot.wordpress.com/about/");
+            //Process.Start("http://modbot.wordpress.com/about/");
+            Process.Start("http://modbot.wordpress.com/");
         }
 
         private void EmailLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start("mailto:DorCoMaNdO@gmail.com");
+            Process.Start("mailto:CoMaNdO.ModBot@gmail.com");
         }
 
         private void Donations_List_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if (e.ColumnIndex > 4)
             {
-                string sDonationsIgnoreRecent = "";
-                string sDonationsIgnoreLatest = "";
-                string sDonationsIgnoreTop = "";
+                string sDonationsIgnoreRecent = "", sDonationsIgnoreLatest = "", sDonationsIgnoreTop = "";
 
                 foreach (DataGridViewRow row in Donations_List.Rows)
                 {
                     string sId = row.Cells["ID"].Value.ToString();
-                    if (row.Cells["IncludeRecent"].Value.ToString().Equals("False"))
-                    {
-                        sDonationsIgnoreRecent += sId + ",";
-                    }
-                    if (row.Cells["IncludeLatest"].Value.ToString().Equals("False"))
-                    {
-                        sDonationsIgnoreLatest += sId + ",";
-                    }
-                    if (row.Cells["IncludeTop"].Value.ToString().Equals("False"))
-                    {
-                        sDonationsIgnoreTop += sId + ",";
-                    }
+
+                    if (row.Cells["IncludeRecent"].Value.ToString().Equals("False")) sDonationsIgnoreRecent += sId + ",";
+
+                    if (row.Cells["IncludeLatest"].Value.ToString().Equals("False")) sDonationsIgnoreLatest += sId + ",";
+
+                    if (row.Cells["IncludeTop"].Value.ToString().Equals("False")) sDonationsIgnoreTop += sId + ",";
                 }
+
                 ini.SetValue("Settings", "Donations_Ignore_Recent", sDonationsIgnoreRecent);
                 ini.SetValue("Settings", "Donations_Ignore_Latest", sDonationsIgnoreLatest);
                 ini.SetValue("Settings", "Donations_Ignore_Top", sDonationsIgnoreTop);
@@ -1499,7 +1555,7 @@ namespace ModBot
 
         private void Donations_List_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
         {
-            if(e.Column.Name == "Date")
+            if (e.Column.Name == "Date")
             {
                 e.SortResult = Convert.ToDateTime(e.CellValue1.ToString()).CompareTo(Convert.ToDateTime(e.CellValue2.ToString()));
                 e.Handled = true;
@@ -1615,7 +1671,7 @@ namespace ModBot
         {
             new Thread(() =>
             {
-                if(Api.UpdateMetadata(ChannelTitleBox.Text, ChannelGameBox.Text))
+                if (Api.UpdateMetadata(ChannelTitleBox.Text, ChannelGameBox.Text))
                 {
                     if (MetadataModified) MetadataModified = false;
                 }
@@ -1765,6 +1821,7 @@ namespace ModBot
             if (sender.GetType() == typeof(CheckBox))
             {
                 CheckBox cb = (CheckBox)sender;
+
                 if (cb == Currency_DisableCommand)
                 {
                     Irc.LastCurrencyDisabledAnnounce = 0;
@@ -1798,28 +1855,66 @@ namespace ModBot
                 {
                     Channel_SubscriptionsDate.Enabled = Channel_SubscriptionRewardsList.Enabled = cb.Checked;
                 }
+                else if (cb == Channel_ViewersChange)
+                {
+                    Channel_ViewersChangeInterval.Enabled = Channel_ViewersChangeRate.Enabled = Channel_ViewersChangeMessage.Enabled = cb.Checked;
+                }
+                else if (cb == Channel_WelcomeSub)
+                {
+                    Channel_WelcomeSubMessage.Enabled = cb.Checked;
+                }
+
                 ini.SetValue("Settings", cb.Name, cb.Checked ? "1" : "0");
             }
             else if (sender.GetType() == typeof(TextBox))
             {
                 TextBox tb = (TextBox)sender;
-                if (tb == MySQL_Table)
+
+                if (tb == MySQL_Password)
                 {
-                    foreach (char c in " !@#$%^&*()[]{}\\/|'\"~`")
+                    /*foreach (char c in ";\\")
                     {
-                        if (MySQL_Table.Text.Contains(c))
+                        if (tb.Text.Contains(c))
                         {
-                            if(!SettingsErrorLabel.Text.Contains("Invalid MySQL table name.\r\n")) SettingsErrorLabel.Text += "Invalid MySQL table name.\r\n";
+                            if (!SettingsErrorLabel.Text.Contains("MySQL passwords can not contain semicolons (;) or backslashes (\\).\r\n")) SettingsErrorLabel.Text += "MySQL passwords can not contain semicolons (;) or backslashes (\\).\r\n";
                             return;
                         }
                     }
+                    SettingsErrorLabel.Text = SettingsErrorLabel.Text.Replace("MySQL passwords can not contain semicolons (;) or backslashes (\\).\r\n", "");*/
+                    foreach (char c in "'\"")
+                    {
+                        if (tb.Text.Contains(c))
+                        {
+                            if (!SettingsErrorLabel.Text.Contains("MySQL passwords can not contain quotation marks.\r\n")) SettingsErrorLabel.Text += "MySQL passwords can not contain quotation marks.\r\n";
+                            return;
+                        }
+                    }
+                    SettingsErrorLabel.Text = SettingsErrorLabel.Text.Replace("MySQL passwords can not contain quotation marks.\r\n", "");
                 }
-                SettingsErrorLabel.Text = SettingsErrorLabel.Text.Replace("Invalid MySQL table name.\r\n", "");
+                else if (tb == Database_Table)
+                {
+                    foreach (char c in " !@#$%^&*()[]{}\\/|'\"~`")
+                    {
+                        if (tb.Text.Contains(c))
+                        {
+                            if (!SettingsErrorLabel.Text.Contains("Invalid MySQL table name.\r\n")) SettingsErrorLabel.Text += "Invalid MySQL table name.\r\n";
+                            return;
+                        }
+                    }
+                    SettingsErrorLabel.Text = SettingsErrorLabel.Text.Replace("Invalid MySQL table name.\r\n", "");
+                }
+
                 ini.SetValue("Settings", tb.Name, tb.Text);
             }
             else if (sender.GetType() == typeof(NumericUpDown) || sender.GetType() == typeof(FlatNumericUpDown))
             {
                 NumericUpDown nud = (NumericUpDown)sender;
+
+                if (nud == Channel_ViewersChangeInterval)
+                {
+                    if (Irc.newViewers != null) Irc.newViewers.Change((int)nud.Value * 60000, (int)nud.Value * 60000);
+                }
+
                 ini.SetValue("Settings", nud.Name, nud.Value.ToString());
             }
         }

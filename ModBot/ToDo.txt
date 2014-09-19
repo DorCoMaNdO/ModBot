@@ -1,5 +1,5 @@
 ﻿* Review all of the other features of the bot and improve, include them in the UI.
-* Redesign the bot.
-+ Add old features to the giveaway from the old raffle system.
 + Add user management to the UI.
 + Improve the userlevels (let the user create / delete user groups and select what commands each group can access).
+* Better MOTD, Changelog and welcome windows.
+* Recreate the custom border.

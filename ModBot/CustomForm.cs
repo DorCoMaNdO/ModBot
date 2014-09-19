@@ -139,6 +139,9 @@ namespace ModBot
 
                 FormCloseButton.Visible = false;
             }
+
+            Hide();
+            Show();
             SetForegroundWindow(Handle);
         }
 

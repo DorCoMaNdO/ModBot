@@ -39,6 +39,7 @@
             this.StateLabel = new System.Windows.Forms.Label();
             this.ChangelogButton = new System.Windows.Forms.Button();
             this.BetaUpdates = new System.Windows.Forms.CheckBox();
+            this.DevUpdates = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // DownloadProgressBar
@@ -159,13 +160,26 @@
             this.BetaUpdates.TabIndex = 96;
             this.BetaUpdates.Text = "Check for beta updates";
             this.BetaUpdates.UseVisualStyleBackColor = true;
-            this.BetaUpdates.CheckedChanged += new System.EventHandler(this.BetaUpdates_CheckedChanged);
+            this.BetaUpdates.CheckedChanged += new System.EventHandler(this.UpdateChecks_CheckedChanged);
+            // 
+            // DevUpdates
+            // 
+            this.DevUpdates.AutoSize = true;
+            this.DevUpdates.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.DevUpdates.Location = new System.Drawing.Point(384, 58);
+            this.DevUpdates.Name = "DevUpdates";
+            this.DevUpdates.Size = new System.Drawing.Size(131, 17);
+            this.DevUpdates.TabIndex = 97;
+            this.DevUpdates.Text = "Check for dev updates";
+            this.DevUpdates.UseVisualStyleBackColor = true;
+            this.DevUpdates.CheckedChanged += new System.EventHandler(this.UpdateChecks_CheckedChanged);
             // 
             // Updater
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(532, 174);
+            this.Controls.Add(this.DevUpdates);
             this.Controls.Add(this.BetaUpdates);
             this.Controls.Add(this.ChangelogButton);
             this.Controls.Add(this.StateLabel);
@@ -193,6 +207,7 @@
             this.Controls.SetChildIndex(this.StateLabel, 0);
             this.Controls.SetChildIndex(this.ChangelogButton, 0);
             this.Controls.SetChildIndex(this.BetaUpdates, 0);
+            this.Controls.SetChildIndex(this.DevUpdates, 0);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -211,6 +226,7 @@
         private System.Windows.Forms.Label StateLabel;
         public System.Windows.Forms.Button ChangelogButton;
         public System.Windows.Forms.CheckBox BetaUpdates;
+        public System.Windows.Forms.CheckBox DevUpdates;
     }
 }
 

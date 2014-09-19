@@ -63,9 +63,9 @@ namespace ModBot.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap AboutImage {
+        internal static System.Drawing.Bitmap DonateImage {
             get {
-                object obj = ResourceManager.GetObject("AboutImage", resourceCulture);
+                object obj = ResourceManager.GetObject("DonateImage", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -73,9 +73,19 @@ namespace ModBot.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap DonateImage {
+        internal static System.Drawing.Bitmap ModBot {
             get {
-                object obj = ResourceManager.GetObject("DonateImage", resourceCulture);
+                object obj = ResourceManager.GetObject("ModBot", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ModBotLoading {
+            get {
+                object obj = ResourceManager.GetObject("ModBotLoading", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

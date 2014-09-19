@@ -26,6 +26,8 @@ namespace ModBot
 
             table = Irc.channel.Substring(1);
 
+            if (MainForm.Database_Table.Text != "") table = MainForm.Database_Table.Text.ToLower();
+
             if (MainForm.MySQL_Host.Text == "" || MainForm.MySQL_Database.Text == "" || MainForm.MySQL_Username.Text == "")
             {
                 if (!Directory.Exists(@"Data\Users")) Directory.CreateDirectory(@"Data\Users");
@@ -91,6 +93,24 @@ namespace ModBot
                     }
                 }
 
+                using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM " + table + " LIMIT 5;", DB))
+                {
+                    using (SQLiteDataReader r = query.ExecuteReader())
+                    {
+                        while (r.Read())
+                        {
+                            if (r["user"].ToString().ToLower() != r["user"].ToString())
+                            {
+                                using (SQLiteCommand query2 = new SQLiteCommand("UPDATE " + table + " SET user = lower(user);", DB))
+                                {
+                                    query2.ExecuteNonQuery();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 //if (tableExists("transfers") && !tableHasData(channel))
                 //{
                 //    using (SQLiteCommand query = new SQLiteCommand("INSERT INTO " + channel + " SELECT * FROM transfers;", DB)) query.ExecuteNonQuery();
@@ -114,15 +134,16 @@ namespace ModBot
             {
                 Console.WriteLine("Creating connection string to MySQL server...");
 
-                if (MainForm.MySQL_Table.Text != "") table = MainForm.MySQL_Table.Text.ToLower();
-
                 try
                 {
-                    MySqlDB = new MySqlConnection("Server=" + MainForm.MySQL_Host.Text + ";Port=" + MainForm.MySQL_Port.Value + ";Database=" + MainForm.MySQL_Database.Text + ";Uid=" + MainForm.MySQL_Username.Text + ";Pwd=" + MainForm.MySQL_Password.Text + ";");
-                    MySqlDB.Open(); // Test connection.
+                    MySqlDB = new MySqlConnection("Server=" + MainForm.MySQL_Host.Text + ";Port=" + MainForm.MySQL_Port.Value + ";Database='" + MainForm.MySQL_Database.Text + "';Uid='" + MainForm.MySQL_Username.Text + "';Pwd='" + MainForm.MySQL_Password.Text + "';");
+
+                    Console.WriteLine("Created connection string to MySQL server.\r\nTesting connection...");
+
+                    MySqlDB.Open();
                     MySqlDB.Close();
 
-                    Console.WriteLine("Created connection string to MySQL server.");
+                    Console.WriteLine("Connection successful.");
 
                     using (MySqlConnection con = MySqlDB.Clone())
                     {
