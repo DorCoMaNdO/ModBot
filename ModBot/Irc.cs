@@ -1221,7 +1221,7 @@ namespace ModBot
                 else if (msg[1].Equals("PRIVMSG"))
                 {
                     user = getUser(message);
-                    addUserToList(user);
+                    addUserToList(user, -1, true);
                     //Console.WriteLine(message);
                     string text = message.Substring(message.IndexOf(":", 1) + 1);
 
@@ -1339,7 +1339,7 @@ namespace ModBot
                         });
                     }
                 }
-                else if (msg[1].Equals("JOIN"))
+                /*else if (msg[1].Equals("JOIN"))
                 {
                     user = getUser(message);
 
@@ -1353,12 +1353,15 @@ namespace ModBot
 
                     if (user == Api.capName(nick) || user == "Jtv") return;
 
-                    /*string name = Api.GetDisplayName(user);
+                    string name = Api.GetDisplayName(user);
+
                     Console.WriteLine(name + " joined");
+
                     if (greetingOn && greeting != "")
                     {
                         sendMessage(greeting.Replace("@user", name));
                     }
+
                     if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                     {
                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
@@ -1367,14 +1370,17 @@ namespace ModBot
                             MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
                             MainForm.Giveaway_WinnerChat.SelectedText = name + " has joined the channel.\r\n";
                         });
-                    }*/
+                    }
                 }
                 else if (msg[1].Equals("PART"))
                 {
                     user = getUser(message);
                     removeUserFromList(user);
+
                     string name = Api.GetDisplayName(user);
+
                     Console.WriteLine(name + " left");
+
                     if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                     {
                         MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
@@ -1387,7 +1393,7 @@ namespace ModBot
                             MainForm.Giveaway_WinnerChat.SelectedText = name + " has left the channel.\r\n";
                         });
                     }
-                }
+                }*/
                 else if (msg[1].Equals("MODE"))
                 {
                     user = msg[4].ToLower();
@@ -2612,7 +2618,7 @@ namespace ModBot
             }
         }
 
-        private static void addUserToList(string user, int time = -1)
+        private static void addUserToList(string user, int time = -1, bool welcome = false)
         {
             if (time < 0) time = Api.GetUnixTimeNow();
             user = Api.capName(user);
@@ -2626,7 +2632,7 @@ namespace ModBot
 
                     string name = Api.GetDisplayName(user);
 
-                    if (time == 0) return;
+                    if (time == 0 || !welcome) return;
 
                     Console.WriteLine(name + " joined.");
 
@@ -2697,21 +2703,72 @@ namespace ModBot
                             lock (ActiveUsers)
                             {
                                 List<string> Delete = new List<string>();
+                                string Leaves = "", Joins = "";
+
                                 foreach (string sUser in ActiveUsers.Keys)
                                 {
                                     string user = sUser.ToLower();
                                     if (!IgnoredUsers.Contains(user) && !lUsers.Contains(user)) Delete.Add(user);
                                 }
+
                                 foreach (string sUser in Delete)
                                 {
                                     removeUserFromList(sUser);
+
+                                    string name = Api.GetDisplayName(sUser);
+
+                                    Leaves += (Leaves != "" ? ", " : "") + name;
+
+                                    if (sUser.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                                    {
+                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                        {
+                                            MainForm.Giveaway_WinnerTimerLabel.Text = "The winner left!";
+                                            MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
+
+                                            MainForm.Giveaway_WinnerChat.SelectionColor = Color.Red;
+                                            MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
+                                            MainForm.Giveaway_WinnerChat.SelectedText = name + " has left the channel.\r\n";
+                                        });
+                                    }
                                 }
+
+                                if (Leaves != "") Console.WriteLine(Leaves + " left.");
 
                                 foreach (string sUser in lUsers)
                                 {
                                     if (sUser != "" && !ActiveUsers.ContainsKey(Api.capName(sUser)))
                                     {
                                         addUserToList(sUser, justjoined ? -1 : 0);
+
+                                        if (sUser == Api.capName(nick) || sUser == "Jtv") return;
+
+                                        string name = Api.GetDisplayName(sUser);
+
+                                        if (justjoined)
+                                        {
+                                            Joins += (Joins != "" ? ", " : "") + name;
+
+                                            if (sUser.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                                            {
+                                                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                                {
+                                                    MainForm.Giveaway_WinnerChat.SelectionColor = Color.Green;
+                                                    MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
+                                                    MainForm.Giveaway_WinnerChat.SelectedText = name + " has joined the channel.\r\n";
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (Joins != "")
+                                {
+                                    Console.WriteLine(Joins + " joined.");
+
+                                    if (greetingOn && greeting != "")
+                                    {
+                                        sendMessage(greeting.Replace("@user", Joins));
                                     }
                                 }
                             }
