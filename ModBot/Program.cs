@@ -103,7 +103,9 @@ namespace ModBot
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            (LoadingScreen = new ImageWindow(Image.FromFile("C:/Users/Dor/Desktop/ModBot Loading.png"))).Show();
+            LoadingScreen = new ImageWindow(Properties.Resources.ModBotLoading, true, 11);
+
+            LoadingScreen.Show();
             //new Changelog().Show();
 
             //_handler += new EventHandler(Handler);
@@ -111,18 +113,24 @@ namespace ModBot
 
             DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), 0xF060, 0x00000000);
 
-            EmbeddedAssembly.Load("ModBot.Resources.System.Data.SQLite.dll", "System.Data.SQLite.dll");
-            EmbeddedAssembly.Load("ModBot.Resources.Newtonsoft.Json.dll", "Newtonsoft.Json.dll");
-            EmbeddedAssembly.Load("ModBot.Resources.MySql.Data.dll", "MySql.Data.dll");
+            LoadingScreen.AddProgress();
+
+            EmbeddedAssembly.Load("ModBot.Resources.System.Data.SQLite.dll", "System.Data.SQLite.dll"); LoadingScreen.AddProgress();
+            EmbeddedAssembly.Load("ModBot.Resources.Newtonsoft.Json.dll", "Newtonsoft.Json.dll"); LoadingScreen.AddProgress();
+            EmbeddedAssembly.Load("ModBot.Resources.MySql.Data.dll", "MySql.Data.dll"); LoadingScreen.AddProgress();
 
             AppDomain.CurrentDomain.AssemblyResolve += (sender, e) =>
             {
                 return EmbeddedAssembly.Get(e.Name);
             };
 
+            LoadingScreen.AddProgress();
+
             ServicePointManager.DefaultConnectionLimit = int.MaxValue;
 
             foreach (string arg in args) Program.args.Add(arg);
+
+            LoadingScreen.AddProgress();
 
             if (File.Exists("modbot.ini") || File.Exists("modbot.sqlite") || File.Exists("games.txt"))
             {
@@ -164,11 +172,15 @@ namespace ModBot
                 }
             }
 
+            LoadingScreen.AddProgress();
+
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
 
             if (!Directory.Exists("Settings")) Directory.CreateDirectory("Settings");
             if (!Directory.Exists("Data")) Directory.CreateDirectory("Data");
             if (!Directory.Exists(@"Data\Logs")) Directory.CreateDirectory(@"Data\Logs");
+
+            LoadingScreen.AddProgress();
 
             /*while (File.Exists(@"Settings\ModBot.ini") && Api.IsFileLocked(@"Settings\ModBot.ini", FileShare.Read))
             {
@@ -178,10 +190,12 @@ namespace ModBot
             {
                 File.WriteAllText(@"Settings\ModBot.ini", "\r\n[Default]");
             }
+
+            LoadingScreen.AddProgress();
             //stream = new FileInfo(@"Settings\ModBot.ini").Open(FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
 
-            Updates.ExtractUpdater();
-            Updates.CheckUpdate(false, false, true);
+            Updates.ExtractUpdater(); LoadingScreen.AddProgress();
+            Updates.CheckUpdate(false, false, true); LoadingScreen.AddProgress();
             Application.Run(MainForm = new MainWindow());
 
             //SetWindowLong(MainForm.Handle, -20, GetWindowLong(MainForm.Handle, -20) | 0x80000);
@@ -323,50 +337,79 @@ namespace ModBot
                 }
             }
 
-            public static void WelcomeMsg()
+            public static void WelcomeMsg(Form form = null)
             {
                 if (ini.GetValue("Settings", "Notification_Welcome", "0") != "0") return;
 
-                using (WebClient w = new WebClient())
+                if (form == null) form = MainForm;
+
+                string Data = "";
+
+                new Thread(() =>
                 {
-                    w.Proxy = null;
-                    try
+                    using (WebClient w = new WebClient())
                     {
-                        MessageBox.Show(w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/WelcomeMsg.txt"), "Welcome");
-                        ini.SetValue("Settings", "Notification_Welcome", "1");
+                        w.Proxy = null;
+                        try
+                        {
+                            Data = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/WelcomeMsg.txt");
+                            ini.SetValue("Settings", "Notification_Welcome", "1");
+                        }
+                        catch
+                        {
+                        }
                     }
-                    catch
+
+                    form.BeginInvoke((MethodInvoker)delegate
                     {
-                    }
-                }
+                        if (Data != "") MessageBox.Show(Data, "Welcome");
+                    });
+                }).Start();
             }
 
-            public static void MsgOfTheDay()
+            public static void MsgOfTheDay(Form form = null)
             {
-                using (WebClient w = new WebClient())
+                if (form == null) form = MainForm;
+
+                string Data = "";
+
+                new Thread(() =>
                 {
-                    w.Proxy = null;
-                    try
+                    using (WebClient w = new WebClient())
                     {
-                        MessageBox.Show(w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/MsgOfTheDay.txt"), "Message of the day");
+                        w.Proxy = null;
+                        try
+                        {
+                            w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/MsgOfTheDay.txt");
+                        }
+                        catch
+                        {
+                        }
                     }
-                    catch
+                
+                    form.BeginInvoke((MethodInvoker)delegate
                     {
-                    }
-                }
+                        if (Data != "") MessageBox.Show(Data, "Message of the day");
+                    });
+                }).Start();
             }
 
-            public static void WhatsNew()
+            public static void WhatsNew(Form form = null)
             {
                 if (ini.GetValue("Settings", "Notification_WhatsNew", "") == Assembly.GetExecutingAssembly().GetName().Version.ToString()) return;
 
+                if (form == null) form = MainForm;
+
+                string Data = "";
+
+                new Thread(() =>
+                {
                 using (WebClient w = new WebClient())
                 {
                     w.Proxy = null;
-                    string news = "";
                     try
                     {
-                        news += "[" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + ".txt");
+                        Data += "[" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + ".txt");
                     }
                     catch
                     {
@@ -374,18 +417,21 @@ namespace ModBot
 
                     try
                     {
-                        news += (news != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + "/WhatsNew.txt");
+                        Data += (Data != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + "/WhatsNew.txt");
                     }
                     catch
                     {
-                    }
-
-                    if (news != "")
-                    {
-                        MessageBox.Show(news, "What's New in version " + Assembly.GetExecutingAssembly().GetName().Version);
-                        ini.SetValue("Settings", "Notification_WhatsNew", Assembly.GetExecutingAssembly().GetName().Version.ToString());
                     }
                 }
+                form.BeginInvoke((MethodInvoker)delegate
+                {
+                    if (Data != "")
+                    {
+                        MessageBox.Show(Data, "What's New in version " + Assembly.GetExecutingAssembly().GetName().Version);
+                        ini.SetValue("Settings", "Notification_WhatsNew", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+                    }
+                });
+                }).Start();
             }
         }
     }

@@ -520,12 +520,9 @@ namespace ModBot
             }
             else
             {
-                new Thread(() =>
-                {
-                    Program.Updates.WelcomeMsg();
-                    Program.Updates.WhatsNew();
-                    if (!Program.args.Contains("-skipmotd")) Program.Updates.MsgOfTheDay();
-                }).Start();
+                Program.Updates.WelcomeMsg();
+                Program.Updates.WhatsNew();
+                if (!Program.args.Contains("-skipmotd")) Program.Updates.MsgOfTheDay();
             }
         }
 

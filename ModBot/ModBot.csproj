@@ -102,6 +102,9 @@
     <Compile Include="CustomForm.Designer.cs">
       <DependentUpon>CustomForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="CustomProgressBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="EmbeddedAssembly.cs" />
     <Compile Include="FlatNumericUpDown.cs">
       <SubType>Component</SubType>
@@ -198,8 +201,8 @@
     <EmbeddedResource Include="Resources\MySql.Data.dll" />
     <EmbeddedResource Include="Resources\Newtonsoft.Json.dll" />
     <EmbeddedResource Include="Resources\btn_donate_SM.gif" />
-    <None Include="Resources\ModBot Loading.png" />
-    <None Include="Resources\ModBot.png" />
+    <EmbeddedResource Include="Resources\ModBot Loading.png" />
+    <EmbeddedResource Include="Resources\ModBot.png" />
     <Content Include="ToDo.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
