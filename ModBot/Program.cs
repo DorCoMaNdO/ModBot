@@ -423,6 +423,7 @@ namespace ModBot
                     {
                     }
                 }
+
                 form.BeginInvoke((MethodInvoker)delegate
                 {
                     if (Data != "")

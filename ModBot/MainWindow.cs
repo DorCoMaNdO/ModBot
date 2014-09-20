@@ -1810,6 +1810,7 @@ namespace ModBot
             else if (e.Column.Name == "Title")
             {
                 e.SortResult = e.CellValue1.ToString() == "" && e.CellValue2.ToString() != "" ? 1 : e.CellValue2.ToString() == "" && e.CellValue1.ToString() != "" ? -1 : e.CellValue1.ToString().CompareTo(e.CellValue2.ToString());
+                e.Handled = true;
             }
         }
 
