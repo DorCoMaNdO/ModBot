@@ -162,7 +162,7 @@ namespace ModBot
                 {
                     //Console.WriteLine(e);
                     //Console.WriteLine(e.Number);
-                    MainForm.BeginInvoke((MethodInvoker)delegate
+                    Program.Invoke((MethodInvoker)delegate
                     {
                         if (e.Number == 1042)
                         {

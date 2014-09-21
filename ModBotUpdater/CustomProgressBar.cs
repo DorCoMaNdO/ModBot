@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace ModBotUpdater
 {
-    class CustomProgressBar : ProgressBar
+    public class CustomProgressBar : ProgressBar
     {
         public CustomProgressBar()
         {

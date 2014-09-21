@@ -202,6 +202,23 @@ namespace ModBot
             //SetLayeredWindowAttributes(MainForm.Handle, 0, 155, 0x2);
         }
 
+        public static void Invoke(Delegate method)
+        {
+            Invoke(method, MainForm);
+        }
+
+        public static void Invoke(Delegate method, Form form)
+        {
+            if (form.IsHandleCreated)
+            {
+                form.BeginInvoke(method);
+            }
+            else
+            {
+                form.Invoke(method);
+            }
+        }
+
         public static void HideConsole()
         {
             ShowWindow(GetConsoleWindow(), 0);
@@ -221,7 +238,7 @@ namespace ModBot
         {
             e.Cancel = true;
             if (MainForm == null) return;
-            MainForm.BeginInvoke((MethodInvoker)delegate
+            Program.Invoke((MethodInvoker)delegate
             {
                 MainForm.Close();
             });
@@ -288,7 +305,7 @@ namespace ModBot
                                 if (Update)
                                 {
                                     while (!File.Exists("ModBotUpdater.exe")) ExtractUpdater(false);
-                                    Process.Start("ModBotUpdater.exe", "-force -close -modbot" + (Irc.DetailsConfirmed ? " -modbotconnect" : "") + (args.Contains("-autoupdate") ? " -modbotupdate" : ""));
+                                    Process.Start("ModBotUpdater.exe", "-force -bg -close -modbot" + (Irc.DetailsConfirmed ? " -modbotconnect" : "") + (args.Contains("-autoupdate") ? " -modbotupdate" : ""));
                                     Environment.Exit(0);
                                 }
 
@@ -417,7 +434,8 @@ namespace ModBot
 
                     try
                     {
-                        Data += (Data != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + "/WhatsNew.txt");
+                        //Data += (Data != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + "/WhatsNew.txt");
+                        Data += (Data != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + ".txt");
                     }
                     catch
                     {

@@ -96,8 +96,8 @@ namespace ModBot
                                     Channels.Add(new Tuple<string, string, string, string, string>(json["Channel"].ToString(), json["Bot"].ToString(), sStatus, json["Version"].ToString(), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToLocalTime().ToString()), new Tuple<string, string, int>(json["Title"].ToString(), json["Game"].ToString(), int.Parse(json["Viewers"].ToString())));
                                 }
                             }
-                            while (!IsHandleCreated) Thread.Sleep(100);
-                            BeginInvoke((MethodInvoker)delegate
+
+                            Program.Invoke((MethodInvoker)delegate
                             {
                                 foreach (Tuple<string, string, string, string, string> channel in Channels.Keys)
                                 {
@@ -673,7 +673,7 @@ namespace ModBot
                     }
                 }
 
-                BeginInvoke((MethodInvoker)delegate
+                Program.Invoke((MethodInvoker)delegate
                 {
                     foreach (Control ctrl in dState.Keys)
                     {
@@ -828,7 +828,7 @@ namespace ModBot
                     ini.SetValue("Settings", "Donations_Ignore_Top", sDonationsIgnoreTop);
                     string[] sTopIgnores = sDonationsIgnoreTop.Split(',');
 
-                    BeginInvoke((MethodInvoker)delegate
+                    Program.Invoke((MethodInvoker)delegate
                     {
                         foreach (Transaction transaction in transactions)
                         {
@@ -969,7 +969,7 @@ namespace ModBot
                                 }
                             }
 
-                            BeginInvoke((MethodInvoker)delegate
+                            Program.Invoke((MethodInvoker)delegate
                             {
                                 if (!MetadataModified)
                                 {
@@ -989,7 +989,7 @@ namespace ModBot
                     }
                 }
 
-                BeginInvoke((MethodInvoker)delegate
+                Program.Invoke((MethodInvoker)delegate
                 {
                     ChannelStatusLabel.Text = "DISCONNECTED";
                     ChannelStatusLabel.ForeColor = Color.Red;

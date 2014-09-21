@@ -306,7 +306,7 @@ namespace ModBot
                                 Transactions.Add(new Transaction(transaction["transactionId"].ToString(), DateTime.Parse(transaction["date"].ToString(), null, System.Globalization.DateTimeStyles.RoundtripKind).ToString(), transaction["amount"].ToString(), transaction["username"].ToString(), transaction["note"].ToString()));
                             }
                         }
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             if (Irc.DetailsConfirmed)
                             {
@@ -319,7 +319,7 @@ namespace ModBot
                         if (e.Message.Contains("(401) Unauthorized"))
                         {
                             Console.WriteLine("Stream Tip key is incorrect. Donations checks disabled.");
-                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                             {
                                 MainForm.DonationsWindowButton.Enabled = false;
                                 MainForm.DonationsWindowButton.Text = "Donations\r\n(Disabled)";

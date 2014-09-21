@@ -139,7 +139,7 @@ namespace ModBot
                 //Program.MainForm.YouTubePlayer.Movie = "https://www.youtube.com/v/" + song.id + "?autoplay=1";
                 //Program.MainForm.YouTubePlayer.Movie = "https://www.youtube.com/apiplayer?video_id=" + song.id + "&version=3&autoplay=1&enablejsapi=1&feature=player_embedded&controls=0&modestbranding=1&rel=0&showinfo=0&autohide=1&color=white&playerapiid=musicPlayer&iv_load_policy=3";
                 CurrentSong = song;
-                Program.MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                 {
                     Program.MainForm.SongRequestPlayer.Url = new Uri("https://www.youtube.com/apiplayer?video_id=" + song.id + "&version=3&autoplay=1&enablejsapi=1&feature=player_embedded&controls=0&modestbranding=1&rel=0&showinfo=0&autohide=1&color=white&playerapiid=musicPlayer&iv_load_policy=3");
                     Program.MainForm.SongRequestPlayer.Visible = true;
@@ -154,7 +154,7 @@ namespace ModBot
                 //    new Thread(() =>
                 //    {
                 //        Thread.Sleep(10000);
-                //        Program.MainForm.BeginInvoke((MethodInvoker)delegate
+                //        Program.Program.Invoke((MethodInvoker)delegate
                 //        {
                 //            /*bool found = false;
                 //            foreach (HtmlElement elem in Program.MainForm.SongRequestPlayer.Document.All)
@@ -210,7 +210,7 @@ namespace ModBot
 
         private static void NextSong(object state)
         {
-            /*Program.MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            /*Program.Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 foreach (System.Windows.Forms.HtmlElement elem in Program.MainForm.SongRequestPlayer.Document.All)
                 {

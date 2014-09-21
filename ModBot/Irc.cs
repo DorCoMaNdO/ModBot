@@ -66,7 +66,7 @@ namespace ModBot
 
             if (donation_clientid == "" || donation_token == "")
             {
-                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                 {
                     MainForm.DonationsWindowButton.Enabled = false;
                     MainForm.DonationsWindowButton.Text = "Donations\r\n(Disabled)";
@@ -75,7 +75,7 @@ namespace ModBot
                 Irc.donation_token = "";
             }
 
-            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
                 {
@@ -116,7 +116,7 @@ namespace ModBot
                         }
                         else
                         {
-                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                             {
                                 Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Twitch reported that bot's auth token is invalid.\r\n");
                             });
@@ -160,7 +160,7 @@ namespace ModBot
                         {
                             if (e.Message.Contains("(404) Not Found."))
                             {
-                                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                 {
                                     Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Twitch reported channel not found.\r\n");
                                 });
@@ -215,7 +215,7 @@ namespace ModBot
                                         json = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/user?oauth_token=" + channeltoken));
                                         Console.WriteLine((partnered = json["partnered"].ToString() == "True") ? "Partnered.\r\n" : "Not partnered.\r\n");
 
-                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
                                             ini.SetValue("Settings", "Channel_UseSteam", (MainForm.Channel_UseSteam.Checked = (ini.GetValue("Settings", "Channel_UseSteam", "0") == "1")) ? "1" : "0");
 
@@ -235,7 +235,7 @@ namespace ModBot
                                     }
                                     else
                                     {
-                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
                                             Console.WriteLine(MainForm.SettingsErrorLabel.Text += "The channel's access token is missing access. It must be generated through here to have all the access required.\r\n");
                                         });
@@ -246,7 +246,7 @@ namespace ModBot
                                 }
                                 else
                                 {
-                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                    Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                     {
                                         Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Twitch reported that the channel's auth token is invalid.\r\n");
                                     });
@@ -278,7 +278,7 @@ namespace ModBot
 
                 OnInitialize(InitializationStep.ConfigureSettings);
 
-                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                 {
                     string name = "";
                     foreach (string word in currencyName.Split(' '))
@@ -336,7 +336,7 @@ namespace ModBot
 
                 OnInitialize(InitializationStep.ConnectionAborted);
 
-                /*MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                /*Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                 {
                     foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
                     {
@@ -462,7 +462,7 @@ namespace ModBot
 
                         StartThreads();
 
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
                             {
@@ -487,7 +487,7 @@ namespace ModBot
                     {
                         OnInitialize(InitializationStep.ConnectionFailed);
 
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Username and/or password (oauth token) are incorrect!\r\n");
                             MainForm.ConnectButton.Enabled = false;
@@ -506,7 +506,7 @@ namespace ModBot
                     Api.LogError("*************Error Message (via Connect()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
                 }
 
-                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                 {
                     MainForm.ConnectButton.Enabled = true;
                     MainForm.DisconnectButton.Enabled = false;
@@ -569,7 +569,7 @@ namespace ModBot
 
                     IsStreaming = false;
 
-                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                    Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                     {
                         MainForm.CurrencyWindowButton.Text = "Currency";
                         MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, 10F, FontStyle.Bold);
@@ -614,7 +614,7 @@ namespace ModBot
             IsModerator = false;
             IsStreaming = false;
 
-            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 MainForm.CurrencyWindowButton.Text = "Currency";
                 MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, 10F, FontStyle.Bold);
@@ -695,7 +695,7 @@ namespace ModBot
                 if (log) Console.WriteLine("MySQL connection closed.\r\n");
             }
 
-            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 MainForm.ConnectButton.Enabled = allowreconnecting;
             });
@@ -849,7 +849,7 @@ namespace ModBot
                     Dictionary<string, DateTime> LastSubscription = Api.GetLastSubscribers(new DateTime(), 1);
                     if (LastSubscription.Count > 0)
                     {
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             MainForm.Channel_SubscriptionsDate.Value = LastSubscription.ElementAt(0).Value;
                         });
@@ -860,7 +860,7 @@ namespace ModBot
                         Dictionary<string, DateTime> Subscriptions = Api.GetLastSubscribers(MainForm.Channel_SubscriptionsDate.Value);
                         if (Subscriptions.Count > 0)
                         {
-                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                             {
                                 MainForm.Channel_SubscriptionsDate.Value = Subscriptions.ElementAt(0).Value.AddSeconds(1);
                             });
@@ -938,7 +938,7 @@ namespace ModBot
                             {
                                 new Thread(() =>
                                 {
-                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                    Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                     {
                                         Console.WriteLine(MainForm.SettingsErrorLabel.Text += "Twitch reported that the channel was not found.\r\n");
                                         Disconnect();
@@ -1263,7 +1263,7 @@ namespace ModBot
                                 }
                             }
 
-                            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                             {
                                 MainForm.SpamFilterWindowButton.Enabled = Moderators.Contains(Api.capName(nick));
                                 if (!MainForm.SpamFilterWindowButton.Enabled && MainForm.CurrentWindow == MainForm.SpamFilterWindow) MainForm.SettingsWindowButton.Checked = true;
@@ -1324,7 +1324,7 @@ namespace ModBot
 
                     if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                     {
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             MainForm.Giveaway_WinnerChat.SelectionColor = Color.Blue;
                             if (UserColors.ContainsKey(user)) MainForm.Giveaway_WinnerChat.SelectionColor = ColorTranslator.FromHtml(UserColors[user]);
@@ -1364,7 +1364,7 @@ namespace ModBot
 
                     if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                     {
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             MainForm.Giveaway_WinnerChat.SelectionColor = Color.Green;
                             MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
@@ -1383,7 +1383,7 @@ namespace ModBot
 
                     if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                     {
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             MainForm.Giveaway_WinnerTimerLabel.Text = "The winner left!";
                             MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
@@ -1503,7 +1503,7 @@ namespace ModBot
                                 int type;
                                 if (int.TryParse(args[1], out type) && type >= 1 && type <= 3)
                                 {
-                                    MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                    Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                     {
                                         MainForm.Giveaway_TypeActive.Checked = (type == 1);
                                         MainForm.Giveaway_TypeKeyword.Checked = (type == 2);
@@ -2643,7 +2643,7 @@ namespace ModBot
 
                     if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                     {
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             MainForm.Giveaway_WinnerChat.SelectionColor = Color.Green;
                             MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);
@@ -2708,20 +2708,21 @@ namespace ModBot
                                 foreach (string sUser in ActiveUsers.Keys)
                                 {
                                     string user = sUser.ToLower();
+
                                     if (!IgnoredUsers.Contains(user) && !lUsers.Contains(user)) Delete.Add(user);
                                 }
 
-                                foreach (string sUser in Delete)
+                                foreach (string user in Delete)
                                 {
-                                    removeUserFromList(sUser);
+                                    removeUserFromList(user);
 
-                                    string name = Api.GetDisplayName(sUser);
+                                    string name = Api.GetDisplayName(user);
 
                                     Leaves += (Leaves != "" ? ", " : "") + name;
 
-                                    if (sUser.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                                    if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                                     {
-                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
                                             MainForm.Giveaway_WinnerTimerLabel.Text = "The winner left!";
                                             MainForm.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(255, 0, 0);
@@ -2737,21 +2738,23 @@ namespace ModBot
 
                                 foreach (string sUser in lUsers)
                                 {
-                                    if (sUser != "" && !ActiveUsers.ContainsKey(Api.capName(sUser)))
+                                    string user = Api.capName(sUser);
+
+                                    if (user != "" && !ActiveUsers.ContainsKey(user))
                                     {
-                                        addUserToList(sUser, justjoined ? -1 : 0);
+                                        addUserToList(user, justjoined ? -1 : 0);
 
-                                        if (sUser == Api.capName(nick) || sUser == "Jtv") return;
+                                        if (user == Api.capName(nick) || user == "Jtv") return;
 
-                                        string name = Api.GetDisplayName(sUser);
+                                        string name = Api.GetDisplayName(user);
 
                                         if (justjoined)
                                         {
                                             Joins += (Joins != "" ? ", " : "") + name;
 
-                                            if (sUser.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
+                                            if (user.Equals(Api.capName(MainForm.Giveaway_WinnerLabel.Text)))
                                             {
-                                                MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                                Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                                 {
                                                     MainForm.Giveaway_WinnerChat.SelectionColor = Color.Green;
                                                     MainForm.Giveaway_WinnerChat.SelectionFont = new Font("Segoe Print", 7, FontStyle.Bold);

@@ -14,15 +14,48 @@ namespace ModBotUpdater
     public partial class Updater : CustomForm
     {
         private Changelog changelog = new Changelog();
+        private Form This;
+        private ImageWindow UpdatingLayout = new ImageWindow(Properties.Resources.ModBotUpdating, true, 100);
         public Updater()
         {
+            This = this;
             InitializeComponent();
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
 
+            if (Program.args.Contains("-hide") || Program.args.Contains("-bg"))
+            {
+                new Thread(() =>
+                {
+                    Thread.Sleep(100);
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        Hide();
+                        if (Program.args.Contains("-bg")) UpdatingLayout.Show();
+                    });
+                }).Start();
+            }
+            
             BetaUpdates.Checked = (Program.ini.GetValue("Settings", "BetaUpdates", "0") == "1");
             DevUpdates.Checked = (Program.ini.GetValue("Settings", "DevUpdates", "0") == "1");
 
             CheckUpdates();
+        }
+
+        private new void Invoke(Delegate method)
+        {
+            Invoke(method, This);
+        }
+
+        private void Invoke(Delegate method, Form form)
+        {
+            if(form.IsHandleCreated)
+            {
+                form.BeginInvoke(method);
+            }
+            else
+            {
+                form.Invoke(method);
+            }
         }
 
         private bool IsFileLocked(string FileLocation)
@@ -36,10 +69,6 @@ namespace ModBotUpdater
             }
             catch (IOException)
             {
-                //the file is unavailable because it is:
-                //still being written to
-                //or being processed by another thread
-                //or does not exist (has already been processed)
                 return true;
             }
             finally
@@ -48,7 +77,6 @@ namespace ModBotUpdater
                     stream.Close();
             }
 
-            //file is not locked
             return false;
         }
 
@@ -97,11 +125,9 @@ namespace ModBotUpdater
                     {
                         w.DownloadProgressChanged += new DownloadProgressChangedEventHandler((object sender, DownloadProgressChangedEventArgs e) =>
                         {
-                            //label2.Text = "Downloaded " + e.BytesReceived + " of " + e.TotalBytesToReceive;
-                            BeginInvoke((MethodInvoker)delegate
+                            Invoke((MethodInvoker)delegate
                             {
-                                DownloadProgressBar.Value = int.Parse(Math.Truncate(double.Parse(e.BytesReceived.ToString()) / double.Parse(e.TotalBytesToReceive.ToString()) * 100).ToString());
-                                //DownloadProgressBar.Value = e.ProgressPercentage;
+                                UpdatingLayout.Progress.Value = DownloadProgressBar.Value = int.Parse(Math.Truncate(double.Parse(e.BytesReceived.ToString()) / double.Parse(e.TotalBytesToReceive.ToString()) * 100).ToString());
                                 StateLabel.Text = "Downloading...";
                             });
                         });
@@ -109,14 +135,14 @@ namespace ModBotUpdater
                         {
                             if (e.Error == null && !e.Cancelled)
                             {
-                                BeginInvoke((MethodInvoker)delegate
+                                Invoke((MethodInvoker)delegate
                                 {
                                     DoneDownloading();
                                 });
                             }
                             else
                             {
-                                BeginInvoke((MethodInvoker)delegate
+                                Invoke((MethodInvoker)delegate
                                 {
                                     StateLabel.Text = "Error while attempting to update!";
                                 });
@@ -173,13 +199,12 @@ namespace ModBotUpdater
                     {
                         while (inStream.Position < inStream.Length)
                         {
-                            DownloadProgressBar.Value = int.Parse(Math.Truncate(double.Parse(inStream.Position.ToString()) / double.Parse(inStream.Length.ToString()) * 100).ToString());
+                            UpdatingLayout.Progress.Value = DownloadProgressBar.Value = int.Parse(Math.Truncate(double.Parse(inStream.Position.ToString()) / double.Parse(inStream.Length.ToString()) * 100).ToString());
                             outStream.WriteByte((byte)inStream.ReadByte());
                         }
                     }
                 }
                 File.Delete(@"Updater\ModBot.exe");
-                //File.Move(@"Updater\ModBot.exe", "ModBot.exe");
                 while (File.Exists(@"Updater\ModBot.exe")) { }
 
                 if (Directory.Exists("Updater"))
@@ -187,7 +212,7 @@ namespace ModBotUpdater
                     Directory.Delete("Updater", true);
                 }
 
-                DownloadProgressBar.Value = 100;
+                UpdatingLayout.Progress.Value = DownloadProgressBar.Value = 100;
                 CurrentVersionLabel.Text = "Not Found";
                 StateLabel.Text = "Done updating!";
                 if (File.Exists("ModBot.exe"))
@@ -320,14 +345,14 @@ namespace ModBotUpdater
                     }
                 }
 
-                BeginInvoke((MethodInvoker)delegate
+                Invoke((MethodInvoker)delegate
                 {
                     if (sLatestVersion != "")
                     {
                         string[] sCurrent = CurrentVersionLabel.Text.Split('.'), sLatest = (LatestVersionLabel.Text = sLatestVersion).Split('.');
                         if (CurrentVersionLabel.Text == "Not Found" || TimeSpan.FromDays(int.Parse(sCurrent[2])).Add(TimeSpan.FromSeconds(int.Parse(sCurrent[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3])))) == -1)
                         {
-                            DownloadProgressBar.Value = 0;
+                            UpdatingLayout.Progress.Value = DownloadProgressBar.Value = 0;
                             if (dFileSize > 0)
                             {
                                 StateLabel.Text = "Updates available... (" + dFileSize.ToString("0.00") + " " + sFileSizeSuffix + ")";
@@ -355,7 +380,7 @@ namespace ModBotUpdater
                 if (Program.args.Contains("-force"))
                 {
                     Program.args.Remove("-force");
-                    startDownload();
+                    Invoke((MethodInvoker)delegate { startDownload(); });
                     return;
                 }
 
@@ -380,12 +405,12 @@ namespace ModBotUpdater
                 StateLabel.ForeColor = Color.Orange;
             }
 
-            DownloadProgressBar.Text = "";
-            DownloadProgressBar.TextColor = Brushes.Black;
+            UpdatingLayout.Progress.Text = DownloadProgressBar.Text = "";
+            UpdatingLayout.Progress.TextColor = DownloadProgressBar.TextColor = Brushes.Black;
             if (StateLabel.Text == "Error while checking for updates!" || StateLabel.Text == "Error while attempting to update!")
             {
-                DownloadProgressBar.Text = "Error!";
-                DownloadProgressBar.TextColor = Brushes.Red;
+                UpdatingLayout.Progress.Text = DownloadProgressBar.Text = "Error!";
+                UpdatingLayout.Progress.TextColor = DownloadProgressBar.TextColor = Brushes.Red;
             }
 
             if (StateLabel.Text.Contains("Updates available...") || StateLabel.Text == "Error while attempting to update!")
@@ -464,7 +489,7 @@ namespace ModBotUpdater
                     Versions.Add(Version, Changes);
                 }
 
-                BeginInvoke((MethodInvoker)delegate
+                Invoke((MethodInvoker)delegate
                 {
                     if (LatestVersionLabel.Text.IndexOfAny(new char[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' }) != -1) return;
                     bool Found = (CurrentVersionLabel.Text.IndexOfAny(new char[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' }) == -1);
@@ -495,12 +520,9 @@ namespace ModBotUpdater
                         }
 
                         changelog.ChangelogNotes.SelectionFont = new Font("Segoe Print", 8, FontStyle.Bold);
-                        //changelog.ChangelogNotes.SelectedText = sVersion + " " + sDate + " :\r\n";
                         changelog.ChangelogNotes.SelectedText = Version;
                         changelog.ChangelogNotes.SelectionColor = Color.Red;
                         changelog.ChangelogNotes.SelectedText = sDate;
-                        //changelog.ChangelogNotes.SelectionColor = Color.Red;
-                        //changelog.ChangelogNotes.SelectionFont = new Font("Segoe Print", 7, FontStyle.Regular);
                         changelog.ChangelogNotes.SelectionColor = Color.Black;
                         changelog.ChangelogNotes.SelectedText = " :\r\n";
                         changelog.ChangelogNotes.SelectionFont = new Font("Microsoft Sans Serif", 8);

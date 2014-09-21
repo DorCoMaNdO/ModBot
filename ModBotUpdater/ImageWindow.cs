@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
-namespace ModBot
+namespace ModBotUpdater
 {
     public partial class ImageWindow : Form
     {

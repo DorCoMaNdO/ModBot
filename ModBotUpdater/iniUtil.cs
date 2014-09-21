@@ -10,10 +10,13 @@ public class iniUtil
 {
     [DllImport("kernel32.dll")]
     private static extern int GetPrivateProfileSectionNames(byte[] lpszReturnBuffer, int nSize, string lpFileName);
+
     [DllImport("kernel32.dll")]
     private static extern int GetPrivateProfileSection(string lpAppName, byte[] lpReturnedString, int nSize, string lpFileName);
+
     [DllImport("kernel32.dll")]
     private static extern int GetPrivateProfileString(string lpApplicationName, string lpKeyName, string lpDefault, byte[] lpReturnedString, int nSize, string lpFileName);
+
     [DllImport("kernel32.dll")]
     private static extern bool WritePrivateProfileString(string lpApplicationName, string lpKeyName, string lpString, string lpFileName);
 

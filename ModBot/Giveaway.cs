@@ -21,7 +21,7 @@ namespace ModBot
 
         public static void startGiveaway(int ticketcost = 0, int maxtickets = 1)
         {
-            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 MainForm.Giveaway_SettingsPresents.Enabled = false;
                 MainForm.Giveaway_StartButton.Enabled = false;
@@ -136,7 +136,7 @@ namespace ModBot
         public static void closeGiveaway(bool announce = true, bool open = true)
         {
             Open = false;
-            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 MainForm.Giveaway_WinnerLabel.Text = "Waiting for a roll...";
                 MainForm.Giveaway_RerollButton.Text = "Roll";
@@ -157,7 +157,7 @@ namespace ModBot
         public static void openGiveaway()
         {
             Open = true;
-            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 MainForm.Giveaway_WinnerLabel.Text = "Entries open, close to roll for a winner...";
                 MainForm.Giveaway_RerollButton.Text = "Roll";
@@ -174,7 +174,7 @@ namespace ModBot
 
         public static void endGiveaway(bool announce = true)
         {
-            MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 MainForm.Giveaway_SettingsPresents.Enabled = true;
                 MainForm.Giveaway_StartButton.Enabled = true;
@@ -245,7 +245,7 @@ namespace ModBot
 
                     /*lock (MainForm.Giveaway_UserList.Items)
                     {
-                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                         {
                             List<string> delete = new List<string>();
                             foreach (string name in MainForm.Giveaway_UserList.Items)
@@ -302,7 +302,7 @@ namespace ModBot
         public static string getWinner()
         {
             string sWinner = "";
-            MainForm.BeginInvoke((MethodInvoker)delegate
+            Program.Invoke((MethodInvoker)delegate
             {
                 MainForm.Giveaway_RerollButton.Enabled = false;
                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
@@ -403,7 +403,7 @@ namespace ModBot
 
                                     /*lock (MainForm.Giveaway_UserList.Items)
                                     {
-                                        MainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
+                                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
                                         {
                                             foreach (string user in ValidUsers)
                                             {
@@ -453,7 +453,7 @@ namespace ModBot
                                 }
                             }
                             Chance = (float)winnertickets / tickets * 100;
-                            MainForm.BeginInvoke((MethodInvoker)delegate
+                            Program.Invoke((MethodInvoker)delegate
                             {
                                 //string WinnerLabel = "Winner : ";
                                 string WinnerLabel = "";
@@ -480,7 +480,7 @@ namespace ModBot
                             thread = new Thread(() =>
                             {
                                 sWinner = Api.GetDisplayName(sWinner, true);
-                                MainForm.BeginInvoke((MethodInvoker)delegate
+                                Program.Invoke((MethodInvoker)delegate
                                 {
                                     MainForm.Giveaway_WinnerLabel.Text = sWinner;
                                 });
@@ -492,14 +492,14 @@ namespace ModBot
                     }
                     catch
                     {
-                        MainForm.BeginInvoke((MethodInvoker)delegate
+                        Program.Invoke((MethodInvoker)delegate
                         {
                             Console.WriteLine(MainForm.Giveaway_WinnerLabel.Text = "Error while rolling, retrying...");
                         });
                         continue;
                     }
 
-                    MainForm.BeginInvoke((MethodInvoker)delegate
+                    Program.Invoke((MethodInvoker)delegate
                     {
                         MainForm.Giveaway_WinnerLabel.Text = "No valid winner found";
                         MainForm.Giveaway_RerollButton.Enabled = true;
