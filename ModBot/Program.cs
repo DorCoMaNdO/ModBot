@@ -377,10 +377,10 @@ namespace ModBot
                         }
                     }
 
-                    form.BeginInvoke((MethodInvoker)delegate
+                    Invoke((MethodInvoker)delegate
                     {
                         if (Data != "") MessageBox.Show(Data, "Welcome");
-                    });
+                    }, form);
                 }).Start();
             }
 
@@ -397,17 +397,17 @@ namespace ModBot
                         w.Proxy = null;
                         try
                         {
-                            w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/MsgOfTheDay.txt");
+                            Data = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/MsgOfTheDay.txt");
                         }
                         catch
                         {
                         }
                     }
                 
-                    form.BeginInvoke((MethodInvoker)delegate
+                    Invoke((MethodInvoker)delegate
                     {
                         if (Data != "") MessageBox.Show(Data, "Message of the day");
-                    });
+                    }, form);
                 }).Start();
             }
 
@@ -421,35 +421,35 @@ namespace ModBot
 
                 new Thread(() =>
                 {
-                using (WebClient w = new WebClient())
-                {
-                    w.Proxy = null;
-                    try
+                    using (WebClient w = new WebClient())
                     {
-                        Data += "[" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + ".txt");
-                    }
-                    catch
-                    {
+                        w.Proxy = null;
+                        try
+                        {
+                            Data += "[" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + ".txt");
+                        }
+                        catch
+                        {
+                        }
+
+                        try
+                        {
+                            //Data += (Data != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + "/WhatsNew.txt");
+                            Data += (Data != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + ".txt");
+                        }
+                        catch
+                        {
+                        }
                     }
 
-                    try
+                    Invoke((MethodInvoker)delegate
                     {
-                        //Data += (Data != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + "/WhatsNew.txt");
-                        Data += (Data != "" ? "\r\n\r\n[" : "[") + Assembly.GetExecutingAssembly().GetName().Version + "]\r\n" + w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + Assembly.GetExecutingAssembly().GetName().Version + ".txt");
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                form.BeginInvoke((MethodInvoker)delegate
-                {
-                    if (Data != "")
-                    {
-                        MessageBox.Show(Data, "What's New in version " + Assembly.GetExecutingAssembly().GetName().Version);
-                        ini.SetValue("Settings", "Notification_WhatsNew", Assembly.GetExecutingAssembly().GetName().Version.ToString());
-                    }
-                });
+                        if (Data != "")
+                        {
+                            MessageBox.Show(Data, "What's New in version " + Assembly.GetExecutingAssembly().GetName().Version);
+                            ini.SetValue("Settings", "Notification_WhatsNew", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+                        }
+                    }, form);
                 }).Start();
             }
         }
