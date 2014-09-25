@@ -377,6 +377,7 @@ namespace ModBot
                                         }
                                     }
 
+                                    // Only refund if lastroll == 0
                                     /*List<string> Delete = new List<string>();
                                     foreach (string user in Users.Keys)
                                     {

@@ -21,6 +21,7 @@ namespace ModBot
         public int iSettingsPresent = -2;
         //private bool g_bLoaded = false;
         public Dictionary<CheckBox, Panel> Windows = new Dictionary<CheckBox, Panel>();
+        public Dictionary<Panel, Dictionary<Control, Control>> TabConfigs = new Dictionary<Panel, Dictionary<Control, Control>>();
         public Panel CurrentWindow = null;
         private List<Thread> Threads = new List<Thread>();
         private string AuthenticationScopes;
@@ -196,7 +197,7 @@ namespace ModBot
             {
                 AutoCompleteStringCollection Games = new AutoCompleteStringCollection();
                 Games.AddRange(File.ReadAllLines(@"Settings\Games.txt"));
-                ChannelGameBox.AutoCompleteCustomSource = Games;
+                Channel_Game.AutoCompleteCustomSource = Games;
             }
 
             CenterSpacer(ConnectionLabel, ConnectionSpacer);
@@ -227,48 +228,48 @@ namespace ModBot
 
             // Todo : Create a method
             panel = new Panel();
-            panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y);
+            panel.Size = new Size(Bot_TokenButton.Size.Width, 1);
+            panel.Location = new Point(Bot_TokenButton.Location.X, Bot_TokenButton.Location.Y);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
             panel = new Panel();
-            panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y + GenerateBotTokenButton.Size.Height - 1);
-            SettingsWindow.Controls.Add(panel);
-            panel.BringToFront();
-            panel = new Panel();
-            panel.BackColor = Color.Black;
-            panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y + 1);
+            panel.Size = new Size(Bot_TokenButton.Size.Width, 1);
+            panel.Location = new Point(Bot_TokenButton.Location.X, Bot_TokenButton.Location.Y + Bot_TokenButton.Size.Height - 1);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
             panel = new Panel();
             panel.BackColor = Color.Black;
-            panel.Size = new Size(GenerateBotTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateBotTokenButton.Location.X, GenerateBotTokenButton.Location.Y + GenerateBotTokenButton.Size.Height - 2);
+            panel.Size = new Size(Bot_TokenButton.Size.Width, 1);
+            panel.Location = new Point(Bot_TokenButton.Location.X, Bot_TokenButton.Location.Y + 1);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.BackColor = Color.Black;
+            panel.Size = new Size(Bot_TokenButton.Size.Width, 1);
+            panel.Location = new Point(Bot_TokenButton.Location.X, Bot_TokenButton.Location.Y + Bot_TokenButton.Size.Height - 2);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
 
             panel = new Panel();
-            panel.Size = new Size(GenerateChannelTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateChannelTokenButton.Location.X, GenerateChannelTokenButton.Location.Y);
+            panel.Size = new Size(Channel_TokenButton.Size.Width, 1);
+            panel.Location = new Point(Channel_TokenButton.Location.X, Channel_TokenButton.Location.Y);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
             panel = new Panel();
-            panel.Size = new Size(GenerateChannelTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateChannelTokenButton.Location.X, GenerateChannelTokenButton.Location.Y + GenerateChannelTokenButton.Size.Height - 1);
-            SettingsWindow.Controls.Add(panel);
-            panel.BringToFront();
-            panel = new Panel();
-            panel.BackColor = Color.Black;
-            panel.Size = new Size(GenerateChannelTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateChannelTokenButton.Location.X, GenerateChannelTokenButton.Location.Y + 1);
+            panel.Size = new Size(Channel_TokenButton.Size.Width, 1);
+            panel.Location = new Point(Channel_TokenButton.Location.X, Channel_TokenButton.Location.Y + Channel_TokenButton.Size.Height - 1);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
             panel = new Panel();
             panel.BackColor = Color.Black;
-            panel.Size = new Size(GenerateChannelTokenButton.Size.Width, 1);
-            panel.Location = new Point(GenerateChannelTokenButton.Location.X, GenerateChannelTokenButton.Location.Y + GenerateChannelTokenButton.Size.Height - 2);
+            panel.Size = new Size(Channel_TokenButton.Size.Width, 1);
+            panel.Location = new Point(Channel_TokenButton.Location.X, Channel_TokenButton.Location.Y + 1);
+            SettingsWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.BackColor = Color.Black;
+            panel.Size = new Size(Channel_TokenButton.Size.Width, 1);
+            panel.Location = new Point(Channel_TokenButton.Location.X, Channel_TokenButton.Location.Y + Channel_TokenButton.Size.Height - 2);
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
 
@@ -280,27 +281,177 @@ namespace ModBot
             Windows.Add(SpamFilterWindowButton, SpamFilterWindow);
             Windows.Add(AboutWindowButton, AboutWindow);
 
-            int y = -((Height - 38) / Windows.Keys.Count * Windows.Keys.Count - Height + 38);
-            int y2 = y;
+            Dictionary<Control, Control> TabConfig = new Dictionary<Control, Control>();
+            TabConfig.Add(this, Bot_Name);
+            TabConfig.Add(Bot_Name, Bot_TokenButton);
+            TabConfig.Add(Bot_TokenButton, Channel_Name);
+            TabConfig.Add(Channel_Name, Channel_TokenButton);
+            TabConfig.Add(Channel_TokenButton, Currency_HandoutInterval);
+            TabConfig.Add(Currency_HandoutInterval, Currency_HandoutAmount);
+            TabConfig.Add(Currency_HandoutAmount, Currency_Name);
+            TabConfig.Add(Currency_Name, Currency_Command);
+            TabConfig.Add(Currency_Command, Subscribers_Spreadsheet);
+            TabConfig.Add(Subscribers_Spreadsheet, Currency_SubHandoutAmount);
+            TabConfig.Add(Currency_SubHandoutAmount, Donations_ST_ClientId);
+            TabConfig.Add(Donations_ST_ClientId, Donations_ST_Token);
+            TabConfig.Add(Donations_ST_Token, ConnectButton);
+            TabConfig.Add(ConnectButton, DisconnectButton);
+            TabConfigs.Add(SettingsWindow, TabConfig);
+
+            TabConfig = new Dictionary<Control, Control>();
+            TabConfig.Add(this, Channel_Title);
+            TabConfig.Add(Channel_Title, Channel_Game);
+            TabConfig.Add(Channel_Game, Channel_UpdateTitleGame);
+            TabConfig.Add(Channel_UpdateTitleGame, Channel_UseSteam);
+            TabConfig.Add(Channel_UseSteam, Channel_ViewersChange);
+            TabConfig.Add(Channel_ViewersChange, Channel_WelcomeSub);
+            TabConfig.Add(Channel_WelcomeSub, Channel_SubscriptionRewards);
+            TabConfigs.Add(ChannelWindow, TabConfig);
+
+            // finish the rest
+
+            int count = Windows.Count;
+            int h = Height - 38;
+            while (h / count < 90) count--;
+            if (count < Windows.Count)
+            {
+                h -= 24;
+                while (h / count < 90) count--;
+            }
+
             foreach (CheckBox btn in Windows.Keys)
             {
-                btn.Size = new Size(100, (Height - 38) / Windows.Keys.Count);
+                btn.Size = new Size(100, h / count);
             }
+
+            int y = -(h / count * count - Height + 38 + count < Windows.Count ? 24 : 0);
             while (y > 0)
             {
+                int c = 0;
                 foreach (CheckBox btn in Windows.Keys)
                 {
-                    if (y == 0) break;
+                    c++;
+                    if (c > count || y == 0) break;
                     btn.Size = new Size(btn.Size.Width, btn.Size.Height + 1);
                     y--;
                 }
             }
-            y = 30;
+
+            y = 0;
+            int btnc = 0;
             foreach (CheckBox btn in Windows.Keys)
             {
-                btn.Location = new Point(8, y);
+                btnc++;
+                if (btnc > count) break;
                 y += btn.Size.Height;
             }
+            while (y < h)
+            {
+                btnc = 0;
+                foreach (CheckBox btn in Windows.Keys)
+                {
+                    btnc++;
+                    if (btnc > count || y >= h) break;
+                    btn.Size = new Size(btn.Size.Width, btn.Size.Height + 1);
+                    y++;
+                }
+            }
+
+            int currenty = 30;
+            foreach (CheckBox btn in Windows.Keys)
+            {
+                btn.Location = new Point(8, currenty);
+                currenty += btn.Size.Height;
+            }
+
+            VScrollBar scroll = new VScrollBar();
+            scroll.Size = new Size(102, 24);
+            scroll.Location = new Point(7, Height - 32);
+            scroll.Visible = (count < Windows.Count);
+            scroll.Maximum = Windows.Count - count + 9;
+            scroll.Scroll += (object sender, ScrollEventArgs e) =>
+            {
+                currenty = 30 - h / count * e.OldValue; // fix animation cutting
+                foreach (CheckBox btn in Windows.Keys)
+                {
+                    btn.Location = new Point(8, currenty);
+                    currenty += btn.Size.Height;
+                }
+
+                foreach (CheckBox btn in Windows.Keys)
+                {
+                    btn.Size = new Size(100, h / count);
+                }
+
+                y = -(h / count * count - Height + 38 + count < Windows.Count ? 24 : 0);
+                while (y > 0)
+                {
+                    int c = 0;
+                    foreach (CheckBox btn in Windows.Keys)
+                    {
+                        c++;
+                        if (c - 1 < e.NewValue) continue;
+                        if (c > count || y == 0) break;
+                        btn.Size = new Size(btn.Size.Width, btn.Size.Height + 1);
+                        y--;
+                    }
+                }
+
+                y = 0;
+                btnc = 0;
+                foreach (CheckBox btn in Windows.Keys)
+                {
+                    btnc++;
+                    if (btnc - 1 < e.NewValue) continue;
+                    if (btnc > count + e.NewValue) break;
+                    y += btn.Size.Height;
+                }
+                while(y < h)
+                {
+                    btnc = 0;
+                    foreach (CheckBox btn in Windows.Keys)
+                    {
+                        btnc++;
+                        if (btnc - 1 < e.NewValue) continue;
+                        if (btnc > count + e.NewValue || y >= h) break;
+                        btn.Size = new Size(btn.Size.Width, btn.Size.Height + 1);
+                        y++;
+                    }
+                }
+
+                new Thread(() =>
+                {
+                    int newval = e.NewValue;
+                    while (30 - h / count * newval != Windows.Keys.ElementAt(0).Location.Y)
+                    {
+                        if (e.NewValue != newval) break;
+                        foreach (CheckBox btn in Windows.Keys)
+                        {
+                            if (e.NewValue != newval) break;
+                            Invoke((MethodInvoker)delegate
+                            {
+                                btn.Location = new Point(8, btn.Location.Y + (30 - h / count * newval > Windows.Keys.ElementAt(0).Location.Y ? 1 : -1));
+                            });
+                        }
+                        Thread.Sleep(5);
+                    }
+
+                    /*if (e.NewValue != newval)
+                    {
+                        currenty = 30 - h / count * newval;
+                        foreach (CheckBox btn in Windows.Keys)
+                        {
+                            Invoke((MethodInvoker)delegate
+                            {
+                                btn.Location = new Point(8, currenty);
+                            });
+                            currenty += btn.Size.Height;
+                        }
+                    }*/
+                }).Start();
+            };
+            Controls.Add(scroll);
+            scroll.BringToFront();
 
             CurrentWindow = SettingsWindow;
             SettingsWindow.BringToFront();
@@ -309,11 +460,11 @@ namespace ModBot
 
             bIgnoreUpdates = true;
 
-            ini.SetValue("Settings", "BOT_Name", BotNameBox.Text = ini.GetValue("Settings", "BOT_Name", "ModBot"));
-            ini.SetValue("Settings", "BOT_Password", BotPasswordBox.Text = ini.GetValue("Settings", "BOT_Password", ""));
+            ini.SetValue("Settings", "BOT_Name", Bot_Name.Text = ini.GetValue("Settings", "BOT_Name", "ModBot"));
+            ini.SetValue("Settings", "BOT_Password", Bot_Token.Text = ini.GetValue("Settings", "BOT_Password", ""));
 
-            ini.SetValue("Settings", "Channel_Name", ChannelBox.Text = ini.GetValue("Settings", "Channel_Name", "ModChannel"));
-            ini.SetValue("Settings", "Channel_Token", ChannelTokenBox.Text = ini.GetValue("Settings", "Channel_Token", ""));
+            ini.SetValue("Settings", "Channel_Name", Channel_Name.Text = ini.GetValue("Settings", "Channel_Name", "ModChannel"));
+            ini.SetValue("Settings", "Channel_Token", Channel_Token.Text = ini.GetValue("Settings", "Channel_Token", ""));
             ini.SetValue("Settings", "Channel_SteamID64", Channel_SteamID64.Text = ini.GetValue("Settings", "Channel_SteamID64", "SteamID64"));
             ini.SetValue("Settings", "Channel_ViewersChange", (Channel_ViewersChange.Checked = (ini.GetValue("Settings", "Channel_ViewersChange", "0") == "1")) ? "1" : "0");
             int variable = Convert.ToInt32(ini.GetValue("Settings", "Channel_ViewersChangeInterval", "5"));
@@ -345,31 +496,31 @@ namespace ModBot
             Channel_SubscriptionRewardsList.RowsAdded += new DataGridViewRowsAddedEventHandler(Channel_SubscriptionRewardsList_Changed);
             Channel_SubscriptionRewardsList.RowsRemoved += new DataGridViewRowsRemovedEventHandler(Channel_SubscriptionRewardsList_Changed);
 
-            ini.SetValue("Settings", "Currency_Name", CurrencyNameBox.Text = ini.GetValue("Settings", "Currency_Name", "Mod Coins"));
-            ini.SetValue("Settings", "Currency_Command", CurrencyCommandBox.Text = ini.GetValue("Settings", "Currency_Command", "ModCoins"));
+            ini.SetValue("Settings", "Currency_Name", Currency_Name.Text = ini.GetValue("Settings", "Currency_Name", "Mod Coins"));
+            ini.SetValue("Settings", "Currency_Command", Currency_Command.Text = ini.GetValue("Settings", "Currency_Command", "ModCoins"));
             variable = Convert.ToInt32(ini.GetValue("Settings", "Currency_Interval", "5"));
-            if (variable > CurrencyHandoutInterval.Maximum || variable < CurrencyHandoutInterval.Minimum)
+            if (variable > Currency_HandoutInterval.Maximum || variable < Currency_HandoutInterval.Minimum)
             {
                 variable = 5;
             }
-            ini.SetValue("Settings", "Currency_Interval", (CurrencyHandoutInterval.Value = variable).ToString());
+            ini.SetValue("Settings", "Currency_Interval", (Currency_HandoutInterval.Value = variable).ToString());
             variable = Convert.ToInt32(ini.GetValue("Settings", "Currency_Payout", "1"));
-            if (variable > CurrencyHandoutAmount.Maximum || variable < CurrencyHandoutAmount.Minimum)
+            if (variable > Currency_HandoutAmount.Maximum || variable < Currency_HandoutAmount.Minimum)
             {
                 variable = 1;
             }
-            ini.SetValue("Settings", "Currency_Payout", (CurrencyHandoutAmount.Value = variable).ToString());
+            ini.SetValue("Settings", "Currency_Payout", (Currency_HandoutAmount.Value = variable).ToString());
             variable = Convert.ToInt32(ini.GetValue("Settings", "Currency_SubscriberPayout", "1"));
-            if (variable > CurrencySubHandoutAmount.Maximum || variable < CurrencySubHandoutAmount.Minimum)
+            if (variable > Currency_SubHandoutAmount.Maximum || variable < Currency_SubHandoutAmount.Minimum)
             {
                 variable = 1;
             }
-            ini.SetValue("Settings", "Currency_SubscriberPayout", (CurrencySubHandoutAmount.Value = variable).ToString());
+            ini.SetValue("Settings", "Currency_SubscriberPayout", (Currency_SubHandoutAmount.Value = variable).ToString());
 
-            ini.SetValue("Settings", "Subsribers_URL", SubLinkBox.Text = ini.GetValue("Settings", "Subsribers_URL", ""));
+            ini.SetValue("Settings", "Subsribers_URL", Subscribers_Spreadsheet.Text = ini.GetValue("Settings", "Subsribers_URL", ""));
 
-            ini.SetValue("Settings", "Donations_ClientID", DonationsClientIdBox.Text = ini.GetValue("Settings", "Donations_ClientID", ""));
-            ini.SetValue("Settings", "Donations_Token", DonationsTokenBox.Text = ini.GetValue("Settings", "Donations_Token", ""));
+            ini.SetValue("Settings", "Donations_ClientID", Donations_ST_ClientId.Text = ini.GetValue("Settings", "Donations_ClientID", ""));
+            ini.SetValue("Settings", "Donations_Token", Donations_ST_Token.Text = ini.GetValue("Settings", "Donations_Token", ""));
             ini.SetValue("Settings", "Donations_UpdateTop", (UpdateTopDonorsCheckBox.Checked = (ini.GetValue("Settings", "Donations_UpdateTop", "0") == "1")) ? "1" : "0");
             variable = Convert.ToInt32(ini.GetValue("Settings", "Donations_Top_Limit", "20"));
             if (variable > TopDonorsLimit.Maximum || variable < TopDonorsLimit.Minimum)
@@ -430,6 +581,8 @@ namespace ModBot
             Channel_SubscriptionsDate.Value = DateTime.Now;
             //Channel_SubscriptionsDate.CustomFormat = "dddd, MMMM M, yyyy H:mm:ss";
             //Channel_SubscriptionsDate.CustomFormat = "d/MM/yy H:mm:ss";
+
+            if (ConnectButton.Enabled) ConnectButton.Focus();
 
             bIgnoreUpdates = false;
 
@@ -528,7 +681,58 @@ namespace ModBot
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (keyData == Keys.Tab || keyData == (Keys.Shift | Keys.Tab)) return true;
+            if (keyData == Keys.Tab || keyData == (Keys.Shift | Keys.Tab))
+            {
+                if (keyData == Keys.Tab)
+                {
+                    if (TabConfigs.ContainsKey(CurrentWindow))
+                    {
+                        if (!CurrentWindow.ContainsFocus && TabConfigs[CurrentWindow].ContainsKey(this))
+                        {
+                            TabConfigs[CurrentWindow][this].Focus();
+                        }
+                        else if(CurrentWindow.ContainsFocus)
+                        {
+                            foreach(Control ctrl in CurrentWindow.Controls)
+                            {
+                                if(ctrl.Focused)
+                                {
+                                    if (TabConfigs[CurrentWindow].ContainsKey(ctrl)) TabConfigs[CurrentWindow][ctrl].Focus();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (TabConfigs.ContainsKey(CurrentWindow) && CurrentWindow.ContainsFocus)
+                    {
+                        foreach (Control ctrl in CurrentWindow.Controls)
+                        {
+                            if (ctrl.Focused && TabConfigs[CurrentWindow].ContainsValue(ctrl))
+                            {
+                                foreach (Control ctrl2 in TabConfigs[CurrentWindow].Keys)
+                                {
+                                    if (ctrl == TabConfigs[CurrentWindow][ctrl2])
+                                    {
+                                        if(ctrl2 != this) ctrl2.Focus();
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        } 
+                    }
+                }
+                return true;
+            }
+
+            if (keyData == (Keys.Alt | Keys.F4) || keyData == (Keys.Control | Keys.W))
+            {
+                Close();
+                return true;
+            }
 
             return base.ProcessCmdKey(ref msg, keyData);
         }
@@ -973,8 +1177,8 @@ namespace ModBot
                             {
                                 if (!MetadataModified)
                                 {
-                                    ChannelTitleBox.Text = ChannelTitle;
-                                    ChannelGameBox.Text = ChannelGame;
+                                    Channel_Title.Text = ChannelTitle;
+                                    Channel_Game.Text = ChannelGame;
 
                                     MetadataModified = false;
                                 }
@@ -1462,29 +1666,29 @@ namespace ModBot
 
         private void ConnectButton_Click(object sender, EventArgs e)
         {
-            ini.SetValue("Settings", "BOT_Name", Irc.nick = BotNameBox.Text);
-            Irc.nick = BotNameBox.Text.ToLower();
-            ini.SetValue("Settings", "BOT_Password", Irc.password = BotPasswordBox.Text);
-            ini.SetValue("Settings", "Channel_Name", ChannelBox.Text);
-            Irc.admin = ChannelBox.Text.Replace("#", "");
-            Irc.channel = "#" + ChannelBox.Text.Replace("#", "").ToLower();
-            ini.SetValue("Settings", "Channel_Token", Irc.channeltoken = ChannelTokenBox.Text);
-            if (Irc.channeltoken.StartsWith("oauth:")) Irc.channeltoken = ChannelTokenBox.Text.Substring(6);
-            ini.SetValue("Settings", "Currency_Name", Irc.currencyName = CurrencyNameBox.Text);
-            ini.SetValue("Settings", "Currency_Command", Irc.currency = CurrencyCommandBox.Text.StartsWith("!") ? CurrencyCommandBox.Text.Substring(1) : CurrencyCommandBox.Text);
-            ini.SetValue("Settings", "Currency_Interval", CurrencyHandoutInterval.Value.ToString());
-            Irc.interval = Convert.ToInt32(CurrencyHandoutInterval.Value.ToString());
-            ini.SetValue("Settings", "Currency_Payout", CurrencyHandoutAmount.Value.ToString());
-            Irc.payout = Convert.ToInt32(CurrencyHandoutAmount.Value.ToString());
-            ini.SetValue("Settings", "Currency_SubscriberPayout", CurrencySubHandoutAmount.Value.ToString());
-            Irc.subpayout = Convert.ToInt32(CurrencySubHandoutAmount.Value.ToString());
-            ini.SetValue("Settings", "Donations_ClientID", Irc.donation_clientid = DonationsClientIdBox.Text);
-            ini.SetValue("Settings", "Donations_Token", Irc.donation_token = DonationsTokenBox.Text);
-            if (SubLinkBox.Text != "")
+            ini.SetValue("Settings", "BOT_Name", Irc.nick = Bot_Name.Text);
+            Irc.nick = Bot_Name.Text.ToLower();
+            ini.SetValue("Settings", "BOT_Password", Irc.password = Bot_Token.Text);
+            ini.SetValue("Settings", "Channel_Name", Channel_Name.Text);
+            Irc.admin = Channel_Name.Text.Replace("#", "");
+            Irc.channel = "#" + Channel_Name.Text.Replace("#", "").ToLower();
+            ini.SetValue("Settings", "Channel_Token", Irc.channeltoken = Channel_Token.Text);
+            if (Irc.channeltoken.StartsWith("oauth:")) Irc.channeltoken = Channel_Token.Text.Substring(6);
+            ini.SetValue("Settings", "Currency_Name", Irc.currencyName = Currency_Name.Text);
+            ini.SetValue("Settings", "Currency_Command", Irc.currency = Currency_Command.Text.StartsWith("!") ? Currency_Command.Text.Substring(1) : Currency_Command.Text);
+            ini.SetValue("Settings", "Currency_Interval", Currency_HandoutInterval.Value.ToString());
+            Irc.interval = Convert.ToInt32(Currency_HandoutInterval.Value.ToString());
+            ini.SetValue("Settings", "Currency_Payout", Currency_HandoutAmount.Value.ToString());
+            Irc.payout = Convert.ToInt32(Currency_HandoutAmount.Value.ToString());
+            ini.SetValue("Settings", "Currency_SubscriberPayout", Currency_SubHandoutAmount.Value.ToString());
+            Irc.subpayout = Convert.ToInt32(Currency_SubHandoutAmount.Value.ToString());
+            ini.SetValue("Settings", "Donations_ClientID", Irc.donation_clientid = Donations_ST_ClientId.Text);
+            ini.SetValue("Settings", "Donations_Token", Irc.donation_token = Donations_ST_Token.Text);
+            if (Subscribers_Spreadsheet.Text != "")
             {
-                if ((SubLinkBox.Text.StartsWith("https://spreadsheets.google.com") || SubLinkBox.Text.StartsWith("http://spreadsheets.google.com")) && SubLinkBox.Text.EndsWith("?alt=json"))
+                if ((Subscribers_Spreadsheet.Text.StartsWith("https://spreadsheets.google.com") || Subscribers_Spreadsheet.Text.StartsWith("http://spreadsheets.google.com")) && Subscribers_Spreadsheet.Text.EndsWith("?alt=json"))
                 {
-                    ini.SetValue("Settings", "Subsribers_URL", SubLinkBox.Text);
+                    ini.SetValue("Settings", "Subsribers_URL", Subscribers_Spreadsheet.Text);
                 }
                 else
                 {
@@ -1567,7 +1771,7 @@ namespace ModBot
         private void ConnectionDetailsChanged(object sender, EventArgs e)
         {
             //ConnectButton.Enabled = ((SettingsErrorLabel.Text = (BotNameBox.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (ChannelTokenBox.Text == "" ? "Channel token is missing.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "")) == "");
-            SettingsErrorLabel.Text = (BotNameBox.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!BotPasswordBox.Text.StartsWith("oauth:") ? (BotPasswordBox.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (ChannelBox.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (ChannelTokenBox.Text == "" ? "Channel token is missing.\r\n" : "") + (CurrencyNameBox.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (CurrencyCommandBox.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "");
+            SettingsErrorLabel.Text = (Bot_Name.Text.Length < 3 ? "Bot name too short or the field is empty.\r\n" : "") + (!Bot_Token.Text.StartsWith("oauth:") ? (Bot_Token.Text == "" ? "Bot's oauth token field is empty.\r\n" : "Bot's oauth token field must contain \"oauth:\" at the beginning.\r\n") : "") + (Channel_Name.Text.Length < 3 ? "Channel name too short or the field is empty.\r\n" : "") + (Channel_Token.Text == "" ? "Channel token is missing.\r\n" : "") + (Currency_Name.Text.Length < 2 ? "Currency name too short or the field is empty.\r\n" : "") + (Currency_Command.Text.Length < 2 ? "Currency command too short or the field is empty.\r\n" : "") + (Currency_Command.Text.Contains(" ") ? "The currency command can not contain spaces.\r\n" : "");
         }
 
         private void GenerateToken_Request(object sender, EventArgs e)
@@ -1581,11 +1785,11 @@ namespace ModBot
             }
             SettingsWindowButton.Enabled = false;
             AboutWindowButton.Enabled = false;
-            if ((Button)sender == GenerateBotTokenButton)
+            if ((Button)sender == Bot_TokenButton)
             {
                 AuthenticationScopes = "chat_login";
             }
-            else if ((Button)sender == GenerateChannelTokenButton)
+            else if ((Button)sender == Channel_TokenButton)
             {
                 AuthenticationScopes = "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login";
             }
@@ -1611,11 +1815,11 @@ namespace ModBot
             {
                 if (AuthenticationScopes == "chat_login")
                 {
-                    BotPasswordBox.Text = "oauth:" + e.Url.Fragment.Substring(14).Split('&')[0];
+                    Bot_Token.Text = "oauth:" + e.Url.Fragment.Substring(14).Split('&')[0];
                 }
                 else if (AuthenticationScopes == "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login")
                 {
-                    ChannelTokenBox.Text = e.Url.Fragment.Substring(14).Split('&')[0];
+                    Channel_Token.Text = e.Url.Fragment.Substring(14).Split('&')[0];
                 }
 
                 AuthenticationScopes = "";
@@ -1642,7 +1846,7 @@ namespace ModBot
                     SettingsWindow.BringToFront();
                     SettingsWindowButton.Enabled = true;
                     AboutWindowButton.Enabled = true;
-                    GenerateBotTokenButton.Enabled = true;
+                    Bot_TokenButton.Enabled = true;
                 }
 
                 if (AuthenticationScopes == "")
@@ -1668,7 +1872,7 @@ namespace ModBot
         {
             new Thread(() =>
             {
-                if (Api.UpdateMetadata(ChannelTitleBox.Text, ChannelGameBox.Text))
+                if (Api.UpdateMetadata(Channel_Title.Text, Channel_Game.Text))
                 {
                     if (MetadataModified) MetadataModified = false;
                 }

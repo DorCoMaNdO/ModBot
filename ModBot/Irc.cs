@@ -2270,40 +2270,40 @@ namespace ModBot
                         if (args[0].Equals("payout"))
                         {
                             int amount = 0;
-                            if (int.TryParse(args[1], out amount) && amount >= MainForm.CurrencyHandoutAmount.Minimum && amount <= MainForm.CurrencyHandoutAmount.Maximum)
+                            if (int.TryParse(args[1], out amount) && amount >= MainForm.Currency_HandoutAmount.Minimum && amount <= MainForm.Currency_HandoutAmount.Maximum)
                             {
                                 payout = amount;
                                 sendMessage("New payout amount: " + amount);
                             }
                             else
                             {
-                                sendMessage("Can't change payout amount. Must be a valid integer greater than " + (MainForm.CurrencyHandoutAmount.Minimum - 1) + " and less than " + (MainForm.CurrencyHandoutAmount.Maximum + 1));
+                                sendMessage("Can't change payout amount. Must be a valid integer greater than " + (MainForm.Currency_HandoutAmount.Minimum - 1) + " and less than " + (MainForm.Currency_HandoutAmount.Maximum + 1));
                             }
                         }
                         else if (args[0].Equals("subpayout"))
                         {
                             int amount = 0;
-                            if (int.TryParse(args[1], out amount) && amount >= MainForm.CurrencySubHandoutAmount.Minimum && amount <= MainForm.CurrencySubHandoutAmount.Maximum)
+                            if (int.TryParse(args[1], out amount) && amount >= MainForm.Currency_SubHandoutAmount.Minimum && amount <= MainForm.Currency_SubHandoutAmount.Maximum)
                             {
                                 payout = amount;
                                 sendMessage("New subscribers' payout amount: " + amount);
                             }
                             else
                             {
-                                sendMessage("Can't change subscribers' payout amount. Must be a valid integer greater than " + (MainForm.CurrencySubHandoutAmount.Minimum - 1) + " and less than " + (MainForm.CurrencySubHandoutAmount.Maximum + 1));
+                                sendMessage("Can't change subscribers' payout amount. Must be a valid integer greater than " + (MainForm.Currency_SubHandoutAmount.Minimum - 1) + " and less than " + (MainForm.Currency_SubHandoutAmount.Maximum + 1));
                             }
                         }
                         else if (args[0].Equals("interval"))
                         {
                             int tempInterval = -1;
-                            if (int.TryParse(args[1], out tempInterval) && tempInterval >= MainForm.CurrencyHandoutInterval.Minimum && tempInterval <= MainForm.CurrencyHandoutInterval.Maximum)
+                            if (int.TryParse(args[1], out tempInterval) && tempInterval >= MainForm.Currency_HandoutInterval.Minimum && tempInterval <= MainForm.Currency_HandoutInterval.Maximum)
                             {
                                 interval = tempInterval;
                                 sendMessage("New currency payout interval: " + tempInterval);
                             }
                             else
                             {
-                                sendMessage("Payout interval could not be changed. A valid interval must be greater than " + (MainForm.CurrencyHandoutInterval.Minimum - 1) + " and less than " + (MainForm.CurrencyHandoutInterval.Maximum + 1) + " minutes.");
+                                sendMessage("Payout interval could not be changed. A valid interval must be greater than " + (MainForm.Currency_HandoutInterval.Minimum - 1) + " and less than " + (MainForm.Currency_HandoutInterval.Maximum + 1) + " minutes.");
                             }
                         }
                         else if (args[0].Equals("greeting") || args[0].Equals("greetings"))
