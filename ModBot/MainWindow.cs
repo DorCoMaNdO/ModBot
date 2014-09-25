@@ -123,7 +123,14 @@ namespace ModBot
                                     }
                                 }
 
-                                About_UsersLabel.Text = "Other users (" + About_Users.Rows.Count + " total):";
+                                int lastmonth = 0, onair = 0;
+                                foreach (DataGridViewRow row in About_Users.Rows)
+                                {
+                                    DateTime time = DateTime.Parse(row.Cells["Updated"].Value.ToString());
+                                    if (time.Year == DateTime.Now.Year && time.Month == DateTime.Now.Month) lastmonth++;
+                                    if (row.Cells["Status"].Value.ToString() == "On air") onair++;
+                                }
+                                About_UsersLabel.Text = "Other users (" + About_Users.Rows.Count + " total, " + lastmonth + " in the last month, " + onair + " currently on air):";
 
                                 About_Users.Sort(About_Users.SortedColumn, About_Users.SortOrder == SortOrder.Ascending ? System.ComponentModel.ListSortDirection.Ascending : System.ComponentModel.ListSortDirection.Descending);
                             });
@@ -312,11 +319,12 @@ namespace ModBot
 
             int count = Windows.Count;
             int h = Height - 38;
-            while (h / count < 90) count--;
+            int minsize = 84;
+            while (h / count < minsize) count--;
             if (count < Windows.Count)
             {
                 h -= 24;
-                while (h / count < 90) count--;
+                while (h / count < minsize) count--;
             }
 
             foreach (CheckBox btn in Windows.Keys)
