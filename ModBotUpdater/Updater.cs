@@ -22,6 +22,8 @@ namespace ModBotUpdater
             InitializeComponent();
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
 
+            UpdatingLayout.Progress.Font = DownloadProgressBar.Font = new Font("Segoe Print", 8.0F, FontStyle.Bold);
+
             if (Program.args.Contains("-hide") || Program.args.Contains("-bg"))
             {
                 new Thread(() =>
@@ -30,7 +32,11 @@ namespace ModBotUpdater
                     BeginInvoke((MethodInvoker)delegate
                     {
                         Hide();
-                        if (Program.args.Contains("-bg")) UpdatingLayout.Show();
+                        if (Program.args.Contains("-bg"))
+                        {
+                            UpdatingLayout.Progress.Text = "Initializing download...";
+                            UpdatingLayout.Show();
+                        }
                     });
                 }).Start();
             }
@@ -113,9 +119,10 @@ namespace ModBotUpdater
                     }
                     File.Delete(@"Updater\ModBot.exe");
                 }
-            } 
+            }
 
-            StateLabel.Text = "Initializing download...";
+            UpdatingLayout.Progress.Value = DownloadProgressBar.Value = 0;
+            UpdatingLayout.Progress.Text = DownloadProgressBar.Text = StateLabel.Text = "Initializing download...";
             Thread thread = new Thread(() =>
             {
                 using (WebClient w = new WebClient())
@@ -128,6 +135,7 @@ namespace ModBotUpdater
                             Invoke((MethodInvoker)delegate
                             {
                                 UpdatingLayout.Progress.Value = DownloadProgressBar.Value = int.Parse(Math.Truncate(double.Parse(e.BytesReceived.ToString()) / double.Parse(e.TotalBytesToReceive.ToString()) * 100).ToString());
+                                UpdatingLayout.Progress.Text = DownloadProgressBar.Text = "Downloading... (PRECENTAGE)";
                                 StateLabel.Text = "Downloading...";
                             });
                         });
@@ -192,7 +200,9 @@ namespace ModBotUpdater
                     if (MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
                 }
 
-                StateLabel.Text = "Moving updated version...";
+                UpdatingLayout.Progress.Value = DownloadProgressBar.Value = 0;
+                StateLabel.Text = "Applying update...";
+                UpdatingLayout.Progress.Text = DownloadProgressBar.Text = "Applying update... (PRECENTAGE)";
                 using (Stream inStream = File.Open(@"Updater\ModBot.exe", FileMode.Open)) // ToDo: report progress without lagging the UI
                 {
                     using (Stream outStream = File.Create("ModBot.exe"))
@@ -410,6 +420,11 @@ namespace ModBotUpdater
             if (StateLabel.Text == "Error while checking for updates!" || StateLabel.Text == "Error while attempting to update!")
             {
                 UpdatingLayout.Progress.Text = DownloadProgressBar.Text = "Error!";
+                if(Program.args.Contains("-bg"))
+                {
+                    MessageBox.Show("An error has occurred while attempting to update, please restart the updater to try again.", "Error");
+                    Environment.Exit(0);
+                }
                 UpdatingLayout.Progress.TextColor = DownloadProgressBar.TextColor = Brushes.Red;
             }
 
