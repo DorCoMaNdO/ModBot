@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -14,11 +15,11 @@ namespace ModBotUpdater
     public partial class Updater : CustomForm
     {
         private Changelog changelog = new Changelog();
-        private Form This;
         private ImageWindow UpdatingLayout = new ImageWindow(Properties.Resources.ModBotUpdating, true, 100);
+
         public Updater()
         {
-            This = this;
+            Program.Updater = this;
             InitializeComponent();
             Text = "ModBot - Updater (v" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
 
@@ -29,7 +30,7 @@ namespace ModBotUpdater
                 new Thread(() =>
                 {
                     Thread.Sleep(100);
-                    BeginInvoke((MethodInvoker)delegate
+                    Invoke(() =>
                     {
                         Hide();
                         if (Program.args.Contains("-bg"))
@@ -47,7 +48,7 @@ namespace ModBotUpdater
             CheckUpdates();
         }
 
-        private new void Invoke(Delegate method)
+        /*private new void Invoke(Delegate method)
         {
             Invoke(method, This);
         }
@@ -62,9 +63,26 @@ namespace ModBotUpdater
             {
                 form.Invoke(method);
             }
+        }*/
+
+        public void Invoke(Action method)
+        {
+            Invoke(method, Program.Updater);
         }
 
-        private bool IsFileLocked(string FileLocation)
+        public void Invoke(Action method, Control ctrl)
+        {
+            if (ctrl.IsHandleCreated)
+            {
+                ctrl.BeginInvoke(method);
+            }
+            else
+            {
+                method();
+            }
+        }
+
+        public bool IsFileLocked(string FileLocation)
         {
             FileInfo file = new FileInfo(FileLocation);
             FileStream stream = null;
@@ -99,26 +117,21 @@ namespace ModBotUpdater
                 {
                     while (File.Exists("ModBot.exe") && IsFileLocked("ModBot.exe"))
                     {
-                        if (MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
+                        if (MessageBox.Show("The current ModBot version has been found corrupt, please close any open instences of it or applications that access or attempt to access it.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return;
                     }
                     File.Delete("ModBot.exe");
                 }
             }
 
-            if (!Directory.Exists("Updater"))
+            if (!Directory.Exists("Updater")) Directory.CreateDirectory("Updater");
+
+            if (File.Exists(@"Updater\ModBot.exe"))
             {
-                Directory.CreateDirectory("Updater");
-            }
-            else
-            {
-                if (File.Exists(@"Updater\ModBot.exe"))
+                while (File.Exists(@"Updater\ModBot.exe") && IsFileLocked(@"Updater\ModBot.exe"))
                 {
-                    while (File.Exists(@"Updater\ModBot.exe") && IsFileLocked(@"Updater\ModBot.exe"))
-                    {
-                        if (MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Environment.Exit(0);
-                    }
-                    File.Delete(@"Updater\ModBot.exe");
+                    if (MessageBox.Show("Please close ModBot that is inside the \"Updater\" inorder to continue with the update.", "ModBot Updater", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return;
                 }
+                File.Delete(@"Updater\ModBot.exe");
             }
 
             UpdatingLayout.Progress.Value = DownloadProgressBar.Value = 0;
@@ -132,7 +145,7 @@ namespace ModBotUpdater
                     {
                         w.DownloadProgressChanged += new DownloadProgressChangedEventHandler((object sender, DownloadProgressChangedEventArgs e) =>
                         {
-                            Invoke((MethodInvoker)delegate
+                            Invoke(() =>
                             {
                                 UpdatingLayout.Progress.Value = DownloadProgressBar.Value = int.Parse(Math.Truncate(double.Parse(e.BytesReceived.ToString()) / double.Parse(e.TotalBytesToReceive.ToString()) * 100).ToString());
                                 UpdatingLayout.Progress.Text = DownloadProgressBar.Text = "Downloading... (PRECENTAGE)";
@@ -143,14 +156,14 @@ namespace ModBotUpdater
                         {
                             if (e.Error == null && !e.Cancelled)
                             {
-                                Invoke((MethodInvoker)delegate
+                                Invoke(() =>
                                 {
                                     DoneDownloading();
                                 });
                             }
                             else
                             {
-                                Invoke((MethodInvoker)delegate
+                                Invoke(() =>
                                 {
                                     StateLabel.Text = "Error while attempting to update!";
                                 });
@@ -160,7 +173,10 @@ namespace ModBotUpdater
                     }
                     catch
                     {
-                        StateLabel.Text = "Error while attempting to update!";
+                        Invoke(() =>
+                        {
+                            StateLabel.Text = "Error while attempting to update!";
+                        });
                     }
                 }
             });
@@ -300,12 +316,12 @@ namespace ModBotUpdater
                         try
                         {
                             sLatestVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBot.txt");
-                            if (sLatestVersion != "")
+                            if (Program.ini.GetValue("Settings", "BetaUpdates", "0") == "1")
                             {
-                                if (Program.ini.GetValue("Settings", "BetaUpdates", "0") == "1")
+                                string sBetaVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotBeta.txt");
+                                if (sBetaVersion != "")
                                 {
-                                    string sBetaVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotBeta.txt");
-                                    if (sBetaVersion != "")
+                                    if (sLatestVersion != "")
                                     {
                                         string[] sLatest = sLatestVersion.Split('.'), sBeta = sBetaVersion.Split('.');
                                         if (TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sBeta[2])).Add(TimeSpan.FromSeconds(int.Parse(sBeta[3])))) == -1)
@@ -313,11 +329,18 @@ namespace ModBotUpdater
                                             sLatestVersion = sBetaVersion;
                                         }
                                     }
+                                    else
+                                    {
+                                        sLatestVersion = sBetaVersion;
+                                    }
                                 }
-                                if (Program.ini.GetValue("Settings", "DevUpdates", "0") == "1")
+                            }
+                            if (Program.ini.GetValue("Settings", "DevUpdates", "0") == "1")
+                            {
+                                string sDevVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotDev.txt");
+                                if (sDevVersion != "")
                                 {
-                                    string sDevVersion = w.DownloadString("https://dl.dropboxusercontent.com/u/60356733/ModBot/ModBotDev.txt");
-                                    if (sDevVersion != "")
+                                    if (sLatestVersion != "")
                                     {
                                         string[] sLatest = sLatestVersion.Split('.'), sDev = sDevVersion.Split('.');
                                         if (TimeSpan.FromDays(int.Parse(sLatest[2])).Add(TimeSpan.FromSeconds(int.Parse(sLatest[3]))).CompareTo(TimeSpan.FromDays(int.Parse(sDev[2])).Add(TimeSpan.FromSeconds(int.Parse(sDev[3])))) == -1)
@@ -325,10 +348,17 @@ namespace ModBotUpdater
                                             sLatestVersion = sDevVersion;
                                         }
                                     }
+                                    else
+                                    {
+                                        sLatestVersion = sDevVersion;
+                                    }
                                 }
                             }
-                            w.OpenRead("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + sLatestVersion + "/ModBot.exe");
-                            dFileSize = Convert.ToDouble(w.ResponseHeaders["Content-Length"]);
+                            if (sLatestVersion != "")
+                            {
+                                w.OpenRead("https://dl.dropboxusercontent.com/u/60356733/ModBot/" + sLatestVersion + "/ModBot.exe");
+                                dFileSize = Convert.ToDouble(w.ResponseHeaders["Content-Length"]);
+                            }
                         }
                         catch
                         {
@@ -355,7 +385,7 @@ namespace ModBotUpdater
                     }
                 }
 
-                Invoke((MethodInvoker)delegate
+                Invoke(() =>
                 {
                     if (sLatestVersion != "")
                     {
@@ -390,7 +420,7 @@ namespace ModBotUpdater
                 if (Program.args.Contains("-force"))
                 {
                     Program.args.Remove("-force");
-                    Invoke((MethodInvoker)delegate { startDownload(); });
+                    Invoke(() => { startDownload(); });
                     return;
                 }
 
@@ -504,7 +534,7 @@ namespace ModBotUpdater
                     Versions.Add(Version, Changes);
                 }
 
-                Invoke((MethodInvoker)delegate
+                Invoke(() =>
                 {
                     if (LatestVersionLabel.Text.IndexOfAny(new char[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' }) != -1) return;
                     bool Found = (CurrentVersionLabel.Text.IndexOfAny(new char[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' }) == -1);
@@ -521,7 +551,8 @@ namespace ModBotUpdater
                         string sDate = "";
                         int iLogMajor = int.Parse(sLogVersion[0]), iLogMinor = sLogVersion[1] != "*" ? int.Parse(sLogVersion[1]) : 0, iLogBuild = sLogVersion.Length > 2 ? sLogVersion[2] != "*" ? int.Parse(sLogVersion[2]) : 0 : 0, iLogRev = sLogVersion.Length > 3 ? sLogVersion[3] != "*" ? int.Parse(sLogVersion[3]) : 0 : 0;
 
-                        if (iLogBuild > 0) sDate = " (" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(iLogBuild).AddSeconds(iLogRev * 2).ToLocalTime().ToString(iLogRev > 0 ? "M/dd/yyyy hh:mm:ss tt" : "M/dd/yyyy") + ")";
+                        //if (iLogBuild > 0) sDate = " (" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(iLogBuild).AddSeconds(iLogRev * 2).ToLocalTime().ToString(iLogRev > 0 ? "M/dd/yyyy hh:mm:ss tt" : "M/dd/yyyy") + ")";
+                        if (iLogBuild > 0) sDate = " (" + new DateTime(2000, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddDays(iLogBuild).AddSeconds(iLogRev * 2).ToLocalTime().ToString(iLogRev > 0 ? CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern + " " + CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern : CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern) + ")";
 
                         int Compare = Found ? TimeSpan.FromDays(iCurrentBuild).Add(TimeSpan.FromSeconds(iCurrentRev)).CompareTo(TimeSpan.FromDays(iLogBuild).Add(TimeSpan.FromSeconds(iLogRev))) : -1;
                         changelog.ChangelogNotes.SelectionColor = Color.Blue;
@@ -566,6 +597,11 @@ namespace ModBotUpdater
             CheckBox cb = (CheckBox)sender;
             CheckUpdatesButton.Enabled = true;
             Program.ini.SetValue("Settings", cb.Name, cb.Checked ? "1" : "0");
+        }
+
+        private void ExtensionsButton_Click(object sender, EventArgs e)
+        {
+            new Extensions().ShowDialog();
         }
     }
 }

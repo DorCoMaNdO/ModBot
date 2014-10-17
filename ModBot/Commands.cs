@@ -1,20 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
 using System.IO;
 
 namespace ModBot
 {
     public delegate void CommandExecutedHandler(string user, string command, string[] args);
 
-    public static class Commands
+    static class Commands
     {
-        private class Command
+        public class Command
         {
             public string Cmd { get; private set; }
+            public int MinLevel = 0, Delay = 5;
+            public bool StreamerNoDelay, ModNoDelay, SubNoDelay;
             private event CommandExecutedHandler Executed;
 
-            public Command(string Command, CommandExecutedHandler Handler)
+            public Command(string Command, CommandExecutedHandler Handler, int MinLevel = 0, int Delay = 5, bool StreamerNoDelay = true, bool ModNoDelay = true, bool SubNoDelay = false)
             {
                 if (Command == null || Command == "" || Command.Contains(" "))
                 {
@@ -31,8 +32,20 @@ namespace ModBot
                             return;
                         }
                     }
-                    this.Cmd = Command;
+
+                    Cmd = Command;
+
+                    this.MinLevel = MinLevel;
+
+                    this.Delay = Delay;
+
+                    if (ModNoDelay) StreamerNoDelay = true;
+                    this.StreamerNoDelay = StreamerNoDelay;
+                    this.ModNoDelay = ModNoDelay;
+                    this.SubNoDelay = SubNoDelay;
+
                     Executed += Handler;
+
                     lCommands.Add(this);
                 }
             }
@@ -60,11 +73,12 @@ namespace ModBot
             }
         }
 
-        private static List<Command> lCommands = new List<Command>();
+        public static List<Command> lCommands = new List<Command>();
+        public static Dictionary<string, int> dLastUsed = new Dictionary<string, int>();
 
-        public static void Add(string Command, CommandExecutedHandler Handler)
+        public static void Add(string Command, CommandExecutedHandler Handler, int MinLevel = 0, int Delay = 5, bool StreamerNoDelay = true, bool ModNoDelay = true, bool SubNoDelay = false)
         {
-            new Command(Command, Handler);
+            new Command(Command, Handler, MinLevel, Delay, StreamerNoDelay, ModNoDelay, SubNoDelay);
         }
 
         public static void Remove(string Command, CommandExecutedHandler Handler)
@@ -107,16 +121,14 @@ namespace ModBot
             {
                 foreach (Command cmd in lCommands)
                 {
-                    if (cmd.Cmd.ToLower() == Command.ToLower())
-                    {
-                        return true;
-                    }
+                    if (cmd.Cmd.ToLower() == Command.ToLower()) return true;
                 }
             }
+
             return false;
         }
 
-        public static bool CheckCommand(string user, string message, bool call = false)
+        public static bool CheckCommand(string user, string message, bool call = false, bool log = true)
         {
             while (message.Contains("  "))
             {
@@ -126,6 +138,7 @@ namespace ModBot
             if (message.EndsWith(" ")) message = message.Substring(0, message.Length - 1);
             //message = message.ToLower();
             string[] cmd = message.Split(' ');
+
             lock (lCommands)
             {
                 foreach (Command Command in lCommands)
@@ -134,21 +147,44 @@ namespace ModBot
                     {
                         if (call)
                         {
-                            if (user != "") Log(user + " has used the \"" + Command.Cmd + "\" command.");
+                            lock (dLastUsed)
+                            {
+                                if (Command.MinLevel > Database.getUserLevel(user) || dLastUsed.ContainsKey(cmd[0].ToLower()) && Api.GetUnixTimeNow() - dLastUsed[cmd[0].ToLower()] < Command.Delay && (!Command.StreamerNoDelay || user.ToLower() != Irc.channel.Substring(1)) && (!Command.ModNoDelay || !Irc.Moderators.Contains(user.ToLower())) && (!Command.SubNoDelay || !Irc.Subscribers.Contains(user.ToLower()))) return true;
+
+                                if (!dLastUsed.ContainsKey(cmd[0].ToLower())) dLastUsed.Add(cmd[0].ToLower(), Api.GetUnixTimeNow());
+                                dLastUsed[cmd[0].ToLower()] = Api.GetUnixTimeNow();
+                            }
+
+                            if (user != "" && log) Log(user + " has used the \"" + Command.Cmd + "\" command.");
+
                             Command.Call(user, message);
                         }
+
                         return true;
                     }
                 }
             }
+
             if (Database.Commands.cmdExists(cmd[0]))
             {
                 if (call) // ToDo : Convert to the new system
                 {
-                    if (user != "") Log(user + " has used the \"" + cmd[0] + "\" command.");
                     if (Database.getUserLevel(user) >= Database.Commands.LevelRequired(cmd[0]))
                     {
-                        if (cmd.Length > 1 && Database.getUserLevel(user) > 0)
+                        //if (dLastUsed.ContainsKey(cmd[0].ToLower()) && Api.GetUnixTimeNow() - dLastUsed[cmd[0].ToLower()] < 5 && Database.getUserLevel(user) < 4) return true;
+                        //if (dLastUsed.ContainsKey(cmd[0].ToLower()) && Api.GetUnixTimeNow() - dLastUsed[cmd[0].ToLower()] < 5 && (!Command.StreamerNoDelay || user.ToLower() != Irc.channel.Substring(1)) && (!Command.ModNoDelay || !Irc.Moderators.Contains(user.ToLower())) && (!Command.SubNoDelay || !Irc.Subscribers.Contains(user.ToLower()))) return true;
+                        lock (dLastUsed)
+                        {
+                            if (dLastUsed.ContainsKey(cmd[0].ToLower()) && Api.GetUnixTimeNow() - dLastUsed[cmd[0].ToLower()] < 5 && (user.ToLower() != Irc.channel.Substring(1) || Database.getUserLevel(user) > 0 || !Irc.Moderators.Contains(user.ToLower()))) return true;
+
+                            if (!dLastUsed.ContainsKey(cmd[0].ToLower())) dLastUsed.Add(cmd[0].ToLower(), Api.GetUnixTimeNow());
+                            dLastUsed[cmd[0].ToLower()] = Api.GetUnixTimeNow();
+                        }
+
+                        if (user != "" && log) Log(user + " has used the \"" + cmd[0] + "\" command.");
+
+                        //if (cmd.Length > 1 && Database.getUserLevel(user) > 0)
+                        if (cmd.Length > 1)
                         {
                             Irc.sendMessage(Database.Commands.getOutput(cmd[0]).Replace("@user", Api.GetDisplayName(cmd[1])));
                         }
@@ -158,8 +194,10 @@ namespace ModBot
                         }
                     }
                 }
+
                 return true;
             }
+
             return false;
         }
 

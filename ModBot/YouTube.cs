@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace ModBot
 {
-    public static class YouTube
+    static class YouTube
     {
         public class Song
         {
@@ -80,7 +80,7 @@ namespace ModBot
         public static void VoteSkip(string user)
         {
             string name = user;
-            user = Api.capName(user);
+            user = user.ToLower();
             if(!Votes.Contains(user))
             {
                 Votes.Add(user);
@@ -139,7 +139,7 @@ namespace ModBot
                 //Program.MainForm.YouTubePlayer.Movie = "https://www.youtube.com/v/" + song.id + "?autoplay=1";
                 //Program.MainForm.YouTubePlayer.Movie = "https://www.youtube.com/apiplayer?video_id=" + song.id + "&version=3&autoplay=1&enablejsapi=1&feature=player_embedded&controls=0&modestbranding=1&rel=0&showinfo=0&autohide=1&color=white&playerapiid=musicPlayer&iv_load_policy=3";
                 CurrentSong = song;
-                Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                Program.Invoke(() =>
                 {
                     Program.MainForm.SongRequestPlayer.Url = new Uri("https://www.youtube.com/apiplayer?video_id=" + song.id + "&version=3&autoplay=1&enablejsapi=1&feature=player_embedded&controls=0&modestbranding=1&rel=0&showinfo=0&autohide=1&color=white&playerapiid=musicPlayer&iv_load_policy=3");
                     Program.MainForm.SongRequestPlayer.Visible = true;
@@ -210,7 +210,7 @@ namespace ModBot
 
         private static void NextSong(object state)
         {
-            /*Program.Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
+            /*Program.Program.Invoke(() =>
             {
                 foreach (System.Windows.Forms.HtmlElement elem in Program.MainForm.SongRequestPlayer.Document.All)
                 {

@@ -61,6 +61,16 @@ namespace ModBot.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] CSteamworks {
+            get {
+                object obj = ResourceManager.GetObject("CSteamworks", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap DonateImage {
@@ -96,6 +106,26 @@ namespace ModBot.Properties {
         internal static byte[] ModBotUpdater {
             get {
                 object obj = ResourceManager.GetObject("ModBotUpdater", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] steam_api {
+            get {
+                object obj = ResourceManager.GetObject("steam_api", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] Steamworks_NET {
+            get {
+                object obj = ResourceManager.GetObject("Steamworks_NET", resourceCulture);
                 return ((byte[])(obj));
             }
         }

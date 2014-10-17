@@ -40,6 +40,7 @@
             this.ChangelogButton = new System.Windows.Forms.Button();
             this.BetaUpdates = new System.Windows.Forms.CheckBox();
             this.DevUpdates = new System.Windows.Forms.CheckBox();
+            this.ExtensionsButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // DownloadProgressBar
@@ -63,9 +64,9 @@
             // 
             this.CheckUpdatesButton.BackColor = System.Drawing.Color.White;
             this.CheckUpdatesButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.CheckUpdatesButton.Location = new System.Drawing.Point(14, 137);
+            this.CheckUpdatesButton.Location = new System.Drawing.Point(141, 137);
             this.CheckUpdatesButton.Name = "CheckUpdatesButton";
-            this.CheckUpdatesButton.Size = new System.Drawing.Size(164, 23);
+            this.CheckUpdatesButton.Size = new System.Drawing.Size(122, 23);
             this.CheckUpdatesButton.TabIndex = 46;
             this.CheckUpdatesButton.Text = "Check for Updates";
             this.CheckUpdatesButton.UseVisualStyleBackColor = false;
@@ -75,9 +76,9 @@
             // 
             this.UpdateButton.BackColor = System.Drawing.Color.White;
             this.UpdateButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.UpdateButton.Location = new System.Drawing.Point(354, 137);
+            this.UpdateButton.Location = new System.Drawing.Point(396, 137);
             this.UpdateButton.Name = "UpdateButton";
-            this.UpdateButton.Size = new System.Drawing.Size(164, 23);
+            this.UpdateButton.Size = new System.Drawing.Size(122, 23);
             this.UpdateButton.TabIndex = 47;
             this.UpdateButton.Text = "Update ModBot";
             this.UpdateButton.UseVisualStyleBackColor = false;
@@ -142,9 +143,9 @@
             // 
             this.ChangelogButton.BackColor = System.Drawing.Color.White;
             this.ChangelogButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ChangelogButton.Location = new System.Drawing.Point(184, 137);
+            this.ChangelogButton.Location = new System.Drawing.Point(269, 137);
             this.ChangelogButton.Name = "ChangelogButton";
-            this.ChangelogButton.Size = new System.Drawing.Size(164, 23);
+            this.ChangelogButton.Size = new System.Drawing.Size(121, 23);
             this.ChangelogButton.TabIndex = 53;
             this.ChangelogButton.Text = "Changelog";
             this.ChangelogButton.UseVisualStyleBackColor = false;
@@ -174,11 +175,24 @@
             this.DevUpdates.UseVisualStyleBackColor = true;
             this.DevUpdates.CheckedChanged += new System.EventHandler(this.UpdateChecks_CheckedChanged);
             // 
+            // ExtensionsButton
+            // 
+            this.ExtensionsButton.BackColor = System.Drawing.Color.White;
+            this.ExtensionsButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ExtensionsButton.Location = new System.Drawing.Point(14, 137);
+            this.ExtensionsButton.Name = "ExtensionsButton";
+            this.ExtensionsButton.Size = new System.Drawing.Size(121, 23);
+            this.ExtensionsButton.TabIndex = 98;
+            this.ExtensionsButton.Text = "Extensions";
+            this.ExtensionsButton.UseVisualStyleBackColor = false;
+            this.ExtensionsButton.Click += new System.EventHandler(this.ExtensionsButton_Click);
+            // 
             // Updater
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(532, 174);
+            this.Controls.Add(this.ExtensionsButton);
             this.Controls.Add(this.DevUpdates);
             this.Controls.Add(this.BetaUpdates);
             this.Controls.Add(this.ChangelogButton);
@@ -208,6 +222,7 @@
             this.Controls.SetChildIndex(this.ChangelogButton, 0);
             this.Controls.SetChildIndex(this.BetaUpdates, 0);
             this.Controls.SetChildIndex(this.DevUpdates, 0);
+            this.Controls.SetChildIndex(this.ExtensionsButton, 0);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -227,6 +242,7 @@
         public System.Windows.Forms.Button ChangelogButton;
         public System.Windows.Forms.CheckBox BetaUpdates;
         public System.Windows.Forms.CheckBox DevUpdates;
+        public System.Windows.Forms.Button ExtensionsButton;
     }
 }
 

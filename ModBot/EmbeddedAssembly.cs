@@ -7,22 +7,19 @@ using System.Security.Cryptography;
 /// <summary>
 /// A class for loading Embedded Assembly
 /// </summary>
-public class EmbeddedAssembly
+static class EmbeddedAssembly
 {
     // Version 1.3
 
-    static Dictionary<string, Assembly> dic = null;
+    public static Dictionary<string, Assembly> dic = new Dictionary<string, Assembly>();
 
     /// <summary>
     /// Load Assembly, DLL from Embedded Resources into memory.
     /// </summary>
     /// <param name="embeddedResource">Embedded Resource string. Example: WindowsFormsApplication1.SomeTools.dll</param>
     /// <param name="fileName">File Name. Example: SomeTools.dll</param>
-    public static void Load(string embeddedResource, string fileName)
+    public static void Load(string embeddedResource, string fileName, bool ForceSecondaryMethod = false)
     {
-        if (dic == null)
-            dic = new Dictionary<string, Assembly>();
-
         byte[] ba = null;
         Assembly asm = null;
         Assembly curAsm = Assembly.GetExecutingAssembly();
@@ -36,19 +33,22 @@ public class EmbeddedAssembly
             // Get byte[] from the file from embedded resource
             ba = new byte[(int)stm.Length];
             stm.Read(ba, 0, (int)stm.Length);
-            try
+            if (!ForceSecondaryMethod)
             {
-                asm = Assembly.Load(ba);
+                try
+                {
+                    asm = Assembly.Load(ba);
 
-                // Add the assembly/dll into dictionary
-                dic.Add(asm.FullName, asm);
-                return;
-            }
-            catch
-            {
-                // Purposely do nothing
-                // Unmanaged dll or assembly cannot be loaded directly from byte[]
-                // Let the process fall through for next part
+                    // Add the assembly/dll into dictionary
+                    dic.Add(asm.FullName, asm);
+                    return;
+                }
+                catch
+                {
+                    // Purposely do nothing
+                    // Unmanaged dll or assembly cannot be loaded directly from byte[]
+                    // Let the process fall through for next part
+                }
             }
         }
 
@@ -109,7 +109,7 @@ public class EmbeddedAssembly
     /// <returns></returns>
     public static Assembly Get(string assemblyFullName)
     {
-        if (dic == null || dic.Count == 0)
+        if (dic.Count == 0)
             return null;
 
         if (dic.ContainsKey(assemblyFullName))

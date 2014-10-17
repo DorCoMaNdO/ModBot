@@ -2,7 +2,6 @@
 *.sqlite
 *.rar
 bin
-/ModBot/Externals
 /*.dat
 /ModBot/bin
 /ModBot/obj
@@ -10,3 +9,5 @@ bin
 /ModBotUpdater/obj
 /OneTimeConverter/bin
 /OneTimeConverter/obj
+/ExampleExtension/bin
+/ExampleExtension/obj

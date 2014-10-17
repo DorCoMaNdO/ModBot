@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ModBot
 {
-    public static class Pool
+    static class Pool
     {
         private static Dictionary<string, int> winners = new Dictionary<string, int>();
         private static Dictionary<string, PoolUser> bets = new Dictionary<string, PoolUser>();
@@ -25,7 +25,7 @@ namespace ModBot
 
         public static bool placeBet(string nick, string option, int amount)
         {
-            if (Running && options.Contains(option) && amount <= maxBet)
+            if (Running && options.Contains(option) && amount > 0 && amount <= maxBet)
             {
                 if (bets.ContainsKey(nick))
                 {
@@ -67,7 +67,7 @@ namespace ModBot
             Running = false;
         }
 
-        private static void buildWinners(string winBet)
+        public static void buildWinners(string winBet)
         {
             winners.Clear();
             foreach (string nick in bets.Keys)
@@ -91,7 +91,7 @@ namespace ModBot
             Running = false;
         }
 
-        private static void buildTotalBets()
+        public static void buildTotalBets()
         {
             totalBets = 0;
             foreach (string nick in bets.Keys)
@@ -178,6 +178,53 @@ namespace ModBot
                 return options[optionnumber];
             }
             return "";
+        }
+
+        public static List<string> buildBetOptions(string[] temp)
+        {
+            List<string> betOptions = new List<string>();
+            try
+            {
+                lock (betOptions)
+                {
+                    bool inQuote = false;
+                    string option = "";
+                    for (int i = 2; i < temp.Length; i++)
+                    {
+                        if (temp[i].StartsWith("\""))
+                        {
+                            inQuote = true;
+                        }
+                        if (!inQuote)
+                        {
+                            option = temp[i];
+                        }
+                        if (inQuote)
+                        {
+                            option += temp[i] + " ";
+                        }
+                        if (temp[i].EndsWith("\""))
+                        {
+                            option = option.Substring(1, option.Length - 3);
+                            inQuote = false;
+                        }
+                        if (!inQuote && !option.StartsWith("#") && !betOptions.Contains(option))
+                        {
+                            betOptions.Add(option);
+                            option = "";
+                        }
+                    }
+                }
+
+                //print(sb.ToString());
+            }
+            //catch (Exception e)
+            catch
+            {
+                //Console.WriteLine(e.ToString());
+                //Api.LogError("*************Error Message (via buildBetOptions()): " + DateTime.Now + "*********************************\r\n" + e + "\r\n");
+            }
+            return betOptions;
         }
     }
 

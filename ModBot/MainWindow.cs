@@ -13,16 +13,16 @@ using System.Windows.Forms;
 
 namespace ModBot
 {
-    public partial class MainWindow : CustomForm
+    partial class MainWindow : CustomForm
     {
         private iniUtil ini = Program.ini;
         public Dictionary<string, Dictionary<string, string>> dSettings = new Dictionary<string, Dictionary<string, string>>();
         private bool bIgnoreUpdates, MetadataModified;
         public int iSettingsPresent = -2;
-        //private bool g_bLoaded = false;
-        public Dictionary<CheckBox, Panel> Windows = new Dictionary<CheckBox, Panel>();
-        public Dictionary<Panel, Dictionary<Control, Control>> TabConfigs = new Dictionary<Panel, Dictionary<Control, Control>>();
-        public Panel CurrentWindow = null;
+        public WindowsList Windows = new WindowsList();
+        public Dictionary<Control, Dictionary<Control, Control>> TabConfigs = new Dictionary<Control, Dictionary<Control, Control>>();
+        public Window CurrentWindow = null;
+        public VScrollBar WindowsScroll;
         private List<Thread> Threads = new List<Thread>();
         private string AuthenticationScopes;
         public string ChannelTitle, ChannelGame;
@@ -32,12 +32,15 @@ namespace ModBot
         {
             InitializeComponent();
 
+            Program.MainForm = this;
+
             /*foreach (Control ctrl in Controls)
             {
                 ctrl.TabStop = false;
             }*/
 
-            Text = "ModBot v" + (VersionLabel.Text = "Version: " + Assembly.GetExecutingAssembly().GetName().Version).Substring(9);
+            Text = "ModBot v" + (VersionLabel.Text = Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            VersionLabel.Text = "Version: " + VersionLabel.Text + "\r\nAPI Version: " + Program.ApiVersion;
 
             Thread thread = new Thread(() =>
             {
@@ -94,11 +97,11 @@ namespace ModBot
                                         }
                                     }
                                     //Channels.Add(new Tuple<string, string, string, int, string>(JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/users/" + json["Channel"].ToString()))["display_name"].ToString(), sStatus, json["Version"].ToString(), int.Parse(json["Viewers"].ToString()), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToString()));
-                                    Channels.Add(new Tuple<string, string, string, string, string>(json["Channel"].ToString(), json["Bot"].ToString(), sStatus, json["Version"].ToString(), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToLocalTime().ToString()), new Tuple<string, string, int>(json["Title"].ToString(), json["Game"].ToString(), int.Parse(json["Viewers"].ToString())));
+                                    Channels.Add(new Tuple<string, string, string, string, string>(json["Channel"].ToString(), json["Bot"].ToString(), sStatus, json["Version"].ToString(), new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(updated).ToLocalTime().ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern + " " + CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern)), new Tuple<string, string, int>(json["Title"].ToString(), json["Game"].ToString(), int.Parse(json["Viewers"].ToString())));
                                 }
                             }
 
-                            Program.Invoke((MethodInvoker)delegate
+                            Program.Invoke(() =>
                             {
                                 foreach (Tuple<string, string, string, string, string> channel in Channels.Keys)
                                 {
@@ -127,9 +130,11 @@ namespace ModBot
                                 foreach (DataGridViewRow row in About_Users.Rows)
                                 {
                                     DateTime time = DateTime.Parse(row.Cells["Updated"].Value.ToString());
-                                    if (time.Year == DateTime.Now.Year && time.Month == DateTime.Now.Month) lastmonth++;
+                                    if (time.CompareTo(DateTime.Now.Subtract(TimeSpan.FromDays(30))) > -1) lastmonth++;
+                                    //if (time.Year == DateTime.Now.Year && time.Month == DateTime.Now.Month) lastmonth++;
                                     if (row.Cells["Status"].Value.ToString() == "On air") onair++;
                                 }
+                                //About_UsersLabel.Text = "Other users (" + About_Users.Rows.Count + " total, " + lastmonth + " in the last 30 days, " + onair + " currently on air):";
                                 About_UsersLabel.Text = "Other users (" + About_Users.Rows.Count + " total, " + lastmonth + " in the last month, " + onair + " currently on air):";
 
                                 About_Users.Sort(About_Users.SortedColumn, About_Users.SortOrder == SortOrder.Ascending ? System.ComponentModel.ListSortDirection.Ascending : System.ComponentModel.ListSortDirection.Descending);
@@ -190,9 +195,9 @@ namespace ModBot
                     {
                     }
                 }
-                BeginInvoke((MethodInvoker)delegate
+                BeginInvoke(() =>
                 {
-                    File.WriteAllLines(@"Settings\Games.txt", games.ToArray());
+                    File.WriteAllLines(@"Data\Games.txt", games.ToArray());
                     Games.AddRange(games.ToArray());
                     ChannelGameBox.AutoCompleteCustomSource = Games;
                 });
@@ -200,10 +205,10 @@ namespace ModBot
             thread.Name = "Download games list";
             thread.Start();
             Threads.Add(thread);*/
-            if (File.Exists(@"Settings\Games.txt"))
+            if (File.Exists(@"Data\Games.txt"))
             {
                 AutoCompleteStringCollection Games = new AutoCompleteStringCollection();
-                Games.AddRange(File.ReadAllLines(@"Settings\Games.txt"));
+                Games.AddRange(File.ReadAllLines(@"Data\Games.txt"));
                 Channel_Game.AutoCompleteCustomSource = Games;
             }
 
@@ -280,13 +285,25 @@ namespace ModBot
             SettingsWindow.Controls.Add(panel);
             panel.BringToFront();
 
-            Windows.Add(SettingsWindowButton, SettingsWindow);
-            Windows.Add(ChannelWindowButton, ChannelWindow);
-            Windows.Add(CurrencyWindowButton, CurrencyWindow);
-            Windows.Add(GiveawayWindowButton, GiveawayWindow);
-            Windows.Add(DonationsWindowButton, DonationsWindow);
-            Windows.Add(SpamFilterWindowButton, SpamFilterWindow);
-            Windows.Add(AboutWindowButton, AboutWindow);
+            panel = new Panel();
+            panel.Size = new Size(About_Users.Size.Width, 1);
+            panel.Location = new Point(About_Users.Location.X, About_Users.Location.Y);
+            AboutWindow.Controls.Add(panel);
+            panel.BringToFront();
+            panel = new Panel();
+            panel.Size = new Size(1, About_Users.Size.Height);
+            panel.Location = new Point(About_Users.Location.X + About_Users.Size.Width - 18, About_Users.Location.Y);
+            AboutWindow.Controls.Add(panel);
+            panel.BringToFront();
+            About_UsersLabel.BringToFront();
+
+            Windows.Add(new Window("Settings", SettingsWindow, false));
+            Windows.Add(new Window("Channel", ChannelWindow));
+            Windows.Add(new Window("Currency", CurrencyWindow));
+            Windows.Add(new Window("Giveaway", GiveawayWindow));
+            Windows.Add(new Window("Donations", DonationsWindow, true, false, false, true));
+            Windows.Add(new Window("Spam Filter", SpamFilterWindow, true, true, false, false, "Spam\r\nFilter"));
+            Windows.Add(new Window("About", AboutWindow, false));
 
             Dictionary<Control, Control> TabConfig = new Dictionary<Control, Control>();
             TabConfig.Add(this, Bot_Name);
@@ -317,9 +334,9 @@ namespace ModBot
 
             // finish the rest
 
-            int count = Windows.Count;
-            int h = Height - 38;
-            int minsize = 84;
+            int count = Windows.Count; // Amount of buttons that will be in view.
+            int h = Height - 38; // Height that can be used.
+            int minsize = 84; // Min size of each button.
             while (h / count < minsize) count--;
             if (count < Windows.Count)
             {
@@ -327,7 +344,7 @@ namespace ModBot
                 while (h / count < minsize) count--;
             }
 
-            foreach (CheckBox btn in Windows.Keys)
+            foreach (CheckBox btn in Windows.Buttons)
             {
                 btn.Size = new Size(100, h / count);
             }
@@ -336,7 +353,7 @@ namespace ModBot
             while (y > 0)
             {
                 int c = 0;
-                foreach (CheckBox btn in Windows.Keys)
+                foreach (CheckBox btn in Windows.Buttons)
                 {
                     c++;
                     if (c > count || y == 0) break;
@@ -347,7 +364,7 @@ namespace ModBot
 
             y = 0;
             int btnc = 0;
-            foreach (CheckBox btn in Windows.Keys)
+            foreach (CheckBox btn in Windows.Buttons)
             {
                 btnc++;
                 if (btnc > count) break;
@@ -356,7 +373,7 @@ namespace ModBot
             while (y < h)
             {
                 btnc = 0;
-                foreach (CheckBox btn in Windows.Keys)
+                foreach (CheckBox btn in Windows.Buttons)
                 {
                     btnc++;
                     if (btnc > count || y >= h) break;
@@ -366,27 +383,29 @@ namespace ModBot
             }
 
             int currenty = 30;
-            foreach (CheckBox btn in Windows.Keys)
+            foreach (CheckBox btn in Windows.Buttons)
             {
                 btn.Location = new Point(8, currenty);
                 currenty += btn.Size.Height;
             }
 
-            VScrollBar scroll = new VScrollBar();
-            scroll.Size = new Size(102, 24);
-            scroll.Location = new Point(7, Height - 32);
-            scroll.Visible = (count < Windows.Count);
-            scroll.Maximum = Windows.Count - count + 9;
-            scroll.Scroll += (object sender, ScrollEventArgs e) =>
+            WindowsScroll = new VScrollBar();
+            WindowsScroll.Size = new Size(102, 24);
+            WindowsScroll.Location = new Point(7, Height - 32);
+            WindowsScroll.Visible = (count < Windows.Count);
+            WindowsScroll.Maximum = Windows.Count - count + 9;
+            WindowsScroll.Scroll += (object sender, ScrollEventArgs e) =>
             {
-                currenty = 30 - h / count * e.OldValue; // fix animation cutting
+                /*currenty = 30 - h / count * e.OldValue; // ToDo: fix animation cutting
                 foreach (CheckBox btn in Windows.Keys)
                 {
                     btn.Location = new Point(8, currenty);
                     currenty += btn.Size.Height;
-                }
+                }*/
+                VScrollBar s = (VScrollBar)sender;
+                s.Enabled = false;
 
-                foreach (CheckBox btn in Windows.Keys)
+                foreach (CheckBox btn in Windows.Buttons)
                 {
                     btn.Size = new Size(100, h / count);
                 }
@@ -395,7 +414,7 @@ namespace ModBot
                 while (y > 0)
                 {
                     int c = 0;
-                    foreach (CheckBox btn in Windows.Keys)
+                    foreach (CheckBox btn in Windows.Buttons)
                     {
                         c++;
                         if (c - 1 < e.NewValue) continue;
@@ -407,7 +426,7 @@ namespace ModBot
 
                 y = 0;
                 btnc = 0;
-                foreach (CheckBox btn in Windows.Keys)
+                foreach (CheckBox btn in Windows.Buttons)
                 {
                     btnc++;
                     if (btnc - 1 < e.NewValue) continue;
@@ -417,7 +436,7 @@ namespace ModBot
                 while(y < h)
                 {
                     btnc = 0;
-                    foreach (CheckBox btn in Windows.Keys)
+                    foreach (CheckBox btn in Windows.Buttons)
                     {
                         btnc++;
                         if (btnc - 1 < e.NewValue) continue;
@@ -429,39 +448,81 @@ namespace ModBot
 
                 new Thread(() =>
                 {
-                    int newval = e.NewValue;
-                    while (30 - h / count * newval != Windows.Keys.ElementAt(0).Location.Y)
+                    while (30 - h / count * e.NewValue != Windows.Buttons[0].Location.Y)
                     {
-                        if (e.NewValue != newval) break;
-                        foreach (CheckBox btn in Windows.Keys)
+                        if (e.NewValue != WindowsScroll.Value) break;
+                        foreach (CheckBox btn in Windows.Buttons)
                         {
-                            if (e.NewValue != newval) break;
-                            Invoke((MethodInvoker)delegate
+                            if (e.NewValue != WindowsScroll.Value) break;
+                            Program.Invoke(() =>
                             {
-                                btn.Location = new Point(8, btn.Location.Y + (30 - h / count * newval > Windows.Keys.ElementAt(0).Location.Y ? 1 : -1));
+                                btn.Location = new Point(8, btn.Location.Y + (30 - h / count * e.NewValue > Windows.Buttons[0].Location.Y ? 1 : -1));
                             });
                         }
-                        Thread.Sleep(5);
+                        Thread.Sleep(1);
                     }
 
-                    /*if (e.NewValue != newval)
+                    Program.Invoke(() =>
                     {
-                        currenty = 30 - h / count * newval;
-                        foreach (CheckBox btn in Windows.Keys)
+                        if (e.NewValue == WindowsScroll.Value) // Make sure nothing is messed up.
                         {
-                            Invoke((MethodInvoker)delegate
+                            currenty = 30 - h / count * e.NewValue;
+                            foreach (CheckBox btn in Windows.Buttons)
                             {
                                 btn.Location = new Point(8, currenty);
-                            });
-                            currenty += btn.Size.Height;
+                                currenty += btn.Size.Height;
+                            }
+
+                            foreach (CheckBox btn in Windows.Buttons)
+                            {
+                                btn.Size = new Size(100, h / count);
+                            }
+
+                            y = -(h / count * count - Height + 38 + count < Windows.Count ? 24 : 0);
+                            while (y > 0)
+                            {
+                                int c = 0;
+                                foreach (CheckBox btn in Windows.Buttons)
+                                {
+                                    c++;
+                                    if (c - 1 < e.NewValue) continue;
+                                    if (c > count || y == 0) break;
+                                    btn.Size = new Size(btn.Size.Width, btn.Size.Height + 1);
+                                    y--;
+                                }
+                            }
+
+                            y = 0;
+                            btnc = 0;
+                            foreach (CheckBox btn in Windows.Buttons)
+                            {
+                                btnc++;
+                                if (btnc - 1 < e.NewValue) continue;
+                                if (btnc > count + e.NewValue) break;
+                                y += btn.Size.Height;
+                            }
+                            while (y < h)
+                            {
+                                btnc = 0;
+                                foreach (CheckBox btn in Windows.Buttons)
+                                {
+                                    btnc++;
+                                    if (btnc - 1 < e.NewValue) continue;
+                                    if (btnc > count + e.NewValue || y >= h) break;
+                                    btn.Size = new Size(btn.Size.Width, btn.Size.Height + 1);
+                                    y++;
+                                }
+                            }
                         }
-                    }*/
+
+                        s.Enabled = true;
+                    });
                 }).Start();
             };
-            Controls.Add(scroll);
-            scroll.BringToFront();
+            Controls.Add(WindowsScroll);
+            WindowsScroll.BringToFront();
 
-            CurrentWindow = SettingsWindow;
+            CurrentWindow = Windows.FromControl(SettingsWindow);
             SettingsWindow.BringToFront();
 
             SettingsErrorLabel.Text = "";
@@ -497,7 +558,7 @@ namespace ModBot
                 foreach (string line in File.ReadAllLines(@"Data\Subscriptions\Rewards.txt"))
                 {
                     string[] reward = line.Split(';');
-                    Channel_SubscriptionRewardsList.Rows.Add(reward[0], reward[1]);
+                    if (reward.Length > 1) Channel_SubscriptionRewardsList.Rows.Add(reward[0], reward[1]);
                 }
             }
             Channel_SubscriptionRewardsList.CellValueChanged += new DataGridViewCellEventHandler(Channel_SubscriptionRewardsList_Changed);
@@ -586,7 +647,8 @@ namespace ModBot
 
             ini.SetValue("Settings", "Database_Table", Database_Table.Text = ini.GetValue("Settings", "Database_Table", ""));
 
-            Channel_SubscriptionsDate.Value = DateTime.Now;
+            Channel_SubscriptionsDate.Value = DateTime.UtcNow;
+            Channel_SubscriptionsDate.CustomFormat = CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern + " " + CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern;
             //Channel_SubscriptionsDate.CustomFormat = "dddd, MMMM M, yyyy H:mm:ss";
             //Channel_SubscriptionsDate.CustomFormat = "d/MM/yy H:mm:ss";
 
@@ -599,43 +661,8 @@ namespace ModBot
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            Modifications.Load();
-
-            //Settings loading
-            /*Dictionary<Control, bool> dState = new Dictionary<Control, bool>();
-            Thread tLoad = new Thread(() =>
-            {
-                while (!g_bLoaded)
-                {
-                    foreach (Control ctrl in Controls)
-                    {
-                        if (!BaseControls.Contains(ctrl) && !dState.ContainsKey(ctrl))
-                        {
-                            dState.Add(ctrl, ctrl.Enabled);
-                            BeginInvoke((MethodInvoker)delegate
-                            {
-                                ctrl.Enabled = false;
-                            });
-                        }
-                    }
-                    Thread.Sleep(100);
-                }
-
-                BeginInvoke((MethodInvoker)delegate
-                {
-                    foreach (Control ctrl in dState.Keys)
-                    {
-                        if (Controls.Contains(ctrl))
-                        {
-                            ctrl.Enabled = dState[ctrl];
-                        }
-                    }
-                    GetSettings();
-                });
-            });
-            tLoad.Start();*/
-
-            Program.LoadingScreen.Hide();
+            Hide();
+            Program.MainFormLoaded();
 
             //Update checking
             Thread thread = new Thread(() =>
@@ -675,6 +702,11 @@ namespace ModBot
             thread.Name = "Update checking";
             thread.Start();
 
+            foreach (Control ctrl in Program.Windows.Keys) Program.AddToMainWindow(ctrl, Program.Windows[ctrl]);
+
+            Program.LoadingScreen.Hide();
+            Show();
+
             if (Program.args.Contains("-connect") && ConnectButton.Enabled)
             {
                 ConnectButton.PerformClick();
@@ -685,6 +717,14 @@ namespace ModBot
                 Program.Updates.WhatsNew();
                 if (!Program.args.Contains("-skipmotd")) Program.Updates.MsgOfTheDay();
             }
+
+            /*Rectangle screen = Screen.PrimaryScreen.WorkingArea;
+            WindowState = FormWindowState.Maximized;
+            //Scale(new SizeF(screen.Width / Size.Width, screen.Height / Size.Height));
+            Scale(new SizeF(1.3F, 1.3F));
+            FixBorders();*/
+
+            //Program.AddToMainWindow("Test", new Form());
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -693,19 +733,19 @@ namespace ModBot
             {
                 if (keyData == Keys.Tab)
                 {
-                    if (TabConfigs.ContainsKey(CurrentWindow))
+                    if (TabConfigs.ContainsKey(CurrentWindow.Control))
                     {
-                        if (!CurrentWindow.ContainsFocus && TabConfigs[CurrentWindow].ContainsKey(this))
+                        if (!CurrentWindow.Control.ContainsFocus && TabConfigs[CurrentWindow.Control].ContainsKey(this))
                         {
-                            TabConfigs[CurrentWindow][this].Focus();
+                            TabConfigs[CurrentWindow.Control][this].Focus();
                         }
-                        else if(CurrentWindow.ContainsFocus)
+                        else if (CurrentWindow.Control.ContainsFocus)
                         {
-                            foreach(Control ctrl in CurrentWindow.Controls)
+                            foreach (Control ctrl in CurrentWindow.Control.Controls)
                             {
                                 if(ctrl.Focused)
                                 {
-                                    if (TabConfigs[CurrentWindow].ContainsKey(ctrl)) TabConfigs[CurrentWindow][ctrl].Focus();
+                                    if (TabConfigs[CurrentWindow.Control].ContainsKey(ctrl)) TabConfigs[CurrentWindow.Control][ctrl].Focus();
                                     break;
                                 }
                             }
@@ -714,15 +754,15 @@ namespace ModBot
                 }
                 else
                 {
-                    if (TabConfigs.ContainsKey(CurrentWindow) && CurrentWindow.ContainsFocus)
+                    if (TabConfigs.ContainsKey(CurrentWindow.Control) && CurrentWindow.Control.ContainsFocus)
                     {
-                        foreach (Control ctrl in CurrentWindow.Controls)
+                        foreach (Control ctrl in CurrentWindow.Control.Controls)
                         {
-                            if (ctrl.Focused && TabConfigs[CurrentWindow].ContainsValue(ctrl))
+                            if (ctrl.Focused && TabConfigs[CurrentWindow.Control].ContainsValue(ctrl))
                             {
-                                foreach (Control ctrl2 in TabConfigs[CurrentWindow].Keys)
+                                foreach (Control ctrl2 in TabConfigs[CurrentWindow.Control].Keys)
                                 {
-                                    if (ctrl == TabConfigs[CurrentWindow][ctrl2])
+                                    if (ctrl == TabConfigs[CurrentWindow.Control][ctrl2])
                                     {
                                         if(ctrl2 != this) ctrl2.Focus();
                                         break;
@@ -885,7 +925,7 @@ namespace ModBot
                     }
                 }
 
-                Program.Invoke((MethodInvoker)delegate
+                Program.Invoke(() =>
                 {
                     foreach (Control ctrl in dState.Keys)
                     {
@@ -1001,9 +1041,9 @@ namespace ModBot
                                         foreach (string ban in bans)
                                         {
                                             //Console.WriteLine(ban);
-                                            if (!ban.Equals("") && !Giveaway_BanListListBox.Items.Contains(Api.capName(ban)))
+                                            if (!ban.Equals("") && !Giveaway_BanListListBox.Items.Contains(ban.ToLower()))
                                             {
-                                                Giveaway_BanListListBox.Items.Add(Api.capName(ban));
+                                                Giveaway_BanListListBox.Items.Add(ban.ToLower());
                                             }
                                         }
                                     }
@@ -1027,7 +1067,7 @@ namespace ModBot
         {
             while (Irc.donation_clientid != "" && Irc.donation_token != "")
             {
-                List<Transaction> transactions = Api.UpdateTransactions().OrderByDescending(key => Convert.ToDateTime(key.date)).ToList();
+                List<Transaction> transactions = Api.UpdateTransactions().OrderByDescending(key => key.date).ToList();
                 if (transactions.Count > 0)
                 {
                     string sDonationsIgnoreRecent = ini.GetValue("Settings", "Donations_Ignore_Recent", "");
@@ -1040,13 +1080,13 @@ namespace ModBot
                     ini.SetValue("Settings", "Donations_Ignore_Top", sDonationsIgnoreTop);
                     string[] sTopIgnores = sDonationsIgnoreTop.Split(',');
 
-                    Program.Invoke((MethodInvoker)delegate
+                    Program.Invoke(() =>
                     {
                         foreach (Transaction transaction in transactions)
                         {
                             bool found = false;
                             foreach (DataGridViewRow row in Donations_List.Rows) if (row.Cells["ID"].Value.ToString() == transaction.id) found = true;
-                            if (!found) Donations_List.Rows.Add(transaction.date, transaction.donor, transaction.amount, transaction.id, transaction.notes, !sRecentIgnores.Contains(transaction.id), !sLatestIgnores.Contains(transaction.id), !sTopIgnores.Contains(transaction.id), true);
+                            if (!found) Donations_List.Rows.Add(transaction.date.ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern + " " + CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern), transaction.donor, transaction.amount, transaction.id, transaction.notes, !sRecentIgnores.Contains(transaction.id), !sLatestIgnores.Contains(transaction.id), !sTopIgnores.Contains(transaction.id), true);
                         }
                     });
 
@@ -1129,10 +1169,7 @@ namespace ModBot
                 }
 
                 Thread.Sleep(1000);
-                if (Irc.ResourceKeeper)
-                {
-                    Thread.Sleep(29000);
-                }
+                if (Irc.ResourceKeeper) Thread.Sleep(29000);
             }
         }
 
@@ -1167,21 +1204,20 @@ namespace ModBot
 
                             if (Channel_UseSteam.Checked)
                             {
-                                JObject SteamData = JObject.Parse(w.DownloadString("http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=5C18EE317A1E58DD98BCAF4872977055&steamids=" + Channel_SteamID64.Text));
+                                string Game = Api.GetSteamCurrentGame();
 
-                                try
+                                if (!MetadataModified)
                                 {
-                                    if (SteamData["response"]["players"].HasValues) ChannelGame = SteamData["response"]["players"][0]["gameextrainfo"].ToString();
-                                }
-                                catch { }
+                                    ChannelGame = Game;
 
-                                if (stream["game"].ToString() != ChannelGame)
-                                {
-                                    Api.UpdateMetadata(ChannelTitle, ChannelGame);
+                                    if (stream["game"].ToString() != ChannelGame)
+                                    {
+                                        Api.UpdateMetadata(ChannelTitle, ChannelGame);
+                                    }
                                 }
                             }
 
-                            Program.Invoke((MethodInvoker)delegate
+                            Program.Invoke(() =>
                             {
                                 if (!MetadataModified)
                                 {
@@ -1201,7 +1237,7 @@ namespace ModBot
                     }
                 }
 
-                Program.Invoke((MethodInvoker)delegate
+                Program.Invoke(() =>
                 {
                     ChannelStatusLabel.Text = "DISCONNECTED";
                     ChannelStatusLabel.ForeColor = Color.Red;
@@ -1224,15 +1260,10 @@ namespace ModBot
                         ChannelStatusLabel.Text = "OFF AIR";
                         ChannelStatusLabel.ForeColor = Color.Blue;
                     }
-
-                    //g_bLoaded = true;
                 });
 
                 Thread.Sleep(1000);
-                if (Irc.ResourceKeeper)
-                {
-                    Thread.Sleep(29000);
-                }
+                if (Irc.ResourceKeeper) Thread.Sleep(29000);
             }
         }
 
@@ -1279,7 +1310,7 @@ namespace ModBot
             string winner = Giveaway_WinnerLabel.Text;
             //Irc.sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
             //Irc.sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
-            Irc.sendMessage(winner + " has won the giveaway! (" + (Irc.Subscribers.Contains(Api.capName(winner)) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
+            Irc.sendMessage(winner + " has won the giveaway! (" + (Irc.Subscribers.Contains(winner.ToLower()) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + Irc.currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
         }
 
         private void Giveaway_AddBanTextBox_TextChanged(object sender, EventArgs e)
@@ -1337,8 +1368,8 @@ namespace ModBot
             else if (ctrl == Giveaway_TypeActive)
             {
                 Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
-                Giveaway_WarnFalseEntries.Enabled = (!Giveaway_TypeActive.Checked && Irc.Moderators.Contains(Api.capName(Irc.nick)));
-                if (Giveaway_TypeActive.Checked || !Irc.Moderators.Contains(Api.capName(Irc.nick))) Giveaway_WarnFalseEntries.Checked = false;
+                Giveaway_WarnFalseEntries.Enabled = (!Giveaway_TypeActive.Checked && Irc.Moderators.Contains(Irc.nick.ToLower()));
+                if (Giveaway_TypeActive.Checked || !Irc.Moderators.Contains(Irc.nick.ToLower())) Giveaway_WarnFalseEntries.Checked = false;
             }
             else if (ctrl == Giveaway_TypeKeyword)
             {
@@ -1470,9 +1501,9 @@ namespace ModBot
         {
             try
             {
-                if (Irc.ActiveUsers.ContainsKey(Api.capName(Giveaway_WinnerLabel.Text)))
+                if (Irc.ActiveUsers.ContainsKey(Giveaway_WinnerLabel.Text.ToLower()))
                 {
-                    int time = Api.GetUnixTimeNow() - Irc.ActiveUsers[Api.capName(Giveaway_WinnerLabel.Text)];
+                    int time = Api.GetUnixTimeNow() - Irc.ActiveUsers[Giveaway_WinnerLabel.Text.ToLower()];
                     int color = time - 120;
                     if (color >= 0 && color < 120)
                     {
@@ -1565,7 +1596,7 @@ namespace ModBot
         {
             if (!(e.Cancel = (MessageBox.Show(DisconnectButton.Enabled ? "ModBot is currently active! Are you sure you want to close it?" : "Are you sure you want to close ModBot?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.No)))
             {
-                Environment.Exit(0);
+                Program.Close();
                 /*Console.WriteLine("Closing...");
                 List<Thread> Ts = new List<Thread>();
                 foreach (Thread t in Threads)
@@ -1625,48 +1656,32 @@ namespace ModBot
             ini.SetValue("Settings", "Currency_HandoutTime", Currency_HandoutLastActive.Value.ToString());
         }
 
-        private void WindowChanged(object sender, EventArgs e)
+        public void WindowChanged(object sender, EventArgs e)
         {
-            /*CheckBox CB = (CheckBox)sender;
-            if (CB.Checked)
-            {
-                CB.Enabled = false;
-                WindowButtons[CB].Visible = true;
-                foreach (CheckBox cb in WindowButtons.Keys)
-                {
-                    if (cb != CB)
-                    {
-                        cb.Enabled = true;
-                        cb.Checked = false;
-                        WindowButtons[cb].Visible = false;
-                    }
-                }
-            }*/
             CheckBox CB = (CheckBox)sender;
+            
             if (CB.Checked)
             {
-                //CB.Enabled = false;
-                CurrentWindow = Windows[CB];
-                Windows[CB].BringToFront();
-                foreach (CheckBox cb in Windows.Keys)
+                CurrentWindow = Windows.FromButton(CB);
+                Windows.FromButton(CB).Control.BringToFront();
+                foreach (CheckBox cb in Windows.Buttons)
                 {
                     if (cb != CB)
                     {
-                        //cb.Enabled = true;
                         cb.Checked = false;
                     }
                 }
             }
             else
             {
-                if (Windows[CB] == CurrentWindow)
+                if (Windows.FromButton(CB) == CurrentWindow)
                 {
                     CB.Checked = true;
-                    Windows[CB].BringToFront();
+                    Windows.FromButton(CB).Control.BringToFront();
                 }
             }
 
-            if (CurrentWindow != ChannelWindow)
+            if (CurrentWindow.Control != ChannelWindow)
             {
                 MetadataModified = false;
             }
@@ -1791,8 +1806,8 @@ namespace ModBot
                     ctrl.Enabled = false;
                 }
             }
-            SettingsWindowButton.Enabled = false;
-            AboutWindowButton.Enabled = false;
+            Windows.FromControl(SettingsWindow).Button.Enabled = false;
+            Windows.FromControl(AboutWindow).Button.Enabled = false;
             if ((Button)sender == Bot_TokenButton)
             {
                 AuthenticationScopes = "chat_login";
@@ -1801,79 +1816,8 @@ namespace ModBot
             {
                 AuthenticationScopes = "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login";
             }
+            //AuthenticationBrowser.Source = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
             AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
-        }
-
-        private void AuthenticationBrowser_Navigated(object sender, WebBrowserNavigatedEventArgs e)
-        {
-            if (e.Url.ToString().StartsWith("https://api.twitch.tv/kraken/oauth2/"))
-            {
-                AuthenticationBrowser.BringToFront();
-                if (AuthenticationScopes == "chat_login")
-                {
-                    AuthenticationLabel.Text = "Connect to the bot's account";
-                }
-                else if (AuthenticationScopes == "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login")
-                {
-                    AuthenticationLabel.Text = "Connect to your account (channel)";
-                }
-                AuthenticationLabel.BringToFront();
-            }
-            else if (e.Url.Fragment.Contains("access_token"))
-            {
-                if (AuthenticationScopes == "chat_login")
-                {
-                    Bot_Token.Text = "oauth:" + e.Url.Fragment.Substring(14).Split('&')[0];
-                }
-                else if (AuthenticationScopes == "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login")
-                {
-                    Channel_Token.Text = e.Url.Fragment.Substring(14).Split('&')[0];
-                }
-
-                AuthenticationScopes = "";
-                foreach (Control ctrl in SettingsWindow.Controls)
-                {
-                    ctrl.Enabled = true;
-                }
-                DisconnectButton.Enabled = false;
-                SettingsWindow.BringToFront();
-                SettingsWindowButton.Enabled = true;
-                AboutWindowButton.Enabled = true;
-                AuthenticationBrowser.Url = new Uri("http://www.twitch.tv/logout");
-            }
-            else if (e.Url.ToString() == "http://www.twitch.tv/" || e.Url.ToString().StartsWith("http://www.twitch.tv/?error="))
-            {
-                if (e.Url.ToString().StartsWith("http://www.twitch.tv/?error="))
-                {
-                    AuthenticationScopes = "";
-                    foreach (Control ctrl in SettingsWindow.Controls)
-                    {
-                        ctrl.Enabled = true;
-                    }
-                    DisconnectButton.Enabled = false;
-                    SettingsWindow.BringToFront();
-                    SettingsWindowButton.Enabled = true;
-                    AboutWindowButton.Enabled = true;
-                    Bot_TokenButton.Enabled = true;
-                }
-
-                if (AuthenticationScopes == "")
-                {
-                    AuthenticationBrowser.Url = null;
-                }
-                else
-                {
-                    AuthenticationLabel.SendToBack();
-                    AuthenticationBrowser.Dispose(); // A weird workaround I had to use as for some reason it wouldn't let me use the same Web Browser to get the token if a login was required before generating the token.
-                    AuthenticationBrowser = new WebBrowser();
-                    AuthenticationBrowser.ScriptErrorsSuppressed = true;
-                    AuthenticationBrowser.Location = new Point(108, 30);
-                    AuthenticationBrowser.Size = new Size(814, 562);
-                    AuthenticationBrowser.Navigated += new WebBrowserNavigatedEventHandler(this.AuthenticationBrowser_Navigated);
-                    AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
-                    Controls.Add(AuthenticationBrowser);
-                }
-            }
         }
 
         private void UpdateTitleGameButton_Click(object sender, EventArgs e)
@@ -2131,7 +2075,7 @@ namespace ModBot
 
         private void SettingsErrorLabel_TextChanged(object sender, EventArgs e)
         {
-            ConnectButton.Enabled = (SettingsErrorLabel.Text == "");
+            ConnectButton.Enabled = (SettingsErrorLabel.Text == "" || SettingsErrorLabel.Text == "Unable to connect to MySQL server.\r\n");
         }
 
         private void Channel_SubscriptionRewardsList_Changed(object sender, EventArgs e)
@@ -2151,6 +2095,254 @@ namespace ModBot
                     File.WriteAllText(@"Data\Subscriptions\Rewards.txt", text);
                 }
             }
+        }
+
+        private void CopyrightLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Program.LegalNotice();
+        }
+
+        private void AuthenticationBrowser_Navigated(object sender, WebBrowserNavigatedEventArgs e)
+        {
+            if (e.Url.ToString().StartsWith("https://api.twitch.tv/kraken/oauth2/"))
+            {
+                AuthenticationBrowser.BringToFront();
+                if (AuthenticationScopes == "chat_login")
+                {
+                    AuthenticationLabel.Text = "Connect to the bot's account";
+                }
+                else if (AuthenticationScopes == "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login")
+                {
+                    AuthenticationLabel.Text = "Connect to your account (channel)";
+                }
+                AuthenticationLabel.BringToFront();
+            }
+            else if (e.Url.Fragment.Contains("access_token"))
+            {
+                if (AuthenticationScopes == "chat_login")
+                {
+                    Bot_Token.Text = "oauth:" + e.Url.Fragment.Substring(14).Split('&')[0];
+                }
+                else if (AuthenticationScopes == "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login")
+                {
+                    Channel_Token.Text = e.Url.Fragment.Substring(14).Split('&')[0];
+                }
+
+                AuthenticationScopes = "";
+                foreach (Control ctrl in SettingsWindow.Controls)
+                {
+                    ctrl.Enabled = true;
+                }
+                DisconnectButton.Enabled = false;
+                SettingsWindow.BringToFront();
+                Windows.FromControl(SettingsWindow).Button.Enabled = true;
+                Windows.FromControl(AboutWindow).Button.Enabled = true;
+                AuthenticationBrowser.Url = new Uri("http://www.twitch.tv/logout");
+            }
+            else if (e.Url.ToString() == "http://www.twitch.tv/" || e.Url.ToString().StartsWith("http://www.twitch.tv/?error="))
+            {
+                if (e.Url.ToString().StartsWith("http://www.twitch.tv/?error="))
+                {
+                    AuthenticationScopes = "";
+                    foreach (Control ctrl in SettingsWindow.Controls)
+                    {
+                        ctrl.Enabled = true;
+                    }
+                    DisconnectButton.Enabled = false;
+                    SettingsWindow.BringToFront();
+                    Windows.FromControl(SettingsWindow).Button.Enabled = true;
+                    Windows.FromControl(AboutWindow).Button.Enabled = true;
+                    Bot_TokenButton.Enabled = true;
+                }
+
+                if (AuthenticationScopes == "")
+                {
+                    AuthenticationBrowser.Url = null;
+                }
+                else
+                {
+                    AuthenticationLabel.SendToBack();
+                    AuthenticationBrowser.Dispose(); // A weird workaround I had to use as for some reason it wouldn't let me use the same Web Browser to get the token if a login was required before generating the token.
+                    AuthenticationBrowser = new WebBrowser();
+                    AuthenticationBrowser.ScriptErrorsSuppressed = true;
+                    AuthenticationBrowser.Location = new Point(108, 30);
+                    AuthenticationBrowser.Size = new Size(814, 562);
+                    AuthenticationBrowser.Navigated += new WebBrowserNavigatedEventHandler(this.AuthenticationBrowser_Navigated);
+                    AuthenticationBrowser.Url = new Uri("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=9c70dw37ms89rfhn0jbkdxmtzf5egdq&redirect_uri=http://twitch.tv/&scope=" + AuthenticationScopes);
+                    Controls.Add(AuthenticationBrowser);
+                }
+            }
+        }
+
+        /*private void AuthenticationBrowser_Navigated(object sender, Awesomium.Core.UrlEventArgs e)
+        {
+            if (e.Url.ToString().StartsWith("https://api.twitch.tv/kraken/oauth2/"))
+            {
+                AuthenticationBrowser.BringToFront();
+                if (AuthenticationScopes == "chat_login")
+                {
+                    AuthenticationLabel.Text = "Connect to the bot's account";
+                }
+                else if (AuthenticationScopes == "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login")
+                {
+                    AuthenticationLabel.Text = "Connect to your account (channel)";
+                }
+                AuthenticationLabel.BringToFront();
+            }
+            else if (e.Url.Fragment.Contains("access_token"))
+            {
+                if (AuthenticationScopes == "chat_login")
+                {
+                    Bot_Token.Text = "oauth:" + e.Url.Fragment.Substring(14).Split('&')[0];
+                }
+                else if (AuthenticationScopes == "user_read channel_editor channel_commercial channel_check_subscription channel_subscriptions chat_login")
+                {
+                    Channel_Token.Text = e.Url.Fragment.Substring(14).Split('&')[0];
+                }
+
+                AuthenticationScopes = "";
+                foreach (Control ctrl in SettingsWindow.Controls)
+                {
+                    ctrl.Enabled = true;
+                }
+                DisconnectButton.Enabled = false;
+                SettingsWindow.BringToFront();
+                SettingsWindowButton.Enabled = true;
+                AboutWindowButton.Enabled = true;
+                AuthenticationBrowser.Source = new Uri("http://www.twitch.tv/logout");
+            }
+            else if (e.Url.ToString() == "http://www.twitch.tv/" || e.Url.ToString().StartsWith("http://www.twitch.tv/?error="))
+            {
+                if (e.Url.ToString().StartsWith("http://www.twitch.tv/?error="))
+                {
+                    AuthenticationScopes = "";
+                    foreach (Control ctrl in SettingsWindow.Controls)
+                    {
+                        ctrl.Enabled = true;
+                    }
+                    DisconnectButton.Enabled = false;
+                    SettingsWindow.BringToFront();
+                    SettingsWindowButton.Enabled = true;
+                    AboutWindowButton.Enabled = true;
+                    Bot_TokenButton.Enabled = true;
+                }
+
+                if (AuthenticationScopes == "")
+                {
+                    AuthenticationBrowser.Source = new Uri("about:blank");
+                }
+                else
+                {
+                    AuthenticationLabel.SendToBack();
+                }
+            }
+        }*/
+    }
+
+    class Window
+    {
+        public string Name, AlternativeName;
+        public CheckBox Button;
+        public Control Control;
+        public bool RequiresConnection, RequiresMod, RequiresPartnership, ControlManually;
+
+        public Window(string Name, Control Control, bool RequiresConnection = true, bool RequiresMod = false, bool RequiresPartnership = false, bool ControlManually = false, string AlternativeName = "", CheckBox Button = null, Font Font = null)
+        {
+            this.Name = Name;
+            this.AlternativeName = AlternativeName;
+
+            if (Button == null)
+            {
+                Button = new CheckBox();
+                Button.FlatAppearance.BorderSize = 0;
+                Button.FlatAppearance.CheckedBackColor = Color.FromArgb(230, 230, 230);
+                Button.FlatStyle = FlatStyle.Flat;
+                Button.Font = (Font != null ? Font : new Font("Segoe Print", 10F, FontStyle.Bold, GraphicsUnit.Point, (byte)(0)));
+                Button.ForeColor = SystemColors.ControlText;
+                Button.TextAlign = ContentAlignment.MiddleCenter;
+                Button.UseVisualStyleBackColor = true;
+            }
+            Button.Appearance = Appearance.Button;
+            Button.Name = Name.Replace(" ", "_").Replace("-", "_") + "_WindowButton";
+            Button.Text = GetName();
+            Button.Location = new Point(8, 30);
+            Button.Size = new Size(100, 46);
+
+            this.Button = Button;
+
+            this.Control = Control;
+
+            if (RequiresMod || RequiresPartnership || ControlManually) RequiresConnection = false;
+
+            this.RequiresConnection = RequiresConnection;
+            this.RequiresMod = RequiresMod;
+            this.RequiresPartnership = RequiresPartnership;
+            this.ControlManually = ControlManually;
+
+            Button.Enabled = ControlManually ? false : ((!RequiresConnection || Irc.irc != null && Irc.irc.Connected) && (!RequiresMod || Irc.irc != null && Irc.Moderators.Contains(Irc.nick)) && (!RequiresPartnership || Irc.irc != null && Irc.partnered));
+
+            Program.MainForm.Controls.Add(Button);
+            Button.CheckedChanged += new System.EventHandler(Program.MainForm.WindowChanged);
+        }
+
+        public string GetName()
+        {
+            if (AlternativeName != "") return AlternativeName;
+
+            return Name;
+        }
+    }
+
+    class WindowsList : List<Window>
+    {
+        public List<CheckBox> Buttons { get { List<CheckBox> Buttons = new List<CheckBox>(); foreach (Window window in this) Buttons.Add(window.Button); return Buttons; } }
+        public WindowsList ConnectionOnly { get { WindowsList Windows = new WindowsList(); foreach (Window window in this) if (window.RequiresConnection) Windows.Add(window); return Windows; } }
+        public WindowsList ModOnly { get { WindowsList Windows = new WindowsList(); foreach (Window window in this) if (window.RequiresMod) Windows.Add(window); return Windows; } }
+        public WindowsList PartnershipOnly { get { WindowsList Windows = new WindowsList(); foreach (Window window in this) if (window.RequiresPartnership) Windows.Add(window); return Windows; } }
+        public WindowsList Manual { get { WindowsList Windows = new WindowsList(); foreach (Window window in this) if (window.ControlManually) Windows.Add(window); return Windows; } }
+
+        public WindowsList()
+        {
+        }
+
+        new void Add(Window window)
+        {
+            if (Contains(window) || ContainsControl(window.Control)) throw new Exception("The window is already in the list.");
+            base.Add(window);
+        }
+
+        public bool ContainsControl(Control ctrl)
+        {
+            if (ctrl == null) throw new Exception("The control may not be null.");
+
+            return FromControl(ctrl) != null;
+        }
+
+        public Window FromControl(Control ctrl)
+        {
+            if (ctrl == null) throw new Exception("The control may not be null.");
+
+            foreach (Window window in this) if (window.Control == ctrl) return window;
+
+            return null;
+        }
+
+        public Window FromButton(CheckBox Button)
+        {
+            if (Button == null) throw new Exception("The control may not be null.");
+
+            foreach (Window window in this) if (window.Button == Button) return window;
+
+            return null;
+        }
+
+        public void RemoveWindow(Control ctrl)
+        {
+            if (ctrl == null) throw new Exception("The control may not be null.");
+
+            List<Window> Windows = new List<Window>();
+            foreach (Window window in this) if (window.Control == ctrl) Windows.Add(window);
+            foreach (Window window in Windows) this.Remove(window);
         }
     }
 }

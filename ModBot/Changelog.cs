@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace ModBot
 {
-    public partial class Changelog : CustomForm
+    partial class Changelog : CustomForm
     {
         public Changelog()
         {
@@ -47,7 +47,7 @@ namespace ModBot
                     Versions.Add(Version, Changes);
                 }
 
-                BeginInvoke((MethodInvoker)delegate
+                BeginInvoke(() =>
                 {
                     foreach (string Version in Versions.Keys)
                     {

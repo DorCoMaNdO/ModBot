@@ -145,10 +145,15 @@ namespace ModBot
             SetForegroundWindow(Handle);
         }
 
-        private void FixBorders()
+        public void FixBorders()
         {
             if (CustomFormBorderStyle == FormBorderStyles.Custom1)
             {
+                /*foreach (Control ctrl in BaseControls)
+                {
+                    ctrl.Visible = true;
+                }*/
+
                 TopBorder.BringToFront();
                 TopBorder.Location = new Point(0, 0);
                 TopBorder.Size = new Size(Width, 30);
@@ -190,6 +195,13 @@ namespace ModBot
 
                 FormMinimizeButton.BringToFront();
                 FormMinimizeButton.Location = new Point(Width - 120, 1);
+            }
+            else
+            {
+                foreach(Control ctrl in BaseControls)
+                {
+                    ctrl.Visible = false;
+                }
             }
         }
 

@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.ChannelStatusLabel = new System.Windows.Forms.Label();
             this.Giveaway_MustFollow = new System.Windows.Forms.CheckBox();
@@ -69,8 +69,6 @@
             this.Currency_HandoutLabel = new System.Windows.Forms.Label();
             this.Currency_HandoutActiveTime = new System.Windows.Forms.RadioButton();
             this.Currency_HandoutLastActive = new ModBot.FlatNumericUpDown();
-            this.SettingsWindowButton = new System.Windows.Forms.CheckBox();
-            this.DonationsWindowButton = new System.Windows.Forms.CheckBox();
             this.SettingsWindow = new System.Windows.Forms.Panel();
             this.SettingsErrorLabel = new System.Windows.Forms.Label();
             this.label23 = new System.Windows.Forms.Label();
@@ -142,8 +140,8 @@
             this.UpdateRecentDonorsCheckBox = new System.Windows.Forms.CheckBox();
             this.label16 = new System.Windows.Forms.Label();
             this.UpdateLastDonorCheckBox = new System.Windows.Forms.CheckBox();
-            this.AboutWindowButton = new System.Windows.Forms.CheckBox();
             this.AboutWindow = new System.Windows.Forms.Panel();
+            this.CopyrightLabel = new System.Windows.Forms.LinkLabel();
             this.WebsiteLinkLabel = new System.Windows.Forms.LinkLabel();
             this.About_Users = new System.Windows.Forms.DataGridView();
             this.Channel = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -160,11 +158,8 @@
             this.label17 = new System.Windows.Forms.Label();
             this.AboutImage = new System.Windows.Forms.PictureBox();
             this.VersionLabel = new System.Windows.Forms.Label();
-            this.label20 = new System.Windows.Forms.Label();
             this.About_UsersLabel = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.AuthenticationBrowser = new System.Windows.Forms.WebBrowser();
-            this.ChannelWindowButton = new System.Windows.Forms.CheckBox();
             this.ChannelWindow = new System.Windows.Forms.Panel();
             this.label18 = new System.Windows.Forms.Label();
             this.Channel_WelcomeSubMessage = new System.Windows.Forms.TextBox();
@@ -174,9 +169,6 @@
             this.Channel_ViewersChange = new System.Windows.Forms.CheckBox();
             this.MessageTimersLabel = new System.Windows.Forms.Label();
             this.MessageTimersSpacer = new System.Windows.Forms.GroupBox();
-            this.Channel_SubscriptionRewardsList = new System.Windows.Forms.DataGridView();
-            this.Reward = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Instructions = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Channel_SubscriptionsDate = new System.Windows.Forms.DateTimePicker();
             this.SubscriptionsLabel = new System.Windows.Forms.Label();
             this.Channel_SubscriptionRewards = new System.Windows.Forms.CheckBox();
@@ -185,9 +177,10 @@
             this.Channel_UseSteam = new System.Windows.Forms.CheckBox();
             this.Channel_UpdateTitleGame = new System.Windows.Forms.Button();
             this.Channel_WelcomeSub = new System.Windows.Forms.CheckBox();
+            this.Channel_SubscriptionRewardsList = new System.Windows.Forms.DataGridView();
+            this.Reward = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Instructions = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.CurrencyWindow = new System.Windows.Forms.Panel();
-            this.CurrencyWindowButton = new System.Windows.Forms.CheckBox();
-            this.GiveawayWindowButton = new System.Windows.Forms.CheckBox();
             this.GiveawayWindow = new System.Windows.Forms.Panel();
             this.Giveaway_SubscribersWinMultiplierAmount = new ModBot.FlatNumericUpDown();
             this.Giveaway_UserList = new System.Windows.Forms.ListBox();
@@ -216,7 +209,6 @@
             this.Giveaway_UserCount = new System.Windows.Forms.Label();
             this.Giveaway_SubscribersWinMultiplier = new System.Windows.Forms.CheckBox();
             this.AuthenticationLabel = new System.Windows.Forms.Label();
-            this.SpamFilterWindowButton = new System.Windows.Forms.CheckBox();
             this.SpamFilterWindow = new System.Windows.Forms.Panel();
             this.Spam_CWLAnnounceTimeouts = new System.Windows.Forms.CheckBox();
             this.Spam_CWLBox = new System.Windows.Forms.TextBox();
@@ -225,6 +217,7 @@
             this.Spam_CWLLabel = new System.Windows.Forms.Label();
             this.Spam_CWLSpacer = new System.Windows.Forms.GroupBox();
             this.SongRequestPlayer = new System.Windows.Forms.WebBrowser();
+            this.AuthenticationBrowser = new System.Windows.Forms.WebBrowser();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrencyBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_ActiveUserTime)).BeginInit();
             this.Giveaway_SettingsPresents.SuspendLayout();
@@ -717,43 +710,6 @@
             0});
             this.Currency_HandoutLastActive.ValueChanged += new System.EventHandler(this.Currency_HandoutLastActive_ValueChanged);
             // 
-            // SettingsWindowButton
-            // 
-            this.SettingsWindowButton.Appearance = System.Windows.Forms.Appearance.Button;
-            this.SettingsWindowButton.Checked = true;
-            this.SettingsWindowButton.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.SettingsWindowButton.FlatAppearance.BorderSize = 0;
-            this.SettingsWindowButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(230)))));
-            this.SettingsWindowButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.SettingsWindowButton.Font = new System.Drawing.Font("Segoe Print", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SettingsWindowButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.SettingsWindowButton.Location = new System.Drawing.Point(8, 30);
-            this.SettingsWindowButton.Name = "SettingsWindowButton";
-            this.SettingsWindowButton.Size = new System.Drawing.Size(100, 46);
-            this.SettingsWindowButton.TabIndex = 56;
-            this.SettingsWindowButton.Text = "Settings";
-            this.SettingsWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.SettingsWindowButton.UseVisualStyleBackColor = true;
-            this.SettingsWindowButton.CheckedChanged += new System.EventHandler(this.WindowChanged);
-            // 
-            // DonationsWindowButton
-            // 
-            this.DonationsWindowButton.Appearance = System.Windows.Forms.Appearance.Button;
-            this.DonationsWindowButton.Enabled = false;
-            this.DonationsWindowButton.FlatAppearance.BorderSize = 0;
-            this.DonationsWindowButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(230)))));
-            this.DonationsWindowButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.DonationsWindowButton.Font = new System.Drawing.Font("Segoe Print", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.DonationsWindowButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.DonationsWindowButton.Location = new System.Drawing.Point(8, 194);
-            this.DonationsWindowButton.Name = "DonationsWindowButton";
-            this.DonationsWindowButton.Size = new System.Drawing.Size(100, 46);
-            this.DonationsWindowButton.TabIndex = 57;
-            this.DonationsWindowButton.Text = "Donations";
-            this.DonationsWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.DonationsWindowButton.UseVisualStyleBackColor = true;
-            this.DonationsWindowButton.CheckedChanged += new System.EventHandler(this.WindowChanged);
-            // 
             // SettingsWindow
             // 
             this.SettingsWindow.BackColor = System.Drawing.Color.White;
@@ -813,7 +769,6 @@
             this.SettingsWindow.Name = "SettingsWindow";
             this.SettingsWindow.Size = new System.Drawing.Size(1024, 562);
             this.SettingsWindow.TabIndex = 58;
-            this.SettingsWindow.Visible = this.SettingsWindowButton.Checked;
             // 
             // SettingsErrorLabel
             // 
@@ -1463,13 +1418,13 @@
             this.IncludeTop,
             this.IncludeTopDonor});
             this.Donations_List.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke;
-            this.Donations_List.Location = new System.Drawing.Point(0, 51);
+            this.Donations_List.Location = new System.Drawing.Point(-1, 51);
             this.Donations_List.MultiSelect = false;
             this.Donations_List.Name = "Donations_List";
             this.Donations_List.RowHeadersVisible = false;
             this.Donations_List.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.Donations_List.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.Donations_List.Size = new System.Drawing.Size(1024, 267);
+            this.Donations_List.Size = new System.Drawing.Size(1025, 267);
             this.Donations_List.TabIndex = 60;
             this.Donations_List.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.Donations_List_CellValueChanged);
             this.Donations_List.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.Donations_List_SortCompare);
@@ -1508,8 +1463,8 @@
             // 
             // Notes
             // 
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Notes.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Notes.DefaultCellStyle = dataGridViewCellStyle1;
             this.Notes.HeaderText = "Notes";
             this.Notes.Name = "Notes";
             this.Notes.ReadOnly = true;
@@ -1597,26 +1552,10 @@
             this.UpdateLastDonorCheckBox.UseVisualStyleBackColor = true;
             this.UpdateLastDonorCheckBox.CheckedChanged += new System.EventHandler(this.Settings_Changed);
             // 
-            // AboutWindowButton
-            // 
-            this.AboutWindowButton.Appearance = System.Windows.Forms.Appearance.Button;
-            this.AboutWindowButton.FlatAppearance.BorderSize = 0;
-            this.AboutWindowButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(230)))));
-            this.AboutWindowButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.AboutWindowButton.Font = new System.Drawing.Font("Segoe Print", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.AboutWindowButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.AboutWindowButton.Location = new System.Drawing.Point(8, 280);
-            this.AboutWindowButton.Name = "AboutWindowButton";
-            this.AboutWindowButton.Size = new System.Drawing.Size(100, 46);
-            this.AboutWindowButton.TabIndex = 60;
-            this.AboutWindowButton.Text = "About";
-            this.AboutWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.AboutWindowButton.UseVisualStyleBackColor = true;
-            this.AboutWindowButton.CheckedChanged += new System.EventHandler(this.WindowChanged);
-            // 
             // AboutWindow
             // 
             this.AboutWindow.BackColor = System.Drawing.Color.White;
+            this.AboutWindow.Controls.Add(this.CopyrightLabel);
             this.AboutWindow.Controls.Add(this.WebsiteLinkLabel);
             this.AboutWindow.Controls.Add(this.About_Users);
             this.AboutWindow.Controls.Add(this.DonateImage);
@@ -1625,12 +1564,23 @@
             this.AboutWindow.Controls.Add(this.label17);
             this.AboutWindow.Controls.Add(this.AboutImage);
             this.AboutWindow.Controls.Add(this.VersionLabel);
-            this.AboutWindow.Controls.Add(this.label20);
             this.AboutWindow.Controls.Add(this.About_UsersLabel);
             this.AboutWindow.Location = new System.Drawing.Point(108, 30);
             this.AboutWindow.Name = "AboutWindow";
             this.AboutWindow.Size = new System.Drawing.Size(1024, 562);
             this.AboutWindow.TabIndex = 61;
+            // 
+            // CopyrightLabel
+            // 
+            this.CopyrightLabel.AutoSize = true;
+            this.CopyrightLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
+            this.CopyrightLabel.Location = new System.Drawing.Point(3, 116);
+            this.CopyrightLabel.Name = "CopyrightLabel";
+            this.CopyrightLabel.Size = new System.Drawing.Size(250, 26);
+            this.CopyrightLabel.TabIndex = 63;
+            this.CopyrightLabel.TabStop = true;
+            this.CopyrightLabel.Text = "ModBot © Jonathan \"Keirathi\" Smith, 2013\r\nModified by CoMaNdO\r\n";
+            this.CopyrightLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.CopyrightLabel_LinkClicked);
             // 
             // WebsiteLinkLabel
             // 
@@ -1661,13 +1611,14 @@
             this.Version,
             this.Updated});
             this.About_Users.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke;
-            this.About_Users.Location = new System.Drawing.Point(0, 344);
+            this.About_Users.Location = new System.Drawing.Point(-1, 344);
             this.About_Users.MultiSelect = false;
             this.About_Users.Name = "About_Users";
+            this.About_Users.ReadOnly = true;
             this.About_Users.RowHeadersVisible = false;
             this.About_Users.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.About_Users.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.About_Users.Size = new System.Drawing.Size(1024, 218);
+            this.About_Users.Size = new System.Drawing.Size(1025, 218);
             this.About_Users.TabIndex = 61;
             this.About_Users.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.About_Users_SortCompare);
             // 
@@ -1688,7 +1639,7 @@
             this.Title.HeaderText = "Title";
             this.Title.Name = "Title";
             this.Title.ReadOnly = true;
-            this.Title.Width = 280;
+            this.Title.Width = 281;
             // 
             // Game
             // 
@@ -1788,16 +1739,6 @@
             this.VersionLabel.TabIndex = 16;
             this.VersionLabel.Text = "Version:";
             // 
-            // label20
-            // 
-            this.label20.AutoSize = true;
-            this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label20.Location = new System.Drawing.Point(3, 115);
-            this.label20.Name = "label20";
-            this.label20.Size = new System.Drawing.Size(250, 26);
-            this.label20.TabIndex = 15;
-            this.label20.Text = "ModBot © Jonathan \"Keirathi\" Smith, 2013\r\nModified by CoMaNdO";
-            // 
             // About_UsersLabel
             // 
             this.About_UsersLabel.AutoSize = true;
@@ -1815,36 +1756,6 @@
             this.panel2.Size = new System.Drawing.Size(1024, 562);
             this.panel2.TabIndex = 62;
             // 
-            // AuthenticationBrowser
-            // 
-            this.AuthenticationBrowser.Location = new System.Drawing.Point(108, 30);
-            this.AuthenticationBrowser.MinimumSize = new System.Drawing.Size(20, 20);
-            this.AuthenticationBrowser.Name = "AuthenticationBrowser";
-            this.AuthenticationBrowser.ScriptErrorsSuppressed = true;
-            this.AuthenticationBrowser.ScrollBarsEnabled = false;
-            this.AuthenticationBrowser.Size = new System.Drawing.Size(1024, 562);
-            this.AuthenticationBrowser.TabIndex = 0;
-            this.AuthenticationBrowser.WebBrowserShortcutsEnabled = false;
-            this.AuthenticationBrowser.Navigated += new System.Windows.Forms.WebBrowserNavigatedEventHandler(this.AuthenticationBrowser_Navigated);
-            // 
-            // ChannelWindowButton
-            // 
-            this.ChannelWindowButton.Appearance = System.Windows.Forms.Appearance.Button;
-            this.ChannelWindowButton.Enabled = false;
-            this.ChannelWindowButton.FlatAppearance.BorderSize = 0;
-            this.ChannelWindowButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(230)))));
-            this.ChannelWindowButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ChannelWindowButton.Font = new System.Drawing.Font("Segoe Print", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ChannelWindowButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.ChannelWindowButton.Location = new System.Drawing.Point(8, 73);
-            this.ChannelWindowButton.Name = "ChannelWindowButton";
-            this.ChannelWindowButton.Size = new System.Drawing.Size(100, 46);
-            this.ChannelWindowButton.TabIndex = 63;
-            this.ChannelWindowButton.Text = "Channel";
-            this.ChannelWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.ChannelWindowButton.UseVisualStyleBackColor = true;
-            this.ChannelWindowButton.CheckedChanged += new System.EventHandler(this.WindowChanged);
-            // 
             // ChannelWindow
             // 
             this.ChannelWindow.BackColor = System.Drawing.Color.White;
@@ -1856,7 +1767,6 @@
             this.ChannelWindow.Controls.Add(this.Channel_ViewersChange);
             this.ChannelWindow.Controls.Add(this.MessageTimersLabel);
             this.ChannelWindow.Controls.Add(this.MessageTimersSpacer);
-            this.ChannelWindow.Controls.Add(this.Channel_SubscriptionRewardsList);
             this.ChannelWindow.Controls.Add(this.Channel_SubscriptionsDate);
             this.ChannelWindow.Controls.Add(this.SubscriptionsLabel);
             this.ChannelWindow.Controls.Add(this.Channel_SubscriptionRewards);
@@ -1870,6 +1780,7 @@
             this.ChannelWindow.Controls.Add(this.label3);
             this.ChannelWindow.Controls.Add(this.Channel_Game);
             this.ChannelWindow.Controls.Add(this.Channel_WelcomeSub);
+            this.ChannelWindow.Controls.Add(this.Channel_SubscriptionRewardsList);
             this.ChannelWindow.Location = new System.Drawing.Point(108, 30);
             this.ChannelWindow.Name = "ChannelWindow";
             this.ChannelWindow.Size = new System.Drawing.Size(1024, 562);
@@ -1987,38 +1898,6 @@
             this.MessageTimersSpacer.TabIndex = 68;
             this.MessageTimersSpacer.TabStop = false;
             // 
-            // Channel_SubscriptionRewardsList
-            // 
-            this.Channel_SubscriptionRewardsList.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
-            this.Channel_SubscriptionRewardsList.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.Channel_SubscriptionRewardsList.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
-            this.Channel_SubscriptionRewardsList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.Channel_SubscriptionRewardsList.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Reward,
-            this.Instructions});
-            this.Channel_SubscriptionRewardsList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke;
-            this.Channel_SubscriptionRewardsList.Enabled = false;
-            this.Channel_SubscriptionRewardsList.Location = new System.Drawing.Point(0, 382);
-            this.Channel_SubscriptionRewardsList.MultiSelect = false;
-            this.Channel_SubscriptionRewardsList.Name = "Channel_SubscriptionRewardsList";
-            this.Channel_SubscriptionRewardsList.RowHeadersVisible = false;
-            this.Channel_SubscriptionRewardsList.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            this.Channel_SubscriptionRewardsList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.Channel_SubscriptionRewardsList.Size = new System.Drawing.Size(1024, 180);
-            this.Channel_SubscriptionRewardsList.TabIndex = 62;
-            // 
-            // Reward
-            // 
-            this.Reward.HeaderText = "Reward";
-            this.Reward.Name = "Reward";
-            this.Reward.Width = 400;
-            // 
-            // Instructions
-            // 
-            this.Instructions.HeaderText = "Instructions";
-            this.Instructions.Name = "Instructions";
-            this.Instructions.Width = 606;
-            // 
             // Channel_SubscriptionsDate
             // 
             this.Channel_SubscriptionsDate.CustomFormat = "MM/dd/yyyy H:mm:ss";
@@ -2119,6 +1998,38 @@
             this.Channel_WelcomeSub.UseVisualStyleBackColor = true;
             this.Channel_WelcomeSub.CheckedChanged += new System.EventHandler(this.Settings_Changed);
             // 
+            // Channel_SubscriptionRewardsList
+            // 
+            this.Channel_SubscriptionRewardsList.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            this.Channel_SubscriptionRewardsList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.Channel_SubscriptionRewardsList.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+            this.Channel_SubscriptionRewardsList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.Channel_SubscriptionRewardsList.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Reward,
+            this.Instructions});
+            this.Channel_SubscriptionRewardsList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke;
+            this.Channel_SubscriptionRewardsList.Enabled = false;
+            this.Channel_SubscriptionRewardsList.Location = new System.Drawing.Point(-1, 382);
+            this.Channel_SubscriptionRewardsList.MultiSelect = false;
+            this.Channel_SubscriptionRewardsList.Name = "Channel_SubscriptionRewardsList";
+            this.Channel_SubscriptionRewardsList.RowHeadersVisible = false;
+            this.Channel_SubscriptionRewardsList.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+            this.Channel_SubscriptionRewardsList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            this.Channel_SubscriptionRewardsList.Size = new System.Drawing.Size(1025, 180);
+            this.Channel_SubscriptionRewardsList.TabIndex = 62;
+            // 
+            // Reward
+            // 
+            this.Reward.HeaderText = "Reward";
+            this.Reward.Name = "Reward";
+            this.Reward.Width = 400;
+            // 
+            // Instructions
+            // 
+            this.Instructions.HeaderText = "Instructions";
+            this.Instructions.Name = "Instructions";
+            this.Instructions.Width = 607;
+            // 
             // CurrencyWindow
             // 
             this.CurrencyWindow.BackColor = System.Drawing.Color.White;
@@ -2134,42 +2045,6 @@
             this.CurrencyWindow.Name = "CurrencyWindow";
             this.CurrencyWindow.Size = new System.Drawing.Size(1024, 562);
             this.CurrencyWindow.TabIndex = 63;
-            // 
-            // CurrencyWindowButton
-            // 
-            this.CurrencyWindowButton.Appearance = System.Windows.Forms.Appearance.Button;
-            this.CurrencyWindowButton.Enabled = false;
-            this.CurrencyWindowButton.FlatAppearance.BorderSize = 0;
-            this.CurrencyWindowButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(230)))));
-            this.CurrencyWindowButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.CurrencyWindowButton.Font = new System.Drawing.Font("Segoe Print", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.CurrencyWindowButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.CurrencyWindowButton.Location = new System.Drawing.Point(8, 111);
-            this.CurrencyWindowButton.Name = "CurrencyWindowButton";
-            this.CurrencyWindowButton.Size = new System.Drawing.Size(100, 46);
-            this.CurrencyWindowButton.TabIndex = 64;
-            this.CurrencyWindowButton.Text = "Currency";
-            this.CurrencyWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.CurrencyWindowButton.UseVisualStyleBackColor = true;
-            this.CurrencyWindowButton.CheckedChanged += new System.EventHandler(this.WindowChanged);
-            // 
-            // GiveawayWindowButton
-            // 
-            this.GiveawayWindowButton.Appearance = System.Windows.Forms.Appearance.Button;
-            this.GiveawayWindowButton.Enabled = false;
-            this.GiveawayWindowButton.FlatAppearance.BorderSize = 0;
-            this.GiveawayWindowButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(230)))));
-            this.GiveawayWindowButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.GiveawayWindowButton.Font = new System.Drawing.Font("Segoe Print", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.GiveawayWindowButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.GiveawayWindowButton.Location = new System.Drawing.Point(8, 150);
-            this.GiveawayWindowButton.Name = "GiveawayWindowButton";
-            this.GiveawayWindowButton.Size = new System.Drawing.Size(100, 46);
-            this.GiveawayWindowButton.TabIndex = 65;
-            this.GiveawayWindowButton.Text = "Giveaway";
-            this.GiveawayWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.GiveawayWindowButton.UseVisualStyleBackColor = true;
-            this.GiveawayWindowButton.CheckedChanged += new System.EventHandler(this.WindowChanged);
             // 
             // GiveawayWindow
             // 
@@ -2280,10 +2155,10 @@
             // 
             this.Giveaway_CustomKeyword.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.Giveaway_CustomKeyword.Enabled = false;
-            this.Giveaway_CustomKeyword.Location = new System.Drawing.Point(154, 69);
+            this.Giveaway_CustomKeyword.Location = new System.Drawing.Point(124, 69);
             this.Giveaway_CustomKeyword.MaxLength = 32;
             this.Giveaway_CustomKeyword.Name = "Giveaway_CustomKeyword";
-            this.Giveaway_CustomKeyword.Size = new System.Drawing.Size(123, 20);
+            this.Giveaway_CustomKeyword.Size = new System.Drawing.Size(125, 20);
             this.Giveaway_CustomKeyword.TabIndex = 67;
             this.Giveaway_CustomKeyword.TextChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
@@ -2536,9 +2411,9 @@
             this.Giveaway_TypeKeyword.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Giveaway_TypeKeyword.Location = new System.Drawing.Point(6, 69);
             this.Giveaway_TypeKeyword.Name = "Giveaway_TypeKeyword";
-            this.Giveaway_TypeKeyword.Size = new System.Drawing.Size(268, 17);
+            this.Giveaway_TypeKeyword.Size = new System.Drawing.Size(241, 17);
             this.Giveaway_TypeKeyword.TabIndex = 49;
-            this.Giveaway_TypeKeyword.Text = "Keyword                Custom:                                       ";
+            this.Giveaway_TypeKeyword.Text = "Keyword      Custom:                                        ";
             this.Giveaway_TypeKeyword.UseVisualStyleBackColor = true;
             this.Giveaway_TypeKeyword.CheckedChanged += new System.EventHandler(this.Giveaway_Settings_Changed);
             // 
@@ -2587,24 +2462,6 @@
             this.AuthenticationLabel.TabIndex = 66;
             this.AuthenticationLabel.Text = "Connect to the bot\'s account";
             this.AuthenticationLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // SpamFilterWindowButton
-            // 
-            this.SpamFilterWindowButton.Appearance = System.Windows.Forms.Appearance.Button;
-            this.SpamFilterWindowButton.Enabled = false;
-            this.SpamFilterWindowButton.FlatAppearance.BorderSize = 0;
-            this.SpamFilterWindowButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(230)))));
-            this.SpamFilterWindowButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.SpamFilterWindowButton.Font = new System.Drawing.Font("Segoe Print", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SpamFilterWindowButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.SpamFilterWindowButton.Location = new System.Drawing.Point(8, 235);
-            this.SpamFilterWindowButton.Name = "SpamFilterWindowButton";
-            this.SpamFilterWindowButton.Size = new System.Drawing.Size(100, 46);
-            this.SpamFilterWindowButton.TabIndex = 67;
-            this.SpamFilterWindowButton.Text = "Spam Filter";
-            this.SpamFilterWindowButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.SpamFilterWindowButton.UseVisualStyleBackColor = true;
-            this.SpamFilterWindowButton.CheckedChanged += new System.EventHandler(this.WindowChanged);
             // 
             // SpamFilterWindow
             // 
@@ -2697,18 +2554,24 @@
             this.SongRequestPlayer.Visible = false;
             this.SongRequestPlayer.WebBrowserShortcutsEnabled = false;
             // 
+            // AuthenticationBrowser
+            // 
+            this.AuthenticationBrowser.Location = new System.Drawing.Point(108, 30);
+            this.AuthenticationBrowser.MinimumSize = new System.Drawing.Size(20, 20);
+            this.AuthenticationBrowser.Name = "AuthenticationBrowser";
+            this.AuthenticationBrowser.ScriptErrorsSuppressed = true;
+            this.AuthenticationBrowser.ScrollBarsEnabled = false;
+            this.AuthenticationBrowser.Size = new System.Drawing.Size(1024, 562);
+            this.AuthenticationBrowser.TabIndex = 0;
+            this.AuthenticationBrowser.WebBrowserShortcutsEnabled = false;
+            this.AuthenticationBrowser.Navigated += new System.Windows.Forms.WebBrowserNavigatedEventHandler(this.AuthenticationBrowser_Navigated);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1140, 600);
-            this.Controls.Add(this.SpamFilterWindowButton);
-            this.Controls.Add(this.GiveawayWindowButton);
-            this.Controls.Add(this.CurrencyWindowButton);
-            this.Controls.Add(this.ChannelWindowButton);
-            this.Controls.Add(this.AboutWindowButton);
-            this.Controls.Add(this.DonationsWindowButton);
-            this.Controls.Add(this.SettingsWindowButton);
+            this.Controls.Add(this.AboutWindow);
             this.Controls.Add(this.SettingsWindow);
             this.Controls.Add(this.DonationsWindow);
             this.Controls.Add(this.ChannelWindow);
@@ -2719,13 +2582,11 @@
             this.Controls.Add(this.SpamFilterWindow);
             this.Controls.Add(this.SongRequestPlayer);
             this.Controls.Add(this.panel2);
-            this.Controls.Add(this.AboutWindow);
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "ModBot";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.Controls.SetChildIndex(this.AboutWindow, 0);
             this.Controls.SetChildIndex(this.panel2, 0);
             this.Controls.SetChildIndex(this.SongRequestPlayer, 0);
             this.Controls.SetChildIndex(this.SpamFilterWindow, 0);
@@ -2736,13 +2597,7 @@
             this.Controls.SetChildIndex(this.ChannelWindow, 0);
             this.Controls.SetChildIndex(this.DonationsWindow, 0);
             this.Controls.SetChildIndex(this.SettingsWindow, 0);
-            this.Controls.SetChildIndex(this.SettingsWindowButton, 0);
-            this.Controls.SetChildIndex(this.DonationsWindowButton, 0);
-            this.Controls.SetChildIndex(this.AboutWindowButton, 0);
-            this.Controls.SetChildIndex(this.ChannelWindowButton, 0);
-            this.Controls.SetChildIndex(this.CurrencyWindowButton, 0);
-            this.Controls.SetChildIndex(this.GiveawayWindowButton, 0);
-            this.Controls.SetChildIndex(this.SpamFilterWindowButton, 0);
+            this.Controls.SetChildIndex(this.AboutWindow, 0);
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_MinCurrencyBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Giveaway_ActiveUserTime)).EndInit();
             this.Giveaway_SettingsPresents.ResumeLayout(false);
@@ -2824,8 +2679,6 @@
         public System.Windows.Forms.Label Currency_HandoutLabel;
         public System.Windows.Forms.RadioButton Currency_HandoutActiveTime;
         public FlatNumericUpDown Currency_HandoutLastActive;
-        public System.Windows.Forms.CheckBox SettingsWindowButton;
-        public System.Windows.Forms.CheckBox DonationsWindowButton;
         public System.Windows.Forms.Panel SettingsWindow;
         public System.Windows.Forms.Panel DonationsWindow;
         private System.Windows.Forms.GroupBox ConnectionSpacer;
@@ -2862,7 +2715,6 @@
         public System.Windows.Forms.CheckBox UpdateRecentDonorsCheckBox;
         private System.Windows.Forms.Label label16;
         public System.Windows.Forms.CheckBox UpdateLastDonorCheckBox;
-        public System.Windows.Forms.CheckBox AboutWindowButton;
         public System.Windows.Forms.Panel AboutWindow;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.LinkLabel SupportLinkLabel;
@@ -2871,13 +2723,9 @@
         private System.Windows.Forms.LinkLabel WebsiteLinkLabel;
         private System.Windows.Forms.PictureBox AboutImage;
         private System.Windows.Forms.Label VersionLabel;
-        private System.Windows.Forms.Label label20;
         public System.Windows.Forms.Label SettingsErrorLabel;
-        public System.Windows.Forms.CheckBox ChannelWindowButton;
         public System.Windows.Forms.Panel ChannelWindow;
         public System.Windows.Forms.Panel CurrencyWindow;
-        public System.Windows.Forms.CheckBox CurrencyWindowButton;
-        public System.Windows.Forms.CheckBox GiveawayWindowButton;
         public System.Windows.Forms.Panel GiveawayWindow;
         private System.Windows.Forms.Label label21;
         private System.Windows.Forms.TextBox Currency_Command;
@@ -2889,7 +2737,6 @@
         private System.Windows.Forms.Label GiveawayBansLabel;
         private System.Windows.Forms.GroupBox GiveawayBansSpacer;
         public System.Windows.Forms.Button Bot_TokenButton;
-        private System.Windows.Forms.WebBrowser AuthenticationBrowser;
         private System.Windows.Forms.Label AuthenticationLabel;
         public System.Windows.Forms.Button Channel_TokenButton;
         public System.Windows.Forms.TextBox Channel_Token;
@@ -2901,7 +2748,6 @@
         private System.Windows.Forms.Label label19;
         public FlatNumericUpDown Currency_SubHandoutAmount;
         private System.Windows.Forms.PictureBox DonateImage;
-        public System.Windows.Forms.CheckBox SpamFilterWindowButton;
         public System.Windows.Forms.Panel SpamFilterWindow;
         private System.Windows.Forms.Label Spam_CWLLabel;
         private System.Windows.Forms.GroupBox Spam_CWLSpacer;
@@ -2959,16 +2805,6 @@
         private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeLatest;
         private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTop;
         private System.Windows.Forms.DataGridViewCheckBoxColumn IncludeTopDonor;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Reward;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Instructions;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Channel;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Bot;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Title;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Game;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Status;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Viewers;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Version;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Updated;
         public FlatNumericUpDown Giveaway_SubscribersWinMultiplierAmount;
         public System.Windows.Forms.CheckBox Giveaway_SubscribersWinMultiplier;
         public System.Windows.Forms.TextBox Channel_ViewersChangeMessage;
@@ -2980,5 +2816,17 @@
         public System.Windows.Forms.TextBox Channel_WelcomeSubMessage;
         public System.Windows.Forms.CheckBox Channel_WelcomeSub;
         private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.LinkLabel CopyrightLabel;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Channel;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Bot;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Title;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Game;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Status;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Viewers;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Version;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Updated;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Reward;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Instructions;
+        public System.Windows.Forms.WebBrowser AuthenticationBrowser;
     }
 }

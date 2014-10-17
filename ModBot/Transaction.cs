@@ -1,10 +1,13 @@
-﻿namespace ModBot
+﻿using System;
+using System.Globalization;
+namespace ModBot
 {
     public class Transaction
     {
-        public string id, date, amount, donor, notes = "";
+        public string id, amount, donor, notes;
+        public DateTime date;
 
-        public Transaction(string id, string date, string amount, string donor, string notes)
+        public Transaction(string id, DateTime date, string amount, string donor, string notes)
         {
             this.id = id;
             this.date = date;
@@ -33,7 +36,7 @@
         /// <returns>A string of the transaction according to the format</returns>
         public string ToString(string format)
         {
-            return format.Replace("TRANSACTIONID", id).Replace("ID", id).Replace("TRANSACTION", id).Replace("TIME", date).Replace("DATE", date).Replace("AMOUNT", amount).Replace("DONOR", donor).Replace("NAME", donor).Replace("NOTES", notes);
+            return format.Replace("TRANSACTIONID", id).Replace("ID", id).Replace("TRANSACTION", id).Replace("DATETIME", date.ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern + " " + CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern)).Replace("TIME", date.ToString(CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern)).Replace("DATE", date.ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern)).Replace("AMOUNT", amount).Replace("DONOR", donor).Replace("NAME", donor).Replace("NOTES", notes);
         }
     }
 }

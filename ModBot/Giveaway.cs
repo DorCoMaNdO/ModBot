@@ -7,12 +7,12 @@ using System.Windows.Forms;
 
 namespace ModBot
 {
-    public static class Giveaway
+    static class Giveaway
     {
         private static MainWindow MainForm = Program.MainForm;
-        public static int LastRoll;
+        public static int LastRoll { get; private set; }
         public static bool Started { get; private set; }
-        public static bool Open;
+        public static bool Open { get; private set; }
         public static int Cost { get; private set; }
         public static int MaxTickets { get; private set; }
         public static Dictionary<string, int> Users = new Dictionary<string, int>();
@@ -21,7 +21,7 @@ namespace ModBot
 
         public static void startGiveaway(int ticketcost = 0, int maxtickets = 1)
         {
-            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke(() =>
             {
                 MainForm.Giveaway_SettingsPresents.Enabled = false;
                 MainForm.Giveaway_StartButton.Enabled = false;
@@ -38,7 +38,8 @@ namespace ModBot
                 dState.Clear();
                 foreach (Control ctrl in MainForm.GiveawayWindow.Controls)
                 {
-                    if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(CheckBox) || ctrl.GetType() == typeof(RadioButton) || ctrl.GetType() == typeof(NumericUpDown)) && ctrl != MainForm.Giveaway_AutoBanWinner && ctrl != MainForm.Giveaway_WarnFalseEntries && ctrl != MainForm.Giveaway_AnnounceWarnedEntries)
+                    //if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(CheckBox) || ctrl.GetType() == typeof(RadioButton) || ctrl.GetType() == typeof(NumericUpDown)) && ctrl != MainForm.Giveaway_AutoBanWinner && ctrl != MainForm.Giveaway_WarnFalseEntries && ctrl != MainForm.Giveaway_AnnounceWarnedEntries)
+                    if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(RadioButton) || ctrl == MainForm.Giveaway_ActiveUserTime || ctrl == MainForm.Giveaway_TicketCost || ctrl == MainForm.Giveaway_MaxTickets))
                     {
                         dState.Add(ctrl, ctrl.Enabled);
                         ctrl.Enabled = false;
@@ -136,7 +137,7 @@ namespace ModBot
         public static void closeGiveaway(bool announce = true, bool open = true)
         {
             Open = false;
-            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke(() =>
             {
                 MainForm.Giveaway_WinnerLabel.Text = "Waiting for a roll...";
                 MainForm.Giveaway_RerollButton.Text = "Roll";
@@ -157,7 +158,7 @@ namespace ModBot
         public static void openGiveaway()
         {
             Open = true;
-            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke(() =>
             {
                 MainForm.Giveaway_WinnerLabel.Text = "Entries open, close to roll for a winner...";
                 MainForm.Giveaway_RerollButton.Text = "Roll";
@@ -174,7 +175,7 @@ namespace ModBot
 
         public static void endGiveaway(bool announce = true)
         {
-            Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
+            Program.Invoke(() =>
             {
                 MainForm.Giveaway_SettingsPresents.Enabled = true;
                 MainForm.Giveaway_StartButton.Enabled = true;
@@ -225,12 +226,12 @@ namespace ModBot
 
         public static bool HasBoughtTickets(string user)
         {
-            return Users.ContainsKey(Api.capName(user));
+            return Users.ContainsKey(user.ToLower());
         }
 
         public static bool BuyTickets(string user, int tickets=1)
         {
-            user = Api.capName(user);
+            user = user.ToLower();
             if (Started && (MainForm.Giveaway_TypeKeyword.Checked || MainForm.Giveaway_TypeTickets.Checked) && Open && tickets <= MaxTickets && CheckUser(user))
             {
                 int paid = 0;
@@ -245,7 +246,7 @@ namespace ModBot
 
                     /*lock (MainForm.Giveaway_UserList.Items)
                     {
-                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                        Program.Invoke(() =>
                         {
                             List<string> delete = new List<string>();
                             foreach (string name in MainForm.Giveaway_UserList.Items)
@@ -278,7 +279,7 @@ namespace ModBot
             return false;
         }
 
-        private static int GetMinCurrency()
+        public static int GetMinCurrency()
         {
             if (MainForm.Giveaway_MinCurrency.Checked)
             {
@@ -287,10 +288,10 @@ namespace ModBot
             return 0;
         }
 
-        private static bool CheckUser(string user, bool checkfollow = true, bool checksubscriber = true, bool checktime = true)
+        public static bool CheckUser(string user, bool checkfollow = true, bool checksubscriber = true, bool checktime = true)
         {
             //return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (!checkfollow || !MainForm.Giveaway_MustFollow.Checked || Api.IsFollower(user)) && (!checksubscriber || !MainForm.Giveaway_MustSubscribe.Checked || Api.IsSubscriber(user)) && (!checktime || !MainForm.Giveaway_MustWatch.Checked || Api.CompareTimeWatched(user) >= 0));
-            user = Api.capName(user);
+            user = user.ToLower();
             bool sub = false;
             lock(Irc.Subscribers)
             {
@@ -302,7 +303,7 @@ namespace ModBot
         public static string getWinner()
         {
             string sWinner = "";
-            Program.Invoke((MethodInvoker)delegate
+            Program.Invoke(() =>
             {
                 MainForm.Giveaway_RerollButton.Enabled = false;
                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
@@ -404,7 +405,7 @@ namespace ModBot
 
                                     /*lock (MainForm.Giveaway_UserList.Items)
                                     {
-                                        Program.Invoke((System.Windows.Forms.MethodInvoker)delegate
+                                        Program.Invoke(() =>
                                         {
                                             foreach (string user in ValidUsers)
                                             {
@@ -454,7 +455,7 @@ namespace ModBot
                                 }
                             }
                             Chance = (float)winnertickets / tickets * 100;
-                            Program.Invoke((MethodInvoker)delegate
+                            Program.Invoke(() =>
                             {
                                 //string WinnerLabel = "Winner : ";
                                 string WinnerLabel = "";
@@ -476,12 +477,12 @@ namespace ModBot
                                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = true;
                                 MainForm.Giveaway_RerollButton.Enabled = true;
                                 LastRoll = Api.GetUnixTimeNow();
-                                if (MainForm.Giveaway_AutoBanWinner.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(Api.capName(sWinner))) MainForm.Giveaway_BanListListBox.Items.Add(Api.capName(sWinner));
+                                if (MainForm.Giveaway_AutoBanWinner.Checked && !MainForm.Giveaway_BanListListBox.Items.Contains(sWinner.ToLower())) MainForm.Giveaway_BanListListBox.Items.Add(sWinner.ToLower());
                             });
                             thread = new Thread(() =>
                             {
                                 sWinner = Api.GetDisplayName(sWinner, true);
-                                Program.Invoke((MethodInvoker)delegate
+                                Program.Invoke(() =>
                                 {
                                     MainForm.Giveaway_WinnerLabel.Text = sWinner;
                                 });
@@ -493,14 +494,14 @@ namespace ModBot
                     }
                     catch
                     {
-                        Program.Invoke((MethodInvoker)delegate
+                        Program.Invoke(() =>
                         {
                             Console.WriteLine(MainForm.Giveaway_WinnerLabel.Text = "Error while rolling, retrying...");
                         });
                         continue;
                     }
 
-                    Program.Invoke((MethodInvoker)delegate
+                    Program.Invoke(() =>
                     {
                         MainForm.Giveaway_WinnerLabel.Text = "No valid winner found";
                         MainForm.Giveaway_RerollButton.Enabled = true;

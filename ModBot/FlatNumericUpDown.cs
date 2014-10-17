@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace ModBot
 {
-    public class FlatNumericUpDown : NumericUpDown // Taken from http://www.rsdn.ru/forum/src/397418.1, modified by me
+    public class FlatNumericUpDown : NumericUpDown // Taken from http://www.rsdn.ru/forum/src/397418.1, modified by me (CoMaNdO)
     {
         FieldInfo buttonState;
 
