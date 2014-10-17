@@ -16,14 +16,6 @@ namespace ModBot
             this.notes = notes;
         }
 
-        // Summary:
-        //     A format to print the details of the transaction in:
-        //     TRANSACTIONID/ID/TRANSACTION for the ID.
-        //     DATE/TIME for the accurate date.
-        //     DATE_ROUND for the rounded date (no miliseconds).
-        //     AMOUNT for the amount donated.
-        //     DONOR/NAME for the donor's name.
-        //     NOTES for the notes.
         /// <summary>
         /// Converts a transaction to a string
         /// </summary>

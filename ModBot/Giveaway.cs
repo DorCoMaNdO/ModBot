@@ -31,14 +31,9 @@ namespace ModBot
                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
                 MainForm.Giveaway_StopButton.Enabled = true;
                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
-                /*MainForm.Giveaway_MustFollowCheckBox.Enabled = false;
-                MainForm.Giveaway_MinCurrencyCheckBox.Enabled = false;
-                MainForm.Giveaway_MinCurrency.Enabled = false;
-                MainForm.Giveaway_ActiveUserTime.Enabled = false;*/
                 dState.Clear();
                 foreach (Control ctrl in MainForm.GiveawayWindow.Controls)
                 {
-                    //if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(CheckBox) || ctrl.GetType() == typeof(RadioButton) || ctrl.GetType() == typeof(NumericUpDown)) && ctrl != MainForm.Giveaway_AutoBanWinner && ctrl != MainForm.Giveaway_WarnFalseEntries && ctrl != MainForm.Giveaway_AnnounceWarnedEntries)
                     if (!dState.ContainsKey(ctrl) && (ctrl.GetType() == typeof(RadioButton) || ctrl == MainForm.Giveaway_ActiveUserTime || ctrl == MainForm.Giveaway_TicketCost || ctrl == MainForm.Giveaway_MaxTickets))
                     {
                         dState.Add(ctrl, ctrl.Enabled);
@@ -185,10 +180,6 @@ namespace ModBot
                 MainForm.Giveaway_CancelButton.Enabled = false;
                 MainForm.Giveaway_AnnounceWinnerButton.Enabled = false;
                 MainForm.Giveaway_StopButton.Enabled = false;
-                /*MainForm.Giveaway_MustFollowCheckBox.Enabled = true;
-                MainForm.Giveaway_MinCurrencyCheckBox.Enabled = true;
-                MainForm.Giveaway_MinCurrency.Enabled = MainForm.Giveaway_MinCurrencyCheckBox.Checked;
-                MainForm.Giveaway_ActiveUserTime.Enabled = true;*/
                 foreach (Control ctrl in dState.Keys)
                 {
                     ctrl.Enabled = dState[ctrl];
@@ -290,13 +281,9 @@ namespace ModBot
 
         public static bool CheckUser(string user, bool checkfollow = true, bool checksubscriber = true, bool checktime = true)
         {
-            //return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (!checkfollow || !MainForm.Giveaway_MustFollow.Checked || Api.IsFollower(user)) && (!checksubscriber || !MainForm.Giveaway_MustSubscribe.Checked || Api.IsSubscriber(user)) && (!checktime || !MainForm.Giveaway_MustWatch.Checked || Api.CompareTimeWatched(user) >= 0));
             user = user.ToLower();
             bool sub = false;
-            lock(Irc.Subscribers)
-            {
-                sub = (!checksubscriber || !MainForm.Giveaway_MustSubscribe.Checked || Irc.Subscribers.Contains(user));
-            }
+            sub = (!checksubscriber || !MainForm.Giveaway_MustSubscribe.Checked || Api.IsSubscriber(user));
             return (!Irc.IgnoredUsers.Any(c => c.Equals(user.ToLower())) && !MainForm.Giveaway_BanListListBox.Items.Contains(user) && Database.checkCurrency(user) >= GetMinCurrency() && (!checkfollow || !MainForm.Giveaway_MustFollow.Checked || Api.IsFollower(user)) && sub && (!checktime || !MainForm.Giveaway_MustWatch.Checked || Api.CompareTimeWatched(user) >= 0));
         }
 
@@ -335,21 +322,18 @@ namespace ModBot
                             int ActiveTime = Convert.ToInt32(MainForm.Giveaway_ActiveUserTime.Value) * 60;
                             lock (Irc.ActiveUsers)
                             {
-                                lock (Irc.Subscribers)
+                                foreach (string user in Irc.ActiveUsers.Keys)
                                 {
-                                    foreach (string user in Irc.ActiveUsers.Keys)
+                                    //if (!ValidUsers.Contains(user) && RollTime - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, Irc.ActiveUsers.Count < 100))
+                                    if (!ValidUsers.Contains(user) && Api.GetUnixTimeNow() - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, Irc.ActiveUsers.Count < 100))
+                                    //if (!ValidUsers.Contains(user) && RollTime  Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, false, false))
                                     {
-                                        //if (!ValidUsers.Contains(user) && RollTime - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, Irc.ActiveUsers.Count < 100))
-                                        if (!ValidUsers.Contains(user) && Api.GetUnixTimeNow() - Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, Irc.ActiveUsers.Count < 100))
-                                        //if (!ValidUsers.Contains(user) && RollTime  Irc.ActiveUsers[user] <= ActiveTime && CheckUser(user, false, false))
+                                        ValidUsers.Add(user);
+                                        if (MainForm.Giveaway_SubscribersWinMultiplier.Checked && Api.IsSubscriber(user))
                                         {
-                                            ValidUsers.Add(user);
-                                            if (MainForm.Giveaway_SubscribersWinMultiplier.Checked && Irc.Subscribers.Contains(user))
+                                            for (int i = 1; i < MainForm.Giveaway_SubscribersWinMultiplierAmount.Value; i++)
                                             {
-                                                for (int i = 1; i < MainForm.Giveaway_SubscribersWinMultiplierAmount.Value; i++)
-                                                {
-                                                    ValidUsers.Add(user);
-                                                }
+                                                ValidUsers.Add(user);
                                             }
                                         }
                                     }
@@ -362,71 +346,68 @@ namespace ModBot
                             {
                                 lock (Irc.ActiveUsers)
                                 {
-                                    lock (Irc.Subscribers)
-                                    {
-                                        foreach (string user in Users.Keys)
-                                        {
-                                            if (Irc.ActiveUsers.ContainsKey(user))
-                                            {
-                                                if (MainForm.Giveaway_SubscribersWinMultiplier.Checked && Irc.Subscribers.Contains(user)) Users[user] = Users[user] * Convert.ToInt32(MainForm.Giveaway_SubscribersWinMultiplierAmount.Value);
-
-                                                for (int i = 0; i < Users[user]; i++)
-                                                {
-                                                    ValidUsers.Add(user);
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // Only refund if lastroll == 0
-                                    /*List<string> Delete = new List<string>();
                                     foreach (string user in Users.Keys)
                                     {
-                                        if (Irc.ActiveUsers.ContainsKey(user) && CheckUser(user))
+                                        if (Irc.ActiveUsers.ContainsKey(user))
                                         {
+                                            if (MainForm.Giveaway_SubscribersWinMultiplier.Checked && Api.IsSubscriber(user)) Users[user] = Users[user] * Convert.ToInt32(MainForm.Giveaway_SubscribersWinMultiplierAmount.Value);
+
                                             for (int i = 0; i < Users[user]; i++)
                                             {
                                                 ValidUsers.Add(user);
                                             }
                                         }
-                                        else
+                                    }
+                                }
+
+                                // Only refund if lastroll == 0
+                                /*List<string> Delete = new List<string>();
+                                foreach (string user in Users.Keys)
+                                {
+                                    if (Irc.ActiveUsers.ContainsKey(user) && CheckUser(user))
+                                    {
+                                        for (int i = 0; i < Users[user]; i++)
                                         {
-                                            Database.addCurrency(user, Users[user] * Cost);
-                                            Delete.Add(user);
+                                            ValidUsers.Add(user);
                                         }
                                     }
-                                    foreach (string user in Delete)
+                                    else
                                     {
-                                        if (Users.ContainsKey(user))
-                                        {
-                                            Users.Remove(user);
-                                        }
-                                    }*/
-
-                                    /*lock (MainForm.Giveaway_UserList.Items)
-                                    {
-                                        Program.Invoke(() =>
-                                        {
-                                            foreach (string user in ValidUsers)
-                                            {
-                                                List<string> delete = new List<string>();
-                                                foreach (string name in MainForm.Giveaway_UserList.Items)
-                                                {
-                                                    if ((MainForm.Giveaway_TypeTickets.Checked ? name.Split(' ')[0] : name) == user)
-                                                    {
-                                                        delete.Add(name);
-                                                    }
-                                                }
-                                                foreach (string name in delete)
-                                                {
-                                                    MainForm.Giveaway_UserList.Items.Remove(name);
-                                                }
-                                                MainForm.Giveaway_UserList.Items.Add(user + (MainForm.Giveaway_TypeTickets.Checked ? Users.ContainsKey(user) ? " (" + Users[user] + ")" : "" : ""));
-                                            }
-                                            MainForm.Giveaway_UserCount.Text = "Users: " + MainForm.Giveaway_UserList.Items.Count;
-                                        });
-                                    }*/
+                                        Database.addCurrency(user, Users[user] * Cost);
+                                        Delete.Add(user);
+                                    }
                                 }
+                                foreach (string user in Delete)
+                                {
+                                    if (Users.ContainsKey(user))
+                                    {
+                                        Users.Remove(user);
+                                    }
+                                }*/
+
+                                /*lock (MainForm.Giveaway_UserList.Items)
+                                {
+                                    Program.Invoke(() =>
+                                    {
+                                        foreach (string user in ValidUsers)
+                                        {
+                                            List<string> delete = new List<string>();
+                                            foreach (string name in MainForm.Giveaway_UserList.Items)
+                                            {
+                                                if ((MainForm.Giveaway_TypeTickets.Checked ? name.Split(' ')[0] : name) == user)
+                                                {
+                                                    delete.Add(name);
+                                                }
+                                            }
+                                            foreach (string name in delete)
+                                            {
+                                                MainForm.Giveaway_UserList.Items.Remove(name);
+                                            }
+                                            MainForm.Giveaway_UserList.Items.Add(user + (MainForm.Giveaway_TypeTickets.Checked ? Users.ContainsKey(user) ? " (" + Users[user] + ")" : "" : ""));
+                                        }
+                                        MainForm.Giveaway_UserCount.Text = "Users: " + MainForm.Giveaway_UserList.Items.Count;
+                                    });
+                                }*/
                             }
                         }
 
@@ -459,11 +440,7 @@ namespace ModBot
                             {
                                 //string WinnerLabel = "Winner : ";
                                 string WinnerLabel = "";
-                                //if (Api.IsSubscriber(sWinner)) WinnerLabel += "Subscribing | ";
-                                lock (Irc.Subscribers)
-                                {
-                                    if (Irc.Subscribers.Contains(sWinner)) WinnerLabel += "Subscribing | ";
-                                }
+                                if (Api.IsSubscriber(sWinner)) WinnerLabel += "Subscribing | ";
                                 if (Api.IsFollower(sWinner)) WinnerLabel += "Following | ";
                                 //WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currencyName + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m") + " | Chance : " + Chance.ToString("0.00") + "%";
                                 WinnerLabel += Database.checkCurrency(sWinner) + " " + Irc.currencyName + " | Watched : " + Database.getTimeWatched(sWinner).ToString(@"d\d\ hh\h\ mm\m");

@@ -118,7 +118,6 @@ namespace ModBot
                 try
                 {
                     string sData = w.DownloadString("https://api.twitch.tv/kraken/users/" + user.ToLower() + "/follows/channels/" + Irc.channel.Substring(1));
-                    //bFollower = !sData.Contains("is not following");
                     bFollower = true;
                 }
                 catch
@@ -131,9 +130,14 @@ namespace ModBot
         public static bool IsSubscriber(string user, bool check = false, bool manual = false)
         {
             user = user.ToLower();
-            if (!check) return (Irc.Subscribers.Contains(user) || manual && Database.isSubscriber(user));
-
             bool bSubscriber = false;
+            lock (Irc.Subscribers)
+            {
+                bSubscriber = Irc.Subscribers.Contains(user);
+            }
+            if (!check) return (bSubscriber || manual && Database.isSubscriber(user));
+
+            bSubscriber = false;
             if (Irc.partnered)
             {
                 using (WebClient w = new WebClient())
@@ -142,7 +146,6 @@ namespace ModBot
                     try
                     {
                         string sData = w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1) + "/subscriptions/" + user.ToLower() + "?oauth_token=" + Irc.channeltoken);
-                        //bSubscriber = (!sData.Contains("Token invalid or missing required scope"));
                         bSubscriber = true;
                     }
                     catch
@@ -165,7 +168,6 @@ namespace ModBot
                     {
                         foreach (JToken subscription in JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/channels/" + Irc.channel.Substring(1) + "/subscriptions?direction=desc&limit=" + count + "&oauth_token=" + Irc.channeltoken))["subscriptions"])
                         {
-                            //XmlConvert.ToTimeSpan(subscription["created_at"])
                             DateTime date = DateTime.Parse(subscription["created_at"].ToString());
                             if (startingat.ToUniversalTime().CompareTo(date) > -1)
                             {
@@ -450,7 +452,8 @@ namespace ModBot
             public string[] GetSectionNames() { return ini.GetSectionNames(); }
         }
 
-        public static iniUtil ini { get { return ModBot.Program.ini; } }
+        //public static iniUtil ini { get { return ModBot.Program.ini; } }
+
         public static Dictionary<string, Thread> dCheckingDisplayName { get { return ModBot.Api.dCheckingDisplayName; } }
 
         public static int GetUnixTimeNow() { return ModBot.Api.GetUnixTimeNow(); }
@@ -462,8 +465,6 @@ namespace ModBot
         public static bool IsFileLocked(string FileLocation, FileShare fs = FileShare.None) { return ModBot.Api.IsFileLocked(FileLocation, fs); }
 
         public static string GetDisplayName(string user, bool bWait = false) { return ModBot.Api.GetDisplayName(user, bWait); }
-
-        //public static string capName(string name) { return ModBot.Api.capName(name); }
 
         public static bool IsFollower(string user) { return ModBot.Api.IsFollower(user); }
 
@@ -519,7 +520,6 @@ namespace ModBot
                 }
             }
         }
-        //public static void LogError(string error, IExtension sender) { if (sender == null) return; ModBot.Api.LogError(error, sender); }
 
         public static class Auction
         {
@@ -547,8 +547,6 @@ namespace ModBot
             public static bool Exists(string Command) { return ModBot.Commands.Exists(Command); }
 
             public static bool CheckCommand(string user, string message, bool call = false, bool log = true) { return ModBot.Commands.CheckCommand(user, message, call, log); }
-
-            //public static void Log(string output, IExtension sender) { if (sender == null) return; ModBot.Commands.Log(output, sender); }
         }
 
         public static class Database
@@ -696,8 +694,6 @@ namespace ModBot
             public static string checkBtag(string person) { return ModBot.Irc.checkBtag(person); }
 
             public static void addToLookups(string user) { ModBot.Irc.addToLookups(user); }
-
-            //public static void TimeOutLog(string output, IExtension sender) { if (sender == null) return; ModBot.Irc.TimeOutLog(output, sender); }
         }
 
         public static class Pool

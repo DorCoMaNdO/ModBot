@@ -309,11 +309,6 @@ namespace ModBot
 
                 ini.SetValue("Settings", "ResourceKeeper", (ResourceKeeper = (ini.GetValue("Settings", "ResourceKeeper", "1") == "1")) ? "1" : "0");
 
-                /*if (donationkey == "")
-                {
-                    MainForm.Donations_ManageButton.Enabled = false;
-                }*/
-
                 ini.SetValue("Settings", "Channel_Greeting", greeting = ini.GetValue("Settings", "Channel_Greeting", "Hello @user! Welcome to the stream!"));
 
                 IgnoredUsers.Add("jtv");
@@ -332,22 +327,12 @@ namespace ModBot
             {
                 Console.WriteLine("Aborting connection...");
 
-                /*Program.Invoke(() =>
-                {
-                    foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
-                    {
-                        ctrl.Enabled = true;
-                    }
-                    MainForm.DisconnectButton.Enabled = false;
-                    MainForm.ConnectButton.Enabled = false;
-                });*/
                 Disconnect(bAbort ? !bAbort : MainForm.SettingsErrorLabel.Text == "" || MainForm.SettingsErrorLabel.Text == "Unable to connect to MySQL server.\r\n", false);
 
                 Console.WriteLine("Connection aborted.\r\n");
                 return;
             }
 
-            //Database.newUser(admin);
             Database.setUserLevel(admin, 4);
 
             Connect();
@@ -509,79 +494,6 @@ namespace ModBot
                     Console.WriteLine("Failed to connect to Twitch.TV chat servers...");
 
                     Disconnect(true, false);
-
-                    /*DetailsConfirmed = false;
-                    IsModerator = false;
-
-                    //MainForm.Hide();
-                    List<Thread> Ts = new List<Thread>();
-                    foreach (Thread t in Threads)
-                    {
-                        t.Abort();
-                        Ts.Add(t);
-                    }
-                    Threads.Clear();
-                    foreach (Thread t in Api.dCheckingDisplayName.Values)
-                    {
-                        t.Abort();
-                        Ts.Add(t);
-                    }
-                    Api.dCheckingDisplayName.Clear();
-                    foreach (Thread t in Ts)
-                    {
-                        while (t.IsAlive) Thread.Sleep(10);
-                    }
-                    //Thread.Sleep(TimeSpan.FromDays(365));
-
-                    Pool.cancel();
-
-                    if (irc != null && irc.Connected)
-                    {
-                        irc.Close();
-                    }
-
-                    if (Database.DB != null)
-                    {
-                        Database.DB.Close();
-                        Database.DB = null;
-                    }
-
-                    if (Database.MySqlDB != null)
-                    {
-                        Database.MySqlDB.Close();
-                        Database.MySqlDB = null;
-                    }
-
-                    IsStreaming = false;
-
-                    Program.Invoke(() =>
-                    {
-                        MainForm.CurrencyWindowButton.Text = "Currency";
-                        MainForm.CurrencyWindowButton.Font = new Font(MainForm.CurrencyWindowButton.Font.Name, 10F, FontStyle.Bold);
-                        MainForm.ChannelWindowButton.Text = "Channel";
-                        MainForm.ChannelWindowButton.Font = new Font(MainForm.ChannelWindowButton.Font.Name, 10F, FontStyle.Bold);
-                        MainForm.ChannelStatusLabel.Text = "DISCONNECTED";
-                        MainForm.ChannelStatusLabel.ForeColor = Color.Red;
-                        MainForm.DonationsWindowButton.Text = "Donations";
-
-                        MainForm.Channel_UseSteam.Enabled = false;
-
-                        foreach (System.Windows.Forms.CheckBox btn in MainForm.Windows.Keys)
-                        {
-                            if (btn != MainForm.SettingsWindowButton && btn != MainForm.AboutWindowButton)
-                            {
-                                btn.Enabled = false;
-                            }
-                        }
-                        MainForm.SettingsWindowButton.Enabled = true;
-
-                        foreach (System.Windows.Forms.Control ctrl in MainForm.SettingsWindow.Controls)
-                        {
-                            ctrl.Enabled = true;
-                        }
-                        MainForm.DisconnectButton.Enabled = false;
-                        MainForm.ConnectButton.Enabled = true;
-                    });*/
                 }
             }
         }
@@ -769,8 +681,7 @@ namespace ModBot
                                         while (old == Database.checkCurrency(user))
                                         {
                                             //old = Database.checkCurrency(user);
-                                            //if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Api.IsSubscriber(user))
-                                            if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Subscribers.Contains(user))
+                                            if (Database.isSubscriber(user) || spreadsheetSubs.Contains(user) || Api.IsSubscriber(user))
                                             {
                                                 Database.addCurrency(user, subpayout);
                                             }
@@ -904,12 +815,6 @@ namespace ModBot
                             JObject stream = JObject.Parse(w.DownloadString("https://api.twitch.tv/kraken/streams/" + channel.Substring(1)));
                             if (stream["stream"].HasValues)
                             {
-                                /*if (!IsStreaming)
-                                {
-                                    //StreamStartTime = Api.GetUnixTimeNow();
-                                    //StreamStartTime = Api.GetUnixFromTime(XmlConvert.ToDateTime(stream["stream"]["created_at"].ToString(), XmlDateTimeSerializationMode.Utc));
-                                    StreamStartTime = Api.GetUnixFromTime(DateTime.Parse(stream["stream"]["created_at"].ToString()));
-                                }*/
                                 StreamStartTime = Api.GetUnixFromTime(DateTime.Parse(stream["stream"]["created_at"].ToString()));
                                 bIsStreaming = true;
                             }
@@ -1105,8 +1010,7 @@ namespace ModBot
                         {
                             msg = "you don't follow the channel";
                         }
-                        //else if (MainForm.Giveaway_MustSubscribe.Checked && !Api.IsSubscriber(user))
-                        else if (MainForm.Giveaway_MustSubscribe.Checked && !Subscribers.Contains(user))
+                        else if (MainForm.Giveaway_MustSubscribe.Checked && !Api.IsSubscriber(user))
                         {
                             msg = "you are not subscribed to the channel";
                         }
@@ -1139,7 +1043,7 @@ namespace ModBot
                             finalmessage += name + ", " + msg + ". ";
                         }
                     }
-                    //if (finalmessage != "" && ) sendMessage(finalmessage);
+                    if (finalmessage != "") sendMessage(finalmessage); // ToDo: Add an option to disable as it is spamming.
                     if (MainForm.Giveaway_TypeTickets.Checked && Api.GetUnixTimeNow() - LastAnnouncedTickets > 60)
                     {
                         LastAnnouncedTickets = Api.GetUnixTimeNow();
@@ -1158,23 +1062,6 @@ namespace ModBot
             {
                 //Console.WriteLine(message);
 
-                /*Console.WriteLine("*** DEBUG " + message);
-                for (int attempts = 0; attempts < 10; attempts++)
-                {
-                    try
-                    {
-                        using (StreamWriter log = new StreamWriter(@"Data\Logs\Rewards.txt", true))
-                        {
-                            log.WriteLine("*DEBUG [" + DateTime.Now + "] " + message);
-                        }
-                        break;
-                    }
-                    catch
-                    {
-                        System.Threading.Thread.Sleep(250);
-                    }
-                }*/
-
                 string[] msg = message.Split(' ');
                 string user;
 
@@ -1187,7 +1074,7 @@ namespace ModBot
                 {
                     user = getUser(message);
                     addUserToList(user, -1, true);
-                    //Console.WriteLine(message);
+                    
                     string text = message.Substring(message.IndexOf(":", 1) + 1);
                     if (text.Substring(1).StartsWith("ACTION")) text = "/me " + text.Substring(8).Replace(text[text.Length - 1].ToString(), "");
 
@@ -1210,10 +1097,6 @@ namespace ModBot
                                 UserColors[user] = msg[2];
                             }
                         }
-                        /*else if (temp.StartsWith("You have banned") || temp.StartsWith("Your message was not sent"))
-                        {
-                            return;
-                        }*/
                         else if (text.StartsWith("The moderators of this room are: "))
                         {
                             lock (Moderators)
@@ -1445,8 +1328,7 @@ namespace ModBot
                                     {
                                         TimeSpan t = Database.getTimeWatched(winner);
                                         //sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes | Chance : " + Giveaway.Chance.ToString("0.00") + "%)");
-                                        //sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
-                                        sendMessage(winner + " has won the giveaway! (" + (Irc.Subscribers.Contains(winner.ToLower()) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
+                                        sendMessage(winner + " has won the giveaway! (" + (Api.IsSubscriber(winner) ? "Subscribes to the channel | " : "") + (Api.IsFollower(winner) ? "Follows the channel | " : "") + "Has " + Database.checkCurrency(winner) + " " + currencyName + " | Has watched the stream for " + t.Days + " days, " + t.Hours + " hours and " + t.Minutes + " minutes)");
                                     }
                                     else
                                     {
