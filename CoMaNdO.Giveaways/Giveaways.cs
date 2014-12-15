@@ -89,7 +89,6 @@ namespace CoMaNdO.Giveaways
 
             UI.AddWindow("Giveaway", Window = new GiveawaysWindow(extension));
 
-            //Events.UI.Loaded += Events_OnUILoaded;
             Events.Connected += Events_Connected;
             Events.Chat.ModeratorsChecked += Events_ModeratorsChecked;
             Events.Chat.MessageReceived += Events_MessageReceived;
@@ -97,11 +96,6 @@ namespace CoMaNdO.Giveaways
             Events.UserRemoved += Events_UserRemoved;
             Events.OnDisconnect += Events_OnDisconnect;
         }
-
-        /*private static void Events_OnUILoaded()
-        {
-            UI.AddWindow("Giveaway", Window = new GiveawaysWindow(extension));
-        }*/
 
         private static void Events_Connected(string channel, string nick, bool partnered)
         {

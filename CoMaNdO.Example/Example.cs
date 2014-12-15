@@ -20,7 +20,6 @@ namespace CoMaNdO.Example
             settings.SetValue("Example Section", "SuccessfulExample", "0"); // Set or create a value named "SuccessfulExample" under the section "Example Section", with the value "0".
 
             Events.Connected += Events_Connected; // Register an event handler to add our custom command.
-            //Events.UI.Loaded += Events_OnUILoaded;
 
             UI.AddWindow("Example", new ExampleWindow());
 
@@ -36,11 +35,6 @@ namespace CoMaNdO.Example
         {
             Commands.Add("!example", Command_Example); // We add the command with a handler that will perform the task we want it to.
         }
-
-        /*private void Events_OnUILoaded()
-        {
-            UI.AddWindow("Example", new ExampleWindow());
-        }*/
 
         private void Command_Example(string user, string command, string[] args)
         {

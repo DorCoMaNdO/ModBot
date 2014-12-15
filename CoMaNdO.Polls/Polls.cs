@@ -92,15 +92,8 @@ namespace CoMaNdO.Polls
         {
             //UI.AddWindow("Poll", new PollsWindow());
 
-            //Events.UI.Loaded += Events_OnUILoaded;
             Events.Connected += Events_Connected;
         }
-
-        /*private static void Events_OnUILoaded()
-        {
-            UI.AddWindow("Poll", new PollsWindow());
-        }*/
-
         private static void Events_Connected(string channel, string nick, bool partnered)
         {
             Commands.Add("!poll", Command_Poll, 0, 0);

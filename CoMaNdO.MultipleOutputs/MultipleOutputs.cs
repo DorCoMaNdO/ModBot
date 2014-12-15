@@ -12,15 +12,8 @@ namespace CoMaNdO.MultipleOutputs
 
         public void Load()
         {
-            //Events.UI.Loaded += Events_OnUILoaded;
-
             UI.AddWindow("Multiple Outputs", new MultipleOutputsWindow(this), false, false, false, false, "Multiple\r\nOutputs");
         }
-
-        /*private void Events_OnUILoaded()
-        {
-            UI.AddWindow("Multiple Outputs", new MultipleOutputsWindow(this), false, false, false, false, "Multiple\r\nOutputs");
-        }*/
 
         public string Name { get { return "Multiple Command Outputs"; } }
         public string FileName { get { return "CoMaNdO.MultipleOutputs.dll"; } }
