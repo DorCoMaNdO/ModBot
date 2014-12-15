@@ -1,7 +1,0 @@
-﻿* Review all of the other features of the bot and improve, include them in the UI.
-* Better MOTD, Changelog (Add RichTextBoxes as nodes) and welcome windows.
-* Recreate the custom border (use OnPaint).
-* Recode the gambling system.
-* Code a better example extension ~_~
-+ Add user management to the UI.
-+ Improve the userlevels (let the user create / delete user groups and select what commands each group can access).

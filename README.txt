@@ -1,130 +1,298 @@
-﻿ModBot is designed to be a user-friendly bot for twitch.tv, based heavily on LoyaltyBot.  
+﻿ModBot is designed to be a user-friendly bot for Twitch.TV, based heavily on LoyaltyBot.
 
-Be sure to always use the most up-to-date version, which can be downloaded at https://sourceforge.net/projects/twitchmodbot/.
+This modification of ModBot directly uses the base code of the original ModBot available at http://twitchmodbot.sourceforge.net.
+Even though most of the original code has been modified, this project would probably have never been started without it.
 
-Any questions/comments/suggestions can be sent to me on twitch (user: Keirathi), or emailed to me @ twitch.tv.modbot@gmail.com
+Any questions/comments/suggestions can be emailed to me @ CoMaNdO.ModBot@gmail.com
 
-Requires .NET Framework 4.  Most Windows users should have it already, but if not:  http://www.microsoft.com/en-us/download/details.aspx?id=17718
-
-*Note:  I don't have a Mac, and I have no idea how they work.  If anyone is savvy with building native windows apps on Mac and is interested in building a Mac version, toss me an e-mail to twitch.tv.modbot@gmail.com
-
-
-**************************INSTALLATION***********************************
-1) Extract all of the contents of the rar file into any folder.
-2) [optional] If you use LoyaltyBot and want to transfer your tokens from LoyaltyBot to ModBot, run "OneTimeConverter.exe" first.  Check your LoyaltyBot/users/example.js file if you need to remember the information to put into the boxes.
-	***Note, if you skip this step and want to do it later, you will have to delete your ModBot.sqlite file for OneTimeConverter to do anything.  Therefore I highly recommend if you want to transfer that you do it before you actually start running ModBot in your channel.
-3) Create a new account on Twitch.tv for your bot if you don't have one already.
-4) Run ModBot.   Fill in the username and password for the bot account you created, the channel you want it to run in (generally your twitch name), a name for your currency, and select the amount you want the bot to payout and on what interval.  The Subscribers Spreadsheet box is optional.
+Requires .NET Framework 4. Most Windows users should have it already, but if not: http://www.microsoft.com/en-us/download/details.aspx?id=17718
 
 
-**************************SUBSCRIBERS*************************************
-ModBot features 2 ways to handle subscribers: a google docs spreadsheet, or adding someone as a sub via the database.  They do not conflict with each other, so if you happen to have someones name in both, they're not getting 4x points or anything.  Just pick whichever one is more convenient for you to use, or a combination.  Really doesn't matter!
 
-	Google Docs:
+************************INSTALLATION************************
+
+Head to http://ModBot.wordpress.com/installation
+
+
+
+************************SUBSCRIBERS (Regulars)**************
+
+ModBot features 2 ways to handle subscribers: a google docs spreadsheet, or adding someone as a sub via the database. They do not conflict with each other, so if you happen to have someones name in both they will not have the subscriber effect twice or more. Just pick whichever one is more convenient for you to use, or a combination. Really doesn't matter, although it is recommended to use the database method.
+
+	Google Docs (Support not provided, if you encounter any issues you're on your own, use the database method instead):
 		If you already use LoyaltyBot, you can use the exact same subscribers link.
 		If you don't use LoyaltyBot and want to make a google docs spreadsheet to more easily manage your subscribers list:
 			1) Create a new spreadsheet at http://docs.google.com/
 			2) Set cell A1 as the header "Username"
 			3) Subscriber Names will then be placed in Column A cells, starting with A2. (Fig. 1)
 			4) Set the Subscriber list to Public, and change the type to json. (Fig. 2)
-				*Note:  Even if you don't have a Sub button, you can still add people to your sub list so that they receive double currency income.
+				*Note: Even if you don't have a Sub button, you can still add people to your sub list so that they receive double currency income.
 		Figure 1: [Column Setup] - http://i.imgur.com/eyQOwGz.jpg
 		Figure 2: [Changing Doc Settings] - http://i.imgur.com/jDU9xOR.jpg
 
+
+
 	Database:
-		If you don't want to use a google spreadsheet for whatever reason, you can type !admin addsub <username> or !admin removesub <username> in the channel while the bot is running.
+		Use the following command to add a subscriber:
+		!modbot addsub <username>
+
+		Use the following command to remove a subscriber:
+		!modbot removesub <username>
 
 
 
-************************USER ACCESS LEVELS********************************
+************************USER ACCESS LEVELS******************
 
-Something that you need to understand for this bot are the user levels.  
-You, the broadcaster, are always Level 3.  You have access to every command.
-Normal users in the channel are level 0.  They have access to !<currency>, !ticket, !bid, !bet, !btag, and any custom commands that only require Level 0 Access.
-Level 1 users are moderators.  They have access to opening and closing raffles, betting pools, and auctions, as well as all the Normal User commands, and any custom commands that require Level 1 Access.
-Level 2 users are Super mods.  They have access to adding/removing currency from users, as well as all lower level commands, and any custom commands that require Level 2 Access.
+Something that you need to understand for this bot are the user levels. 
+	You, the broadcaster, are always Level 5. You have access to every command.
+	Normal users in the channel are level 0. They have access to all commands that are set to level 0.
+	Level 1 users are Helpers. They have basic access.
+	Level 2 users are Moderators. They have more advanced access.
+	Level 3 users are Super mods. They have access to all commands except the ones that affect all users or the channel.
+	Level 4 users are Trusted mods. They have access that is equal to the streamer, add only people you trust to this level.
 
-Please only promote people you trust.  It's much less work to do the work yourself than it is to fix a mess that someone else causes.Details on how to change someone's access level are detailed in the commands section below.
-
-
-**************************COMMANDS*****************************************
-
-Admin Only Commands:
-
-	!admin payout <number> --- Changes the amount of currency paid out every interval.
-	!admin interval <number> --- Changes the interval that currency is paid out at.  Accepted values: 1,2,3,4,5,6,10,12,15,20,30,60.
-	   ****NOTE -- The above 2 settings are currently *NOT* saved between sessions.  When you restart the bot, payout and interval will reset back to what you select in the intial drop down boxes.
-	!admin addmod <username> --- Changes the person to a Moderator (Access Level 1).
-	!admin addsuper <username> --- Changes the person to a Super mod (Access Level 2).
-	!admin demote <username> --- Moves the person down 1 Access Level.  Only works if the person is a Mod or Super Mod.
-	!admin setlevel <username> <number> --- Sets the person to the specified Access Level.  Can be used instead of addmod, addsuper, or demote.  Cannot change someones access level to 3 (your level) or make it less than 0.
-	!admin addsub <username> --- Add someone to the internal Sub List.  Doesn't cause conflicts with a spreadsheet Sub List.
-	!admin removesub <username> --- Remove someone from the internal Sub List.
-
-	Greetings:
-		
-		!admin greeting set <Greeting Text> --- Sets your (optional) greeting message that will be sent everytime someone joins your channel.  Using '@user' in your greeting will put the person who joined's username in the greeting. Your custom greeting is always remembered across bot sessions.  If the first character of your greeting is a /, it will be stripped.
-		!admin greeting on --- Turns on your greeting messages.  Must be manually turned on each time you start the bot.
-		!admin greeting off --- Turns off your greeting messages.
-
-
-Super Mod + Admin Commands:
-
-	!<currency> add <amount> <username/all> --- Adds the specified amount of currency to the username.  If "all" is supplied as the last argument instead of a username, will give the coins to everyone currently in the channel.
-	!<currency> remove <amount> <username/all>  --- Removes the specified amount of currency from the username.  If "all" is supplied as the last argument instead of a username, will remove the coins from everyone currently in the channel.
-
-
-Mod + Super Mod + Admin Commands:
-
-	Custom Commands*:
-		
-		!mod addcommmand <AccessLevelRequired> <command> <output>  --- Access level must be between 0 and 3.  Command and output can be any text.  Quick example:  "!mod addcom 0 !ts Come hang out with on on teamspeak" would add a !ts command that anyone in the channel could use. If the first character of the <output> is a /, it will be stripped.
-		!mod removecommand <command>  --- Deletes the command.  Currently if you want to edit a command, you must delete it and re-add it.
-		!mod commandlist ---  Lists all of the custom commands currently available to the channel.
-
-		*Note about custom commands:  the <command> parameter can be ANYTHING.  If you make a command "bacon", then it will trigger anytime bacon is the worst word in a sentence.  It's probably a good practice to make all commands start with an "identifier" key, such as !.  The ! isn't forced.
-
-	Raffle:
-		
-		!raffle open <Price> <MaxTickets> --- Opens a new raffle.  Price and Max tickets must both be greater than 0.
-		!raffle close --- Closes the raffle and draws the first winner.
-		!raffle draw  --- Draws another winner from a closed raffle.
-		!raffle cancel --- Cancels the current raffle and refunds everyone's tickets.
-
-	Auction:
-
-		!auction open --- Opens a new auction.  Users can bid freely until you close the auction.  Current winner is shown in the channel each time there's a new High Bid, and every 30 seconds afterwards.
-		!auction close --- Closes the auction and announces the final winner.
-		!auction cancel --- Cancels the auction and refunds the highest bid.
-
-	Gambling:
-
-		!gamble open <MaxBet> <option1>, <option2>, <option3>, ... , <optionN> --- Opens a new betting pool.  MaxBet specifies the maximum amount of coins that a user can bet.  The options must have a space and a comma between them, and there isn't a limit to the amount of options you can have.
-		!gamble close --- Locks the bets so that no more bets can be made.
-		!gamble winner <optionX>  ---  Closes the bet pool, and pays out people who bet on the correct option.  <optionX> must be one of numbers associated with the original options when you started your pool.
-		!gamble cancel --- Cancels the bet pool, and refunds all bets.
-
-
-Normal User + Mod + Super Mod + Admin Commands:
-
-	!<currency> --- Checks your current amount of currency on the channel.
-	!btag/!battletag <YourBtag> --- Sets your battletag in the database.  If you win an auction or raffle, your battletag is shown in the winner output.
-
-	When a raffle is open:
-
-		!ticket <numberoftickets>  --- purchases the specified number of tickets.  Must <numberoftickets> must be a number >=0.  If you buy tickets and wish to get out of the raffle, use "!ticket 0" to have your coins refunded.
-		!raffle help --- Refresher output for the currently open raffle.  Details the current ticket cost and max tickets, and explains how to purchase tickets.
-
-	When an auction is open:
-
-		!bid <amount>  --- Bids this amount on the current auction.  If your bid is not higher than the current highest bid, nothing happens.  Highest bid in a new auction is always 0.
-
-	When a betting pool is open:
-
-		!bet <amount> <optionnumber>  --- Places a bet on the option you select.  <optionnumber> is specified when the pool is opened, or you can type "!bet help" for a refresher.
-		!bet help --- Resends the list of options for the current bet pool, and a quick refresher on how to bet.
+Access of each level is described below.
 
 
 
-*A quick note about Custom Commands:  
-	If you try to add a custom command that matches any of the other built-in commands (!raffle, !bet, etc), the bot will tell you that it's added but you will have no way to ever use it.  So just pick a new command name!
+************************COMMANDS****************************
+
+Currency:
+	!currency/!<currency> - (Anyone or Access Level 1 if the command is disabled) Checks your current amount of currency on the channel.
+	!currency/!<currency> top5 - (Anyone) Provides a list of the 5 users with the most currency (5 minutes cooldown, mods not affected).
+	!currency/!<currency> <username> - (Access Level 1) Manually check the currency of a specific person.
+	!currency/!<currency> enable/disable - (Access Level 3) Enable or disable the currency command.
+	!currency/!<currency> add <username/online/all> <amount> - (Access Level 3) Adds the specified amount of currency to the username. Using "online" as the username will give the specified of currency to all online users in the channel. Using "all" (Access Level 4) as the username will give the specified of currency to all users that have ever visited the channel.
+	!currency/!<currency> set <username/online/all> <amount> - (Access Level 3) Sets the specified amount of currency to the username. Using "online" as the username will set the specified of currency to all online users in the channel. Using "all" (Access Level 4) as the username will set the specified of currency to all users that have ever visited the channel.
+	!currency/!<currency> remove <username/online/all> <amount> - (Access Level 3) Removes the specified amount of currency from the username. Using "online" as the username will remove the specified of currency from all online users in the channel. Using "all" (Access Level 4) as the username will remove the specified of currency from all users that have ever visited the channel.
+	!currency/!<currency> clear - (Access Level 3) Removes the currency from all the users who have ever visited the channel.
+
+
+
+Time watched:
+	!time - (Anyone or Access Level 1 if the command is disabled) Checks for how long you've watched the stream.
+	!time top5 - (Anyone) Provides a list of the 5 users with the most time watched (5 minutes cooldown, mods not affected).
+	!time <username> - (Access Level 1) Manually check the time watched of a specific person.
+	!time enable/disable - (Access Level 3) Enable or disable the time command.
+
+
+
+Custom commands:
+	!modbot addcmd <AccessLevelRequired> <command> <output> - (Access Level 2) Access level must be between 0 and 4. Command and output can be any text. Quick example: "!mod addcom 0 !ts Come hang out with on on teamspeak" would add a !ts command that anyone in the channel could use. If the first character of the <output> is a /, it will be stripped.
+	!modbot delcmd <command> - (Access Level 2) Deletes the command. Currently if you want to edit a command, you must delete it and re-add it.
+	!modbot cmdlist - (Access Level 1) Lists all of the custom commands currently available to the channel.
+
+	* Note: The commands will always trigger if they're the first word in the sentence, so you might want to have a "command identifier" such as ! to prevent "accidental triggers" from occuring.
+
+
+
+User management:
+	!modbot addhelper <username> - (Access Level 3) Changes the person to a Helper (Access Level 1).
+	!modbot addmod <username> - (Access Level 3) Changes the person to a Moderator (Access Level 2).
+	!modbot addsuper <username> - (Access Level 4) Changes the person to a Super mod (Access Level 3).
+	!modbot demote <username> - (Access Level 3) Moves the person down 1 Access Level. Only works if the person's access level is above 0.
+	!modbot setlevel <username> <number> - (Access Level 3) Sets the person to the specified Access Level. Can be used instead of addhelper, addmod, addsuper, or demote. Cannot change someones access level to yours or above or below 0.
+	!modbot addsub <username> - (Access Level 3) Add someone to the internal Sub List. Doesn't cause conflicts with a spreadsheet Sub List.
+	!modbot removesub <username> - (Access Level 3) Remove someone from the internal Sub List.
+
+
+
+Channel metadata:
+	!modbot title <title> - (Access Level 4) Changes the channel's title.
+	!modbot game <game> - (Access Level 4) Changes the channel's game.
+
+
+
+Battletag:
+	!btag/!battletag <YourBtag> - (Anyone) Sets your battletag in the database. If you win an auction or raffle, your battletag is shown in the winner output.
+
+
+
+Bot:
+	!modbot/!bot/!botinfo - (Anyone) Provides brief information about the bot, the current version and the blog's link (5 minutes cooldown, mods not affected). Please use it to support me.
+
+
+
+************************EXTENSIONS**************************
+
+* Extensions can be downloaded and updated through the updater, automated updates capability is also built in the bot,
+  but advised to disable when running over 10 extensions (as it may affect the starting times of the bot).
+
+
+Giveaway:
+	Run giveaways in your channel, the UI provides many options to configure such as if the winner must be a follower and/or a subscriber and more.
+
+
+	UI:
+		Types:
+			Active users - "Last active less than X minutes ago", this will include all the people who joined/said anything withing the last X minutes.
+			Keyword - Users enter the giveaway by entering one of the keywords (!ticket/!tickets/!raffle/!giveaway).
+					  If a custom keyword is specified, it will be announced to the chat and it will be the only one that will add them to the giveaway.
+			Tickets - Users enter with !ticket/!tickets <amount>, you define the max amount of tickets and the ticket count.
+
+		Settings:
+			Must be a follower - Followers only.
+			Must be a subscriber - Subscribers only.
+			Subscribers' win multiplier X - Subscribers' "luck", this will multiply the subscribers' entries, even in tickets (will go above max tickets).
+			Must have at least X currency - Only users with a certain amount of currency and above.
+			Has watched the stream for at least X hours and Y minutes - Only users who watched the stream for a certain length and longer.
+			Automatically ban winner - Automatically disqualify a user for the next roll.
+			Announce false entries - In ticket/keyword giveaway, if a user doesn't answer the requirements, tell him in a message.
+			Warn and timeout false entries - Give up to 3 warnings to a user for false entries, then time out.
+			Announce timeouts - Announce timeouts made for false entries.
+
+			NOTE: When the bot allows (eg. when the checkbox is checkable), features and filters will work together (eg. followers only and subscribers only will only allow followers that are subscribed).
+
+		Bans:
+			A blacklist from the giveaway, these users will not roll.
+
+		Users:
+			The users that are in the giveaway (in the active users giveaway this is slightly in-accurate as it does NOT eliminate names that are not following if "Must be a follower" is checked).
+
+		Winner chat:
+			See the chat messages of the winner for easy interaction.
+
+		Buttons:
+			Start - Start a giveaway with the settings specified above.
+			Roll - Roll for a winner (if a ticket or a keyword giveaway is selected, closing the giveaway first is required).
+			Open - Open a closed giveaway.
+			Close - Close an opened giveaway.
+			Announce - Announce the winner to the chat.
+			Stop - End the giveaway.
+			Cancel - Cancel the giveaway, refund entries in a ticket giveaway.
+
+		Other:
+			Timer above chat - How long has it been since the winner's last message.
+			Timer above buttons, below chat - How long has it been since the last roll.
+
+
+	Commands:
+		!giveaway/!raffle start <Type> [Price] [MaxTickets] - (Access Level 2) Starts a new giveaway.
+			Type - The giveaway type, these are the possible options:
+				1 = Active users.
+				2 = Keyword.
+				3 = Ticket.
+			If Ticket giveaway is selected, a price and max tickets can be provided too, default price is 5 and max tickets 1.
+				Price - The price for a single ticket.
+				MaxTickets - The max amount of tickets for a single user to buy.
+		!giveaway/!raffle close/lock - (Access Level 2) Declines new entries.
+		!giveaway/!raffle open/unlock - (Access Level 2) Accepts new entries.
+		!giveaway/!raffle stop - (Access Level 2) Ends the giveaway.
+		!giveaway/!raffle roll [optional <Amount>] - (Access Level 2) Rolls for a winner, in ticket/keyword giveaway the giveaway must be closed first.
+		!giveaway/!raffle cancel - (Access Level 2) Cancels the current giveaway (and refunds everyone's entries).
+
+		!ticket <amount> - (Anyone) In a ticket giveaway, purchases the specified number of tickets. The amount of tickets must be equal or greater than 0. If you buy tickets and wish to get out of the raffle, use "!ticket 0" to have your coins refunded.
+
+
+	Planned:
+		More options to control giveaways through the chat.
+
+
+
+Auction:
+	Lets users bid currency over something provided by (probably) the streamer.
+
+
+	Commands:
+		!auction open - (Access Level 2) Opens a new auction. Users can bid freely until you close the auction. Current winner is shown in the channel each time there's a new High Bid, and every 30 seconds afterwards.
+		!auction close - (Access Level 2) Closes the auction and announces the final winner.
+		!auction cancel - (Access Level 2) Cancels the auction and refunds the highest bid.
+		!bid <Amount> - (Anyone) Bid <Amount>.
+
+
+	Planned:
+		UI.
+
+
+
+Gambling:
+	Lets users gamble currency points over different options, that's another way to earn currency.
+	This is commonly used for win/lose over games/matches in the stream.
+
+
+	Commands:
+		!gamble open <MinBet> <MaxBet> <WinReward> <option1> <option2> <option3> ...  <optionN> - (Access Level 2) Opens a new betting pool.
+			MinBet - Specifies the minimum amount of currency required to make a bet.
+			MaxBet - Specifies the maximum amount of currency that a user can bet.
+			WinReward - Additional currency reward to give to each winner.
+			Options - Space separated, use quotation marks to add an option with spaces.
+		!gamble close - (Access Level 2) Locks the bets so that no more bets can be made.
+		!gamble winner <Option> - (Access Level 2) Closes the bet pool, and pays out people who bet on the correct option.
+			Option - The winning option, provide the name or the option id with a hashtag first (ex: #1).
+		!gamble cancel - (Access Level 2) Cancels the bet pool, and refunds all bets.
+		!bet help - (Anyone) Provides information about the availble betting options and how to bet.
+		!bet <Amount> <Option> - (Anyone) Bet <amount> on <option>
+			Amount - The amount of currency to bet.
+			Option - The option to bet on, can be the full option name or the id with a hashtag first (ex: #1).
+
+
+	Planned:
+		UI.
+
+
+
+Greetings:
+	Greets new users joining the channel.
+	This is really not recommended for use, many people find greeting bots offensive.
+
+
+	Commands:
+		!modbot greeting set <Greeting Text> - (Access Level 3) Sets your greeting message that will be sent everytime someone joins your channel. Using '@user' in your greeting will put the person who joined's username in the greeting.
+		!modbot greeting on - (Access Level 3) Turns on your greeting messages.
+		!modbot greeting off - (Access Level 3) Turns off your greeting messages.
+
+
+
+Polls:
+	Start polls that cost currency.
+	Contains optional automated goals to end the poll.
+
+
+	Commands:
+		!poll create/start <VoteCost> <VotesGoal> <TotalVotesGoal> <Title> <Option1> <Option2> ... <OptionN> - (Access Level 2) Start a poll.
+			VoteCost - The cost to vote.
+			VotesGoal - The goal that a single option must reach to automatically end the poll and declare that option as the winner, 0 to disable.
+			TotalVotesGoal - The goal that all options together must reach (ex: if set to 8, 3 from option 1, 5 from option 2) to automatically end the poll and declare the leading option as the winner, 0 to disable.
+			Title - The title of the poll.
+			Options - Space separated options, use quotation marks to add options with spaces (ex: "Option 1").
+		!poll close - (Access Level 2) Decline new votes.
+		!poll open - (Access Level 2) Accept new votes.
+		!poll stop/end - (Access Level 2) Ends the poll, declaring the leading option as the winner.
+		!poll cancel - (Access Level 2) Cancels the poll, refunds all the votes.
+		!poll votes - (Access Level 1) Shows the current state of the votes.
+		!poll votes top <number> - (Access Level 1) Shows the current state of the top <number> votes.
+		!vote <Option> - (Anyone) Vote on <option>.
+			Option - The option, must be the full name or the id with a hashtag first (ex: #1).
+
+
+	Planned:
+		UI.
+
+
+
+User Ranks (Work in progress):
+	Provides ranks to your users. Fully configurable.
+	
+
+	Commands:
+		!ranks add <Rank> - (Access Level 3) Add a rank.
+		!ranks remove <Rank> - (Access Level 3) Remove a rank.
+		!ranks list - (Access Level 3) List all ranks.
+
+
+	Planned:
+		UI.
+
+
+
+Multiple Command Outputs:
+	Adds the option to add custom commands with multiple outputs.
+	An optional option is data storage, once the command is used and a certain output has been granted to a user, it'll be saved an whenever the user will use the command again, he'll get the same output every time.
+
+
+	UI:
+		[EXPLAIN]
+
+
+	Planned:
+		Better UI, commands.

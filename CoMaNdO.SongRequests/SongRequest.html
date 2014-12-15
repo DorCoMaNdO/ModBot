@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <title>ModBot - Song Request - YouTube</title>
+
+        <script type="text/javascript">
+        //<![CDATA[
+            function Play()
+            {
+                document.getElementById("popupVid").getElementsByTagName("iframe")[0].contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+            }
+            function Pause()
+            {
+                document.getElementById("popupVid").getElementsByTagName("iframe")[0].contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+            }
+        //]]>
+        </script>
+	</head>
+	<body>
+		<a href="javascript:;" onClick="Play();">Play</a><br>
+		<a href="javascript:;" onClick="Pause();">Pause</a>
+		<div id="popupVid">
+            <iframe width="500" height="315" src="http://www.youtube.com/embed/oOxPvmXNVtA?enablejsapi=1&controls=0&autoplay=1&disablekb=1&modestbranding=1&showinfo=0&autohide=1&color=white&iv_load_policy=3" frameborder="0" allowfullscreen></iframe>
+		</div>
+	</body>
+</html>
