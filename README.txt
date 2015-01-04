@@ -1,4 +1,6 @@
-﻿ModBot is designed to be a user-friendly bot for Twitch.TV, based heavily on LoyaltyBot.
+﻿Updated December 26th, 2014, up-to-date to version 1.7.5466.20465.
+
+ModBot is designed to be a user-friendly bot for Twitch.TV, based heavily on LoyaltyBot.
 
 This modification of ModBot directly uses the base code of the original ModBot available at http://twitchmodbot.sourceforge.net.
 Even though most of the original code has been modified, this project would probably have never been started without it.
@@ -82,7 +84,12 @@ Custom commands:
 	!modbot delcmd <command> - (Access Level 2) Deletes the command. Currently if you want to edit a command, you must delete it and re-add it.
 	!modbot cmdlist - (Access Level 1) Lists all of the custom commands currently available to the channel.
 
-	* Note: The commands will always trigger if they're the first word in the sentence, so you might want to have a "command identifier" such as ! to prevent "accidental triggers" from occuring.
+	* The commands will always trigger if they're the first word in the sentence, so you might want to have a "command identifier" such as ! to prevent "accidental triggers" from occuring.
+	* You can also use {NUMBER} as parameters where NUMBER represents the parameter index that will be copied.
+	  Example: !modbot addcmd 0 !welcome Welcome to the stream {1}!
+		       !welcome DorCoMaNdO
+	  Output:  Welcome to the stream DorCoMaNdO!
+	  * All of the parameters are required so a message will NOT be sent if you'd try to do something such as using just "!welcome" from the example above.
 
 
 
@@ -115,8 +122,7 @@ Bot:
 
 ************************EXTENSIONS**************************
 
-* Extensions can be downloaded and updated through the updater, automated updates capability is also built in the bot,
-  but advised to disable when running over 10 extensions (as it may affect the starting times of the bot).
+* Extensions can be downloaded and updated through the updater, although updates to extensions will possibly be performed automatically if configured right by the extension.
 
 
 Giveaway:
@@ -212,14 +218,15 @@ Gambling:
 
 	Commands:
 		!gamble open <MinBet> <MaxBet> <WinReward> <option1> <option2> <option3> ...  <optionN> - (Access Level 2) Opens a new betting pool.
-			MinBet - Specifies the minimum amount of currency required to make a bet.
-			MaxBet - Specifies the maximum amount of currency that a user can bet.
-			WinReward - Additional currency reward to give to each winner.
+			MinBet - Specifies the minimum amount of currency required to make a bet, minimum value is 1.
+			MaxBet - Specifies the maximum amount of currency that a user can bet, minimum value is MinBet.
+			WinReward - Additional currency reward to give to each winner, minimum value is 0.
 			Options - Space separated, use quotation marks to add an option with spaces.
 		!gamble close - (Access Level 2) Locks the bets so that no more bets can be made.
 		!gamble winner <Option> - (Access Level 2) Closes the bet pool, and pays out people who bet on the correct option.
 			Option - The winning option, provide the name or the option id with a hashtag first (ex: #1).
 		!gamble cancel - (Access Level 2) Cancels the bet pool, and refunds all bets.
+
 		!bet help - (Anyone) Provides information about the availble betting options and how to bet.
 		!bet <Amount> <Option> - (Anyone) Bet <amount> on <option>
 			Amount - The amount of currency to bet.

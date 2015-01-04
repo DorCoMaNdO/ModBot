@@ -39,16 +39,22 @@ namespace CoMaNdO.Auctions
                         Auction.Start();
                         Chat.SendMessage("Auction open! Bid by typing \"!bid {amount}\", etc.");
                     }
-                    else Chat.SendMessage("Auction already open. Close or cancel the previous one first.");
+                    else
+                    {
+                        Chat.SendMessage("Auction already open. Close or cancel the previous one first.");
+                    }
                 }
                 else if (args[0].ToLower() == "close")
                 {
                     if (Auction.Open)
                     {
                         KeyValuePair<string, int> winner = Auction.Close();
-                        Chat.SendMessage("Auction closed!  Winner is: " + Users.GetBTag(winner.Key) + " (" + winner.Value + ")");
+                        Chat.SendMessage("Auction closed!  Winner is: " + winner.Key + " (" + winner.Value + ")");
                     }
-                    else Chat.SendMessage("No auction open.");
+                    else
+                    {
+                        Chat.SendMessage("No auction open.");
+                    }
                 }
                 else if (args[0].ToLower() == "cancel")
                 {
@@ -57,7 +63,10 @@ namespace CoMaNdO.Auctions
                         Auction.Cancel();
                         Chat.SendMessage("Auction cancelled. Bids refunded.");
                     }
-                    else Chat.SendMessage("No auction open.");
+                    else
+                    {
+                        Chat.SendMessage("No auction open.");
+                    }
                 }
             }
         }
@@ -67,16 +76,7 @@ namespace CoMaNdO.Auctions
             if (args.Length > 0)
             {
                 int amount;
-                if (int.TryParse(args[0], out amount))
-                {
-                    if (Auction.Open)
-                    {
-                        if (Auction.Bid(user, amount))
-                        {
-                            Auction.Loop.Change(0, 30000);
-                        }
-                    }
-                }
+                if (int.TryParse(args[0], out amount)) if (Auction.Open) if (Auction.Bid(user, amount)) Auction.Loop.Change(0, 30000);
             }
         }
 
@@ -103,7 +103,7 @@ namespace CoMaNdO.Auctions
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Auctions"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.1"; } }
+        public string Version { get { return "0.0.2"; } }
         public int ApiVersion { get { return 0; } }
         public int LoadPriority { get { return 1; } }
 
@@ -165,33 +165,38 @@ namespace CoMaNdO.Auctions
             {
                 if (amount > highBid)
                 {
-                    if (highBidder != "")
-                    {
-                        Currency.Add(highBidder, highBid);
-                    }
+                    if (highBidder != "") Currency.Add(highBidder, highBid);
+
                     highBid = amount;
                     highBidder = nick;
                     Currency.Remove(nick, amount);
+
                     return true;
                 }
             }
+
             return false;
         }
 
         public static KeyValuePair<string, int> Close()
         {
             Open = false;
+
             string winner = highBidder;
             int bid = highBid;
+
             highBidder = "";
             highBid = 0;
+
             return new KeyValuePair<string, int>(winner, bid);
         }
 
         public static void Cancel()
         {
             if (highBidder != "") Currency.Add(highBidder, highBid);
+
             Open = false;
+
             highBidder = "";
             highBid = 0;
         }
