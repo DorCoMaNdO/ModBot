@@ -292,7 +292,7 @@ User Ranks (Work in progress):
 
 
 
-Multiple Command Outputs:
+Multiple Command Outputs (Work in progress):
 	Adds the option to add custom commands with multiple outputs.
 	An optional option is data storage, once the command is used and a certain output has been granted to a user, it'll be saved an whenever the user will use the command again, he'll get the same output every time.
 
