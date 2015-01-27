@@ -12,7 +12,7 @@ namespace CoMaNdO.MultipleOutputs
 
         public void Load()
         {
-            UI.AddWindow("Multiple Outputs", new MultipleOutputsWindow(this), false, false, false, false, "Multiple\r\nOutputs");
+            UI.AddWindow("Multiple Outputs", new MultipleOutputsWindow(this), false, false, false, false, false, "Multiple\r\nOutputs");
         }
 
         public string Name { get { return "Multiple Command Outputs"; } }

@@ -102,7 +102,7 @@ namespace CoMaNdO.SongRequests
             Window = new SongRequestsWindow(extension);
             Window.SongRequestPlayer.Dispose();
 
-            UI.AddWindow("Song Request", Window, true, false, false, false, "Song\r\nRequest");
+            UI.AddWindow("Song Request", Window, true, false, false, false, false, "Song\r\nRequest");
 
             Events.UI.Loaded += Events_OnUILoaded;
             Events.Connected += Events_Connected;
@@ -123,17 +123,17 @@ namespace CoMaNdO.SongRequests
             Window.Controls.Add(Window.SongRequestPlayer);
         }
 
-        private static void Events_Connected(string channel, string nick, bool partnered)
+        private static void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add("!songrequest", Command_SongRequest, 0, 0);
-            //Commands.Add("!testsong", Command_TestSong, 0, 0);
-            //Commands.Add("!skipsong", Command_SkipSong, 0, 0);
-            //Commands.Add("!stopsong", Command_StopSong, 0, 0);
+            Commands.Add(extension, "!songrequest", Command_SongRequest, 0, 0);
+            //Commands.Add(extension, "!testsong", Command_TestSong, 0, 0);
+            //Commands.Add(extension, "!skipsong", Command_SkipSong, 0, 0);
+            //Commands.Add(extension, "!stopsong", Command_StopSong, 0, 0);
 
             //YouTube.PlaySong();
         }
 
-        private static void Command_SongRequest(string user, string cmd, string[] args)
+        private static void Command_SongRequest(string user, Command cmd, string[] args)
         {
             if (args.Length > 0)
             {
@@ -167,17 +167,17 @@ namespace CoMaNdO.SongRequests
             }
         }
 
-        private static void Command_TestSong(string user, string cmd, string[] args)
+        private static void Command_TestSong(string user, Command cmd, string[] args)
         {
             PlaySong();
         }
 
-        private static void Command_SkipSong(string user, string cmd, string[] args)
+        private static void Command_SkipSong(string user, Command cmd, string[] args)
         {
             VoteSkip(user);
         }
 
-        private static void Command_StopSong(string user, string cmd, string[] args)
+        private static void Command_StopSong(string user, Command cmd, string[] args)
         {
             StopSong();
         }

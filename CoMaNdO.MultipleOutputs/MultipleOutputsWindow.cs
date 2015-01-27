@@ -89,34 +89,34 @@ namespace CoMaNdO.MultipleOutputs
 
                 if (Chat.connection != null && Chat.connection.Connected)
                 {
-                    foreach (string command in dCommands.Keys) Commands.Add(command, Command_Custom);
+                    foreach (string command in dCommands.Keys) Commands.Add(extension, command, Command_Custom);
                     CommandsRegistered = true;
                 }
             }
         }
 
-        private void Events_Connected(string channel, string nick, bool partnered)
+        private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            if(!CommandsRegistered) foreach (string command in dCommands.Keys) Commands.Add(command, Command_Custom);
+            if (!CommandsRegistered) foreach (string command in dCommands.Keys) Commands.Add(extension, command, Command_Custom);
 
-            Commands.Add("!multipleoutputs", Command_MultipleOutputs, 2, 0);
-            Commands.Add("!mcp", Command_MultipleOutputs, 2, 0);
+            Commands.Add(extension, "!multipleoutputs", Command_MultipleOutputs, 2, 0);
+            Commands.Add(extension, "!mcp", Command_MultipleOutputs, 2, 0);
 
             CommandsRegistered = true;
         }
 
-        private void Command_Custom(string user, string command, string[] args)
+        private void Command_Custom(string user, Command cmd, string[] args)
         {
             try
             {
-                if (dCommands.ContainsKey(command.ToLower()))
+                if (dCommands.ContainsKey(cmd.Cmd.ToLower()))
                 {
-                    if (dCommands[command.ToLower()].Count == 0) return;
+                    if (dCommands[cmd.Cmd.ToLower()].Count == 0) return;
 
-                    Tuple<string, string, string> cmd = dCommands[command.ToLower()][new Random().Next(0, dCommands[command.ToLower()].Count)];
-                    string output = cmd.Item3;
+                    Tuple<string, string, string> command = dCommands[cmd.Cmd.ToLower()][new Random().Next(0, dCommands[cmd.Cmd.ToLower()].Count)];
+                    string output = command.Item3;
 
-                    if (cmd.Item1 != "" && cmd.Item2 != "")
+                    if (command.Item1 != "" && command.Item2 != "")
                     {
                         bool found = false;
                         using (SQLiteCommand query = new SQLiteCommand("SELECT * FROM 'userdata' WHERE user = '" + user + "' COLLATE NOCASE;", DB))
@@ -125,9 +125,9 @@ namespace CoMaNdO.MultipleOutputs
                             {
                                 while (r.Read())
                                 {
-                                    if (r["user"].ToString().ToLower() == user.ToLower() && r["type"].ToString() == cmd.Item1)
+                                    if (r["user"].ToString().ToLower() == user.ToLower() && r["type"].ToString() == command.Item1)
                                     {
-                                        foreach (Tuple<string, string, string> data in dCommands[command.ToLower()])
+                                        foreach (Tuple<string, string, string> data in dCommands[cmd.Cmd.ToLower()])
                                         {
                                             if (data.Item2 == r["data"].ToString())
                                             {
@@ -137,7 +137,7 @@ namespace CoMaNdO.MultipleOutputs
                                             }
                                         }
 
-                                        if (!found) using (SQLiteCommand query2 = new SQLiteCommand("DELETE FROM 'userdata' WHERE user = '" + user + "' AND type = '" + cmd.Item1.Replace("'", "''") + "' COLLATE NOCASE;", DB)) query2.ExecuteNonQuery();
+                                        if (!found) using (SQLiteCommand query2 = new SQLiteCommand("DELETE FROM 'userdata' WHERE user = '" + user + "' AND type = '" + command.Item1.Replace("'", "''") + "' COLLATE NOCASE;", DB)) query2.ExecuteNonQuery();
 
                                         break;
                                     }
@@ -145,11 +145,11 @@ namespace CoMaNdO.MultipleOutputs
                             }
                         }
 
-                        if (!found) using (SQLiteCommand query = new SQLiteCommand("INSERT INTO 'userdata' (user, type, data) VALUES ('" + user + "', '" + cmd.Item1.Replace("'", "''") + "', '" + cmd.Item2.Replace("'", "''") + "');", DB)) query.ExecuteNonQuery();
+                        if (!found) using (SQLiteCommand query = new SQLiteCommand("INSERT INTO 'userdata' (user, type, data) VALUES ('" + user + "', '" + command.Item1.Replace("'", "''") + "', '" + command.Item2.Replace("'", "''") + "');", DB)) query.ExecuteNonQuery();
                     }
 
                     output = output.Replace("@user", user);
-                    output = output.Replace("@data", cmd.Item2);
+                    output = output.Replace("@data", command.Item2);
 
                     Chat.SendMessage(output);
                 }
@@ -161,7 +161,7 @@ namespace CoMaNdO.MultipleOutputs
             }
         }
 
-        private void Command_MultipleOutputs(string user, string command, string[] args)
+        private void Command_MultipleOutputs(string user, Command cmd, string[] args)
         {
             try
             {

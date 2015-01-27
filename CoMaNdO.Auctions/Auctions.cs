@@ -19,16 +19,16 @@ namespace CoMaNdO.Auctions
             Events.OnDisconnect += Events_OnDisconnect;
         }
 
-        private void Events_Connected(string channel, string nick, bool partnered)
+        private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add("!auction", Command_Auction, 2, 0);
-            Commands.Add("!bid", Command_Bid, 0, 0);
+            Commands.Add(this, "!auction", Command_Auction, 2, 0);
+            Commands.Add(this, "!bid", Command_Bid, 0, 0);
 
             if (Auction.Loop == null) Auction.Loop = new Timer(auctionLoopHandler, null, Timeout.Infinite, Timeout.Infinite);
             Auction.Loop.Change(Timeout.Infinite, Timeout.Infinite);
         }
 
-        private void Command_Auction(string user, string cmd, string[] args)
+        private void Command_Auction(string user, Command cmd, string[] args)
         {
             if (args.Length > 0)
             {
@@ -71,7 +71,7 @@ namespace CoMaNdO.Auctions
             }
         }
 
-        private void Command_Bid(string user, string cmd, string[] args)
+        private void Command_Bid(string user, Command cmd, string[] args)
         {
             if (args.Length > 0)
             {
@@ -84,7 +84,7 @@ namespace CoMaNdO.Auctions
         {
             if (Auction.Open && Auction.highBidder != "")
             {
-                Chat.SendMessage(Users.GetDisplayName(Auction.highBidder) + " is currently winning, with a bid of " + Auction.highBid + "!");
+                Chat.SendMessage(Users.GetDisplayName(Auction.highBidder, NameAlterLevel.Cosmetic) + " is currently winning, with a bid of " + Auction.highBid + "!");
             }
         }
 
@@ -103,7 +103,7 @@ namespace CoMaNdO.Auctions
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Auctions"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.2"; } }
+        public string Version { get { return "0.0.3"; } }
         public int ApiVersion { get { return 0; } }
         public int LoadPriority { get { return 1; } }
 

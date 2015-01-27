@@ -15,7 +15,7 @@ namespace CoMaNdO.Gambling
 
         public void Load()
         {
-            Pool.Load();
+            Pool.Load(this);
         }
 
         public string Name { get { return "Gambling System"; } }
@@ -23,7 +23,7 @@ namespace CoMaNdO.Gambling
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Gambling"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.1"; } }
+        public string Version { get { return "0.0.2"; } }
         public int ApiVersion { get { return 0; } }
         public int LoadPriority { get { return 1; } }
 
@@ -73,18 +73,21 @@ namespace CoMaNdO.Gambling
         private static System.Threading.Timer BetQueue;
         public static List<string> Options = new List<string>();
         public static bool Running, Locked;
+        private static IExtension extension;
 
-        public static void Load()
+        public static void Load(IExtension sender)
         {
+            extension = sender;
+
             Events.Connected += Events_Connected;
             Events.Currency.OnQueue += Events_OnCurrencyQueue;
             Events.OnDisconnect += Events_OnDisconnect;
         }
 
-        private static void Events_Connected(string channel, string nick, bool partnered)
+        private static void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add("!gamble", Command_Gamble, 2, 0);
-            Commands.Add("!bet", Command_Bet, 0, 0);
+            Commands.Add(extension, "!gamble", Command_Gamble, 2, 0);
+            Commands.Add(extension, "!bet", Command_Bet, 0, 0);
 
             if (BetQueue == null) BetQueue = new System.Threading.Timer(BetQueueHandler, null, Timeout.Infinite, Timeout.Infinite);
             BetQueue.Change(Timeout.Infinite, Timeout.Infinite);
@@ -324,7 +327,7 @@ namespace CoMaNdO.Gambling
             return betOptions;
         }
 
-        private static void Command_Gamble(string user, string cmd, string[] args)
+        private static void Command_Gamble(string user, Command cmd, string[] args)
         {
             if (args.Length > 0)
             {
@@ -513,7 +516,7 @@ namespace CoMaNdO.Gambling
             }
         }
 
-        private static void Command_Bet(string user, string cmd, string[] args)
+        private static void Command_Bet(string user, Command cmd, string[] args)
         {
             if (Running)
             {

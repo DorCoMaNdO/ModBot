@@ -31,12 +31,12 @@ namespace CoMaNdO.Example
             }
         }
 
-        private void Events_Connected(string channel, string nick, bool partnered) // We register our commands after the bot is connected to the channel.
+        private void Events_Connected(string channel, string nick, bool partnered, bool subprogram) // We register our commands after the bot is connected to the channel.
         {
-            Commands.Add("!example", Command_Example); // We add the command with a handler that will perform the task we want it to.
+            Commands.Add(this, "!example", Command_Example); // We add the command with a handler that will perform the task we want it to.
         }
 
-        private void Command_Example(string user, string command, string[] args)
+        private void Command_Example(string user, Command cmd, string[] args)
         {
             // Output
             Chat.SendMessage("My first command, YAY!");
@@ -47,7 +47,7 @@ namespace CoMaNdO.Example
         public string Author { get { return "CoMaNdO"; } } // Your name/nickname.
         public string UniqueID { get { return "CoMaNdO.Example"; } } // Will be used for data storage, to keep a unique space for your extension, you'd normally want to put your name/nickname and the name of the extension.
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } } // Will be used to refer people for suggestions, error reports and more.
-        public string Version { get { return "0.0.3"; } } // The version of the extension.
+        public string Version { get { return "0.0.4"; } } // The version of the extension.
         public int ApiVersion { get { return 0; } } // The API version that it has been built with, changes to the API version will be posted on the blog. The use of ApiVersion 0 is if you believe that changes to the API won't affect your code, this is highly doubtable unless you're me. 
         public int LoadPriority { get { return 3; } }
 

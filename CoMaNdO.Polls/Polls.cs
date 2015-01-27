@@ -14,7 +14,7 @@ namespace CoMaNdO.Polls
 
         public void Load()
         {
-            Poll.Load();
+            Poll.Load(this);
         }
 
         public string Name { get { return "Polls"; } }
@@ -22,7 +22,7 @@ namespace CoMaNdO.Polls
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Polls"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.2"; } }
+        public string Version { get { return "0.0.3"; } }
         public int ApiVersion { get { return 0; } }
         public int LoadPriority { get { return 1; } }
 
@@ -83,21 +83,24 @@ namespace CoMaNdO.Polls
         public static bool ModsCanVote = true, SubsCanVote = true, UsersCanVote = true, AnnounceVotes, IsOpen;
         public static string Title = "";
         public static System.Threading.Timer VotesQueue;
+        private static IExtension extension;
 
         public static event OnPollStart OnPollStart = ((int Cost, int Goal, int TotalGoal, List<string> Options) => { });
 
         public static event OnPollEnd OnPollEnd = ((string WinningOption, int Votes, EndReason Reason) => { });
 
-        public static void Load()
+        public static void Load(IExtension sender)
         {
+            extension = sender;
+
             //UI.AddWindow("Poll", new PollsWindow());
 
             Events.Connected += Events_Connected;
         }
-        private static void Events_Connected(string channel, string nick, bool partnered)
+        private static void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add("!poll", Command_Poll, 0, 0);
-            Commands.Add("!vote", Command_Vote, 0, 0);
+            Commands.Add(extension, "!poll", Command_Poll, 0, 0);
+            Commands.Add(extension, "!vote", Command_Vote, 0, 0);
 
             /*string text = "";
             for (int i = 0; i < Options.Count; i++) text += "(" + (i + 1) + ") " + Options[i] + ". ";
@@ -106,13 +109,13 @@ namespace CoMaNdO.Polls
             Chat.SendMessage("Poll voting options: " + text);*/
         }
 
-        private static void Command_Poll(string user, string command, string[] args)
+        private static void Command_Poll(string user, Command cmd, string[] args)
         {
             if (args.Length > 0)
             {
                 if (args[0].ToLower() == "vote" && args.Length > 1)
                 {
-                    Command_Vote(user, "!vote", new string[] { args[1] });
+                    Command_Vote(user, cmd, new string[] { args[1] });
                     return;
                 }
 
@@ -433,7 +436,7 @@ namespace CoMaNdO.Polls
             return false;
         }
 
-        private static void Command_Vote(string user, string command, string[] args)
+        private static void Command_Vote(string user, Command cmd, string[] args)
         {
             if (args.Length > 0)
             {

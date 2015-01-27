@@ -24,9 +24,9 @@ namespace CoMaNdO.Greetings
             Settings.SetValue("Settings", "On", (On = (Settings.GetValue("Settings", "On", "0") == "1")) ? "1" : "0");
         }
 
-        private void Events_Connected(string channel, string nick, bool partnered)
+        private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add("!modbot", Command_ModBot, 0, 0);
+            Commands.Add(this, "!modbot", Command_ModBot, 0, 0);
         }
 
         private void Events_UserlistRefreshed(List<string> joins, List<string> leaves, bool initial)
@@ -51,7 +51,7 @@ namespace CoMaNdO.Greetings
             if (!initial && !FromReload && Channel.IsStreaming && On) Chat.SendMessage(Message.Replace("@user", user));
         }
 
-        private void Command_ModBot(string user, string command, string[] args)
+        private void Command_ModBot(string user, Command cmd, string[] args)
         {
             if (args.Length > 0)
             {
@@ -95,7 +95,7 @@ namespace CoMaNdO.Greetings
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Greetings"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.1"; } }
+        public string Version { get { return "0.0.2"; } }
         public int ApiVersion { get { return 0; } }
         public int LoadPriority { get { return 2; } }
 

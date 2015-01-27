@@ -1,4 +1,4 @@
-﻿Updated December 26th, 2014, up-to-date to version 1.7.5466.20465.
+﻿Updated January 27th, 2015, up-to-date to version 1.8.5505.15894.
 
 ModBot is designed to be a user-friendly bot for Twitch.TV, based heavily on LoyaltyBot.
 
@@ -89,7 +89,7 @@ Custom commands:
 	  Example: !modbot addcmd 0 !welcome Welcome to the stream {1}!
 		       !welcome DorCoMaNdO
 	  Output:  Welcome to the stream DorCoMaNdO!
-	  * All of the parameters are required so a message will NOT be sent if you'd try to do something such as using just "!welcome" from the example above.
+	* All of the parameters are required so a message will NOT be sent if you'd try to do something such as using just "!welcome" on the example above.
 
 
 

@@ -302,7 +302,7 @@ namespace CoMaNdO.Giveaways
                                     }
                                     else if (KeyValue.Key.Equals("Giveaway_MustSubscribe"))
                                     {
-                                        Giveaway_MustSubscribe.Checked = (KeyValue.Value == "1" && Channel.IsPartnered);
+                                        Giveaway_MustSubscribe.Checked = (KeyValue.Value == "1" && Channel.HasSubProgram);
                                     }
                                     else if (KeyValue.Key.Equals("Giveaway_MustWatch"))
                                     {
@@ -342,7 +342,7 @@ namespace CoMaNdO.Giveaways
                                     }
                                     else if (KeyValue.Key.Equals("Giveaway_SubscribersWinMultiplier"))
                                     {
-                                        Giveaway_SubscribersWinMultiplier.Checked = (KeyValue.Value == "1" && Channel.IsPartnered);
+                                        Giveaway_SubscribersWinMultiplier.Checked = (KeyValue.Value == "1" && Channel.HasSubProgram);
                                     }
                                     else if (KeyValue.Key.Equals("Giveaway_SubscribersWinMultiplierAmount"))
                                     {

@@ -15,12 +15,12 @@ namespace CoMaNdO.Uptime
             Events.Connected += Events_Connected;
         }
 
-        private void Events_Connected(string channel, string nick, bool partnered)
+        private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add("!uptime", Command_Uptime, 0, 300);
+            Commands.Add(this, "!uptime", Command_Uptime, 0, 300);
         }
 
-        private void Command_Uptime(string user, string command, string[] args)
+        private void Command_Uptime(string user, Command cmd, string[] args)
         {
             if (Channel.IsStreaming)
             {
@@ -38,7 +38,7 @@ namespace CoMaNdO.Uptime
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Uptime"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.3"; } }
+        public string Version { get { return "0.0.4"; } }
         public int ApiVersion { get { return 0; } }
         public int LoadPriority { get { return 2; } }
 

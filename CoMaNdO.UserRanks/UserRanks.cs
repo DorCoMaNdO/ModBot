@@ -31,12 +31,12 @@ namespace CoMaNdO.UserRanks
             Events.Currency.OnQueue += Events_OnCurrencyQueue;
         }
 
-        private void Events_Connected(string channel, string nick, bool partnered)
+        private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add("!ranks", Command_Ranks, 3, 0);
+            Commands.Add(this, "!ranks", Command_Ranks, 3, 0);
         }
 
-        private void Command_Ranks(string user, string command, string[] args)
+        private void Command_Ranks(string user, Command cmd, string[] args)
         {
             if (args.Length > 0)
             {
