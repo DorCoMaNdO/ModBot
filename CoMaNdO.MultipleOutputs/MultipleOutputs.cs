@@ -1,11 +1,9 @@
 ﻿using ModBot;
 using System;
-using System.ComponentModel.Composition;
 using System.Net;
 
 namespace CoMaNdO.MultipleOutputs
 {
-    [Export(typeof(IExtension))]
     public class MultipleOutputs : IExtension
     {
         private string LatestVersion;
@@ -21,7 +19,7 @@ namespace CoMaNdO.MultipleOutputs
         public string UniqueID { get { return "CoMaNdO.MultipleOutputs"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
         public string Version { get { return "0.0.1"; } }
-        public int ApiVersion { get { return 0; } }
+        public int ApiVersion { get { return 5; } }
         public int LoadPriority { get { return 2; } }
 
         public bool UpdateCheck()

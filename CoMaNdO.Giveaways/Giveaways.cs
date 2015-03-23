@@ -1,7 +1,6 @@
 ﻿using ModBot;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Drawing;
 using System.Linq;
 using System.Net;
@@ -12,7 +11,6 @@ namespace CoMaNdO.Giveaways
 {
     public delegate void OnRoll(ref List<string> ValidUsers);
 
-    [Export(typeof(IExtension))]
     public class Giveaways : IExtension
     {
         private string LatestVersion;
@@ -28,7 +26,7 @@ namespace CoMaNdO.Giveaways
         public string UniqueID { get { return "CoMaNdO.Giveaways"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
         public string Version { get { return "0.0.2"; } }
-        public int ApiVersion { get { return 0; } }
+        public int ApiVersion { get { return 5; } }
         public int LoadPriority { get { return 0; } }
 
         public bool UpdateCheck()
@@ -71,6 +69,7 @@ namespace CoMaNdO.Giveaways
 
     static class Giveaway
     {
+#warning Add giveaway item/title and better bans.
         public static GiveawaysWindow Window;
         public static System.Threading.Timer GiveawayQueue, UserList;
         public static int LastAnnouncedTickets = 0;
@@ -90,19 +89,19 @@ namespace CoMaNdO.Giveaways
             UI.AddWindow("Giveaway", Window = new GiveawaysWindow(extension));
 
             Events.Connected += Events_Connected;
-            Events.Chat.ModeratorsChecked += Events_ModeratorsChecked;
+            Events.Channel.ModeratorsChecked += Events_ModeratorsChecked;
             Events.Chat.MessageReceived += Events_MessageReceived;
-            Events.UserAdded += Events_UserAdded;
-            Events.UserRemoved += Events_UserRemoved;
+            Events.Users.Added += Events_UserAdded;
+            Events.Users.Removed += Events_UserRemoved;
             Events.OnDisconnect += Events_OnDisconnect;
         }
 
         private static void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add(extension, "!raffle", Command_Giveaway, 0, 0);
-            Commands.Add(extension, "!giveaway", Command_Giveaway, 0, 0);
-            Commands.Add(extension, "!ticket", Command_Ticket, 0, 0);
-            Commands.Add(extension, "!tickets", Command_Ticket, 0, 0);
+            Commands.Add(extension, "!raffle", Command_Giveaway, Users.UserLevel.Normal, 0, 0);
+            Commands.Add(extension, "!giveaway", Command_Giveaway, Users.UserLevel.Normal, 0, 0);
+            Commands.Add(extension, "!ticket", Command_Ticket, Users.UserLevel.Normal, 0, 0);
+            Commands.Add(extension, "!tickets", Command_Ticket, Users.UserLevel.Normal, 0, 0);
 
             if (GiveawayQueue == null) GiveawayQueue = new System.Threading.Timer(GiveawayQueueHandler, null, Timeout.Infinite, Timeout.Infinite);
             GiveawayQueue.Change(Timeout.Infinite, Timeout.Infinite);
@@ -139,7 +138,7 @@ namespace CoMaNdO.Giveaways
             });
         }
 
-        private static void Command_Giveaway(string user, Command cmd, string[] args)
+        private static void Command_Giveaway(string user, Command cmd, string[] args, string origin)
         {
             if (args.Length > 0)
             {
@@ -189,7 +188,7 @@ namespace CoMaNdO.Giveaways
                                 Chat.SendMessage("No giveaway running!");
                             }
                         }
-                        else if (args[0].ToLower() == "start" || args[0].ToLower() == "create" || args[0].ToLower() == "run" && args.Length > 1)
+                        else if ((args[0].ToLower() == "start" || args[0].ToLower() == "create" || args[0].ToLower() == "run") && args.Length > 1)
                         {
                             if (!Started)
                             {
@@ -330,16 +329,16 @@ namespace CoMaNdO.Giveaways
 
                 if ((args[0].ToLower() == "buy" || args[0].ToLower() == "join" || args[0].ToLower() == "purchase" || args[0].ToLower() == "ticket" || args[0].ToLower() == "tickets") && args.Length > 1)
                 {
-                    Command_Ticket(user, cmd, new string[] { args[1] });
+                    Command_Ticket(user, cmd, new string[] { args[1] }, origin);
                 }
             }
             else
             {
-                Command_Ticket(user, cmd, args);
+                Command_Ticket(user, cmd, args, origin);
             }
         }
 
-        private static void Command_Ticket(string user, Command cmd, string[] args)
+        private static void Command_Ticket(string user, Command cmd, string[] args, string origin)
         {
             if (Started && (Window.Giveaway_TypeKeyword.Checked && (Window.Giveaway_CustomKeyword.Text == "" || cmd == null) || Window.Giveaway_TypeTickets.Checked))
             {
@@ -473,16 +472,18 @@ namespace CoMaNdO.Giveaways
         {
             Window.BeginInvoke((MethodInvoker)delegate
             {
-                Window.Giveaway_WarnFalseEntries.Enabled = (!Window.Giveaway_TypeActive.Checked && Chat.Moderators.Contains(Channel.Bot.ToLower()));
-                if (Window.Giveaway_TypeActive.Checked || !Chat.Moderators.Contains(Channel.Bot.ToLower())) Window.Giveaway_WarnFalseEntries.Checked = false;
+                Window.Giveaway_WarnFalseEntries.Enabled = (!Window.Giveaway_TypeActive.Checked && Channel.Moderators.Contains(Channel.Bot.ToLower()));
+                if (Window.Giveaway_TypeActive.Checked || !Channel.Moderators.Contains(Channel.Bot.ToLower())) Window.Giveaway_WarnFalseEntries.Checked = false;
             });
         }
 
-        private static void Events_MessageReceived(string user, string message)
+        private static void Events_MessageReceived(string origin, string user, string message)
         {
+            if (origin == Chat.Name) return;
+
             if (Window.Giveaway_TypeKeyword.Checked && message.ToLower() == Window.Giveaway_CustomKeyword.Text.ToLower())
             {
-                Command_Ticket(user, null, new string[0]);
+                Command_Ticket(user, null, new string[0], origin);
             }
 
             if (Window.Giveaway_TypeActive.Checked && Started)
@@ -820,7 +821,7 @@ namespace CoMaNdO.Giveaways
 
         public static bool BuyTickets(string user, int tickets = 1)
         {
-            string name = Users.GetDisplayName(user, NameAlterLevel.None, true);
+            string name = Users.GetDisplayName(user, Users.NameAlterLevel.None, true);
             user = user.ToLower();
             if (Started && (Window.Giveaway_TypeKeyword.Checked || Window.Giveaway_TypeTickets.Checked) && IsOpen && tickets <= MaxTickets && CheckUser(user))
             {
@@ -885,6 +886,7 @@ namespace CoMaNdO.Giveaways
 
         public static string Roll(bool announce = true, bool checkusers = true)
         {
+#warning Log winners
             string winner = "", winnername = "";
             Window.BeginInvoke((MethodInvoker)delegate
             {
@@ -1031,7 +1033,7 @@ namespace CoMaNdO.Giveaways
                             //Console.WriteLine("[DEBUG] Updating UI...");
                             Window.BeginInvoke((MethodInvoker)delegate
                             {
-                                winnername = Users.GetDisplayName(winner, NameAlterLevel.Cosmetic);
+                                winnername = Users.GetDisplayName(winner, Users.NameAlterLevel.Cosmetic);
                                 Window.Giveaway_WinnerStatusLabel.Text = (Users.IsSubscriber(winner) ? "Subscribing | " : "") + (Users.IsFollower(winner) ? "Following | " : "") + Currency.Check(winner) + " " + Currency.Name + " | Watched : " + Users.GetTimeWatched(winner).ToString(@"d\d\ hh\h\ mm\m");
                                 Window.Giveaway_WinnerLabel.Text = winnername;
                                 Window.Giveaway_WinnerTimerLabel.ForeColor = Color.FromArgb(0, 200, 0);
@@ -1053,7 +1055,7 @@ namespace CoMaNdO.Giveaways
                             });
                             thread = new Thread(() =>
                             {
-                                winnername = Users.GetDisplayName(winner, NameAlterLevel.Cosmetic, true);
+                                winnername = Users.GetDisplayName(winner, Users.NameAlterLevel.Cosmetic, true);
                                 Window.BeginInvoke((MethodInvoker)delegate
                                 {
                                     Window.Giveaway_WinnerLabel.Text = winnername;
@@ -1094,14 +1096,14 @@ namespace CoMaNdO.Giveaways
         {
             if (Started && dUsers.Count > 0)
             {
-                Chat.SendMessage("A total of " + dUsers.Count + " people joined the giveaway!");
+                Chat.SendMessage("A total of " + dUsers.Count + " people have joined the giveaway!");
 
                 string finalmessage = "Giveaway: ";
                 lock (FalseEntries)
                 {
                     foreach (string user in FalseEntries.Keys)
                     {
-                        string name = Users.GetDisplayName(user, NameAlterLevel.Cosmetic);
+                        string name = Users.GetDisplayName(user, Users.NameAlterLevel.Cosmetic);
                         //string msg = "you have insufficient " + Currency.Name + ", you don't answer the requirements or the tickets amount you put is invalid";
                         string msg = "an issue has occurred, please try again";
                         if (FalseEntries[user] == 0)
@@ -1125,7 +1127,7 @@ namespace CoMaNdO.Giveaways
                             msg = "you haven't watched the stream for long enough";
                         }
 
-                        if (Window.Giveaway_WarnFalseEntries.Checked && Chat.Moderators.Contains(Channel.Bot.ToLower()))
+                        if (Window.Giveaway_WarnFalseEntries.Checked && Channel.Moderators.Contains(Channel.Bot.ToLower()))
                         {
                             if (Users.Warn(user, 1, 10, "Attempting to buy tickets without meeting the requirements or with insufficient funds or invalid parameters", 3, true, true, Window.Giveaway_AnnounceWarnedEntries.Checked, 6) == 1)
                             {

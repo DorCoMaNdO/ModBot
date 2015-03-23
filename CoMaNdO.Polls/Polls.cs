@@ -1,13 +1,11 @@
 ﻿using ModBot;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Linq;
 using System.Net;
 
 namespace CoMaNdO.Polls
 {
-    [Export(typeof(IExtension))]
     public class Polls : IExtension
     {
         private string LatestVersion;
@@ -22,8 +20,8 @@ namespace CoMaNdO.Polls
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Polls"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.3"; } }
-        public int ApiVersion { get { return 0; } }
+        public string Version { get { return "0.0.4"; } }
+        public int ApiVersion { get { return 5; } }
         public int LoadPriority { get { return 1; } }
 
         public bool UpdateCheck()
@@ -99,8 +97,8 @@ namespace CoMaNdO.Polls
         }
         private static void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add(extension, "!poll", Command_Poll, 0, 0);
-            Commands.Add(extension, "!vote", Command_Vote, 0, 0);
+            Commands.Add(extension, "!poll", Command_Poll, Users.UserLevel.Normal, 0, 0);
+            Commands.Add(extension, "!vote", Command_Vote, Users.UserLevel.Normal, 0, 0);
 
             /*string text = "";
             for (int i = 0; i < Options.Count; i++) text += "(" + (i + 1) + ") " + Options[i] + ". ";
@@ -109,13 +107,13 @@ namespace CoMaNdO.Polls
             Chat.SendMessage("Poll voting options: " + text);*/
         }
 
-        private static void Command_Poll(string user, Command cmd, string[] args)
+        private static void Command_Poll(string user, Command cmd, string[] args, string origin)
         {
             if (args.Length > 0)
             {
                 if (args[0].ToLower() == "vote" && args.Length > 1)
                 {
-                    Command_Vote(user, cmd, new string[] { args[1] });
+                    Command_Vote(user, cmd, new string[] { args[1] }, origin);
                     return;
                 }
 
@@ -170,6 +168,8 @@ namespace CoMaNdO.Polls
                                     return;
                                 }
 
+                                args = Commands.GetArgs(args, 0, false);
+
                                 int cost, goal, totalgoal;
                                 if (args.Length < 7 || !int.TryParse(args[1], out cost) || cost < 0 || !int.TryParse(args[2], out goal) || !int.TryParse(args[3], out totalgoal))
                                 {
@@ -177,53 +177,7 @@ namespace CoMaNdO.Polls
                                     return;
                                 }
 
-                                List<string> lOptions = new List<string>();
-                                try
-                                {
-                                    bool inQuote = false;
-                                    string option = "";
-                                    for (int i = 4; i < args.Length; i++)
-                                    {
-                                        if (args[i].StartsWith("\""))
-                                        {
-                                            inQuote = true;
-                                        }
-                                        if (!inQuote)
-                                        {
-                                            option = args[i];
-                                        }
-                                        if (inQuote)
-                                        {
-                                            option += args[i] + " ";
-                                        }
-                                        if (args[i].EndsWith("\""))
-                                        {
-                                            option = option.Substring(1, option.Length - 3);
-                                            inQuote = false;
-                                        }
-                                        if (!inQuote && !option.StartsWith("#"))
-                                        {
-                                            bool exists = false;
-                                            foreach (string optn in lOptions)
-                                            {
-                                                if (optn.ToLower() == option.ToLower())
-                                                {
-                                                    exists = true;
-                                                    break;
-                                                }
-                                            }
-                                            if (!exists)
-                                            {
-                                                lOptions.Add(option);
-                                            }
-                                            option = "";
-                                        }
-                                    }
-                                }
-                                catch
-                                {
-                                    lOptions.Clear();
-                                }
+                                List<string> lOptions = Commands.GetArgs(args, 4).ToList();
 
                                 string title = lOptions[0];
                                 lOptions.Remove(title);
@@ -436,7 +390,7 @@ namespace CoMaNdO.Polls
             return false;
         }
 
-        private static void Command_Vote(string user, Command cmd, string[] args)
+        private static void Command_Vote(string user, Command cmd, string[] args, string origin)
         {
             if (args.Length > 0)
             {

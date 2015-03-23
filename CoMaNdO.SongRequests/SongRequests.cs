@@ -2,7 +2,6 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -12,7 +11,6 @@ using System.Windows.Forms;
 
 namespace CoMaNdO.SongRequests
 {
-    [Export(typeof(IExtension))]
     public class SongRequests : IExtension
     {
         private string LatestVersion;
@@ -28,7 +26,7 @@ namespace CoMaNdO.SongRequests
         public string UniqueID { get { return "CoMaNdO.SongRequests"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
         public string Version { get { return "0.0.1"; } }
-        public int ApiVersion { get { return 0; } }
+        public int ApiVersion { get { return 5; } }
 		public int LoadPriority { get { return 1; } }
 
         public bool UpdateCheck()
@@ -125,15 +123,15 @@ namespace CoMaNdO.SongRequests
 
         private static void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add(extension, "!songrequest", Command_SongRequest, 0, 0);
-            //Commands.Add(extension, "!testsong", Command_TestSong, 0, 0);
-            //Commands.Add(extension, "!skipsong", Command_SkipSong, 0, 0);
-            //Commands.Add(extension, "!stopsong", Command_StopSong, 0, 0);
+            Commands.Add(extension, "!songrequest", Command_SongRequest, Users.UserLevel.Normal, 0, 30);
+            //Commands.Add(extension, "!testsong", Command_TestSong, UserLevel.Normal, 0, 0);
+            //Commands.Add(extension, "!skipsong", Command_SkipSong, UserLevel.Normal, 0, 30);
+            //Commands.Add(extension, "!stopsong", Command_StopSong, UserLevel.Mod, 0, 30);
 
             //YouTube.PlaySong();
         }
 
-        private static void Command_SongRequest(string user, Command cmd, string[] args)
+        private static void Command_SongRequest(string user, Command cmd, string[] args, string origin)
         {
             if (args.Length > 0)
             {
@@ -220,11 +218,11 @@ namespace CoMaNdO.SongRequests
                 if (song.duration.TotalSeconds <= MaxLength)
                 {
                     List<string> songs = new List<string>();
-                    if (File.Exists(Api.GetDataPath(extension) + "Songs.txt"))
+                    if (File.Exists(extension.GetDataPath() + "Songs.txt"))
                     {
-                        songs = File.ReadAllLines(Api.GetDataPath(extension) + "Songs.txt").ToList();
+                        songs = File.ReadAllLines(extension.GetDataPath() + "Songs.txt").ToList();
                         int requests = 0;
-                        foreach (string sSong in File.ReadAllLines(Api.GetDataPath(extension) + "Songs.txt"))
+                        foreach (string sSong in File.ReadAllLines(extension.GetDataPath() + "Songs.txt"))
                         {
                             if (song.id.ToLower() == sSong.Split('|')[0].ToLower()) return 3;
 
@@ -245,7 +243,7 @@ namespace CoMaNdO.SongRequests
                     }
 
                     songs.Add(song.id + "|" + song.title + "|" + song.requester);
-                    File.WriteAllLines(Api.GetDataPath(extension) + "Songs.txt", songs.ToArray());
+                    File.WriteAllLines(extension.GetDataPath() + "Songs.txt", songs.ToArray());
 
                     return 0;
                 }
@@ -277,9 +275,9 @@ namespace CoMaNdO.SongRequests
 
         public static void ReorderQueue(bool Remove = false, int start = 1)
         {
-            if (File.Exists(Api.GetDataPath(extension) + "Songs.txt"))
+            if (File.Exists(extension.GetDataPath() + "Songs.txt"))
             {
-                List<string> OldSongs = File.ReadAllLines(Api.GetDataPath(extension) + "Songs.txt").ToList(), songs = new List<string>();
+                List<string> OldSongs = File.ReadAllLines(extension.GetDataPath() + "Songs.txt").ToList(), songs = new List<string>();
                 for (int i = start; i < OldSongs.Count; i++)
                 {
                     songs.Add(OldSongs[i]);
@@ -293,15 +291,15 @@ namespace CoMaNdO.SongRequests
                     }
                 }
 
-                File.WriteAllLines(Api.GetDataPath(extension) + "Songs.txt", songs.ToArray());
+                File.WriteAllLines(extension.GetDataPath() + "Songs.txt", songs.ToArray());
             }
         }
 
         public static void PlaySong(Song song = null)
         {
-            if (song == null && File.Exists(Api.GetDataPath(extension) + "Songs.txt"))
+            if (song == null && File.Exists(extension.GetDataPath() + "Songs.txt"))
             {
-                foreach (string sSong in File.ReadAllLines(Api.GetDataPath(extension) + "Songs.txt"))
+                foreach (string sSong in File.ReadAllLines(extension.GetDataPath() + "Songs.txt"))
                 {
                     if (sSong != "" && (song = GetSong(sSong.Split('|')[0])) != null)
                     {
@@ -428,9 +426,9 @@ namespace CoMaNdO.SongRequests
         public static void SongRequestPlayer_Navigated(object sender, System.Windows.Forms.WebBrowserNavigatedEventArgs e)
         {
             Window.SongRequestPlayer.Navigated -= SongRequestPlayer_Navigated;
-            if (CurrentSong == null && File.Exists(Api.GetDataPath(extension) + "Songs.txt"))
+            if (CurrentSong == null && File.Exists(extension.GetDataPath() + "Songs.txt"))
             {
-                foreach (string sSong in File.ReadAllLines(Api.GetDataPath(extension) + "Songs.txt"))
+                foreach (string sSong in File.ReadAllLines(extension.GetDataPath() + "Songs.txt"))
                 {
                     if (sSong != "" && (CurrentSong = GetSong(sSong.Split('|')[0])) != null)
                     {

@@ -1,13 +1,11 @@
 ﻿using ModBot;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Net;
 using System.Threading;
 
 namespace CoMaNdO.Auctions
 {
-    [Export(typeof(IExtension))]
     public class Auctions : IExtension
     {
         private string LatestVersion;
@@ -21,14 +19,14 @@ namespace CoMaNdO.Auctions
 
         private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add(this, "!auction", Command_Auction, 2, 0);
-            Commands.Add(this, "!bid", Command_Bid, 0, 0);
+            Commands.Add(this, "!auction", Command_Auction, Users.UserLevel.Mod);
+            Commands.Add(this, "!bid", Command_Bid, Users.UserLevel.Normal, 0, 0);
 
             if (Auction.Loop == null) Auction.Loop = new Timer(auctionLoopHandler, null, Timeout.Infinite, Timeout.Infinite);
             Auction.Loop.Change(Timeout.Infinite, Timeout.Infinite);
         }
 
-        private void Command_Auction(string user, Command cmd, string[] args)
+        private void Command_Auction(string user, Command cmd, string[] args, string origin)
         {
             if (args.Length > 0)
             {
@@ -71,7 +69,7 @@ namespace CoMaNdO.Auctions
             }
         }
 
-        private void Command_Bid(string user, Command cmd, string[] args)
+        private void Command_Bid(string user, Command cmd, string[] args, string origin)
         {
             if (args.Length > 0)
             {
@@ -84,7 +82,7 @@ namespace CoMaNdO.Auctions
         {
             if (Auction.Open && Auction.highBidder != "")
             {
-                Chat.SendMessage(Users.GetDisplayName(Auction.highBidder, NameAlterLevel.Cosmetic) + " is currently winning, with a bid of " + Auction.highBid + "!");
+                Chat.SendMessage(Users.GetDisplayName(Auction.highBidder, Users.NameAlterLevel.Cosmetic) + " is currently winning, with a bid of " + Auction.highBid + "!");
             }
         }
 
@@ -103,8 +101,8 @@ namespace CoMaNdO.Auctions
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Auctions"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.3"; } }
-        public int ApiVersion { get { return 0; } }
+        public string Version { get { return "0.0.4"; } }
+        public int ApiVersion { get { return 5; } }
         public int LoadPriority { get { return 1; } }
 
         public bool UpdateCheck()

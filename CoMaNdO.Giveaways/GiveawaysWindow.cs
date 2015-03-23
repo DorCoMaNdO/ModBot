@@ -68,11 +68,11 @@ namespace CoMaNdO.Giveaways
             {
                 Giveaway_ActiveUserTime.Enabled = Giveaway_TypeActive.Checked;
                 Giveaway_AnnounceFalseEntries.Enabled = !Giveaway_TypeActive.Checked;
-                Giveaway_WarnFalseEntries.Enabled = (Giveaway_AnnounceFalseEntries.Checked && !Giveaway_TypeActive.Checked && Chat.Moderators.Contains(Channel.Bot.ToLower()));
+                Giveaway_WarnFalseEntries.Enabled = (Giveaway_AnnounceFalseEntries.Checked && !Giveaway_TypeActive.Checked && Channel.Moderators.Contains(Channel.Bot.ToLower()));
                 if (Giveaway_TypeActive.Checked)
                 {
                     Giveaway_AnnounceFalseEntries.Checked = false;
-                    if (!Chat.Moderators.Contains(Channel.Bot.ToLower())) Giveaway_WarnFalseEntries.Checked = false;
+                    if (!Channel.Moderators.Contains(Channel.Bot.ToLower())) Giveaway_WarnFalseEntries.Checked = false;
                 }
             }
             else if (ctrl == Giveaway_TypeKeyword)
@@ -338,7 +338,7 @@ namespace CoMaNdO.Giveaways
                                     }
                                     else if (KeyValue.Key.Equals("Giveaway_AnnounceWarnedEntries"))
                                     {
-                                        Giveaway_AnnounceWarnedEntries.Checked = (KeyValue.Value == "1" && Chat.Moderators.Contains(Channel.Bot.ToLower()));
+                                        Giveaway_AnnounceWarnedEntries.Checked = (KeyValue.Value == "1" && Channel.Moderators.Contains(Channel.Bot.ToLower()));
                                     }
                                     else if (KeyValue.Key.Equals("Giveaway_SubscribersWinMultiplier"))
                                     {

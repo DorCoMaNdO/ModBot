@@ -1,7 +1,6 @@
 ﻿using ModBot;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Data.SQLite;
 using System.IO;
 using System.Net;
@@ -9,7 +8,6 @@ using System.Windows.Forms;
 
 namespace CoMaNdO.UserRanks
 {
-    [Export(typeof(IExtension))]
     public class UserRanks : IExtension
     {
         private string LatestVersion;
@@ -17,11 +15,11 @@ namespace CoMaNdO.UserRanks
 
         public void Load()
         {
-            while (File.Exists(Api.GetDataPath(this) + "Data.sqlite") && Api.IsFileLocked(Api.GetDataPath(this) + "Data.sqlite", FileShare.Read)) if (MessageBox.Show("ModBot's database file is in use, Please close it in order to let ModBot use it.", "ModBot", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Program.Close();
+            while (File.Exists(this.GetDataPath() + "Data.sqlite") && Api.IsFileLocked(this.GetDataPath() + "Data.sqlite", FileShare.Read)) if (MessageBox.Show("ModBot's database file is in use, Please close it in order to let ModBot use it.", "ModBot", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Program.Close();
 
-            if (!File.Exists(Api.GetDataPath(this) + "Data.sqlite")) SQLiteConnection.CreateFile(Api.GetDataPath(this) + "Data.sqlite");
+            if (!File.Exists(this.GetDataPath() + "Data.sqlite")) SQLiteConnection.CreateFile(this.GetDataPath() + "Data.sqlite");
 
-            DB = new SQLiteConnection(@"Data Source=" + Api.GetDataPath(this) + "Data.sqlite;Version=3;");
+            DB = new SQLiteConnection(@"Data Source=" + this.GetDataPath() + "Data.sqlite;Version=3;");
             DB.Open();
 
             using (SQLiteCommand query = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'ranks' (id INTEGER PRIMARY KEY AUTOINCREMENT, rank TEXT);", DB)) query.ExecuteNonQuery();
@@ -33,10 +31,10 @@ namespace CoMaNdO.UserRanks
 
         private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add(this, "!ranks", Command_Ranks, 3, 0);
+            Commands.Add(this, "!ranks", Command_Ranks, Users.UserLevel.TrustedMod);
         }
 
-        private void Command_Ranks(string user, Command cmd, string[] args)
+        private void Command_Ranks(string user, Command cmd, string[] args, string origin)
         {
             if (args.Length > 0)
             {
@@ -213,7 +211,7 @@ namespace CoMaNdO.UserRanks
         public string UniqueID { get { return "CoMaNdO.UserRanks"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
         public string Version { get { return "0.0.1"; } }
-        public int ApiVersion { get { return 0; } }
+        public int ApiVersion { get { return 5; } }
         public int LoadPriority { get { return 1; } }
 
         public bool UpdateCheck()

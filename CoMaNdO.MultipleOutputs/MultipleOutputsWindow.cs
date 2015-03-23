@@ -20,11 +20,11 @@ namespace CoMaNdO.MultipleOutputs
 
             extension = sender;
 
-            while (Api.IsFileLocked(Api.GetDataPath(sender) + "Data.sqlite", FileShare.Read) && File.Exists(Api.GetDataPath(sender) + "Data.sqlite")) if (MessageBox.Show("Multiple Command Outputs' database file is in use, Please close it in order to let ModBot use it.", "Multiple Command Outputs", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Program.Close();
+            while (Api.IsFileLocked(sender.GetDataPath() + "Data.sqlite", FileShare.Read) && File.Exists(sender.GetDataPath() + "Data.sqlite")) if (MessageBox.Show("Multiple Command Outputs' database file is in use, Please close it in order to let ModBot use it.", "Multiple Command Outputs", MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) Program.Close();
 
-            if (!File.Exists(Api.GetDataPath(sender) + "Data.sqlite")) SQLiteConnection.CreateFile(Api.GetDataPath(sender) + "Data.sqlite");
+            if (!File.Exists(sender.GetDataPath() + "Data.sqlite")) SQLiteConnection.CreateFile(sender.GetDataPath() + "Data.sqlite");
 
-            DB = new SQLiteConnection(@"Data Source=" + Api.GetDataPath(sender) + "Data.sqlite;Version=3;");
+            DB = new SQLiteConnection(@"Data Source=" + sender.GetDataPath() + "Data.sqlite;Version=3;");
             DB.Open();
 
             using (SQLiteCommand query = new SQLiteCommand("CREATE TABLE IF NOT EXISTS 'commands' (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, command TEXT, data TEXT, output TEXT);", DB)) query.ExecuteNonQuery();
@@ -87,9 +87,9 @@ namespace CoMaNdO.MultipleOutputs
                     }
                 }
 
-                if (Chat.connection != null && Chat.connection.Connected)
+                if (Chat.Connection != null && Chat.Connection.Connected)
                 {
-                    foreach (string command in dCommands.Keys) Commands.Add(extension, command, Command_Custom);
+                    foreach (string command in dCommands.Keys) Commands.Add(extension, command, Command_Custom, Users.UserLevel.Normal, 0, 60);
                     CommandsRegistered = true;
                 }
             }
@@ -97,23 +97,23 @@ namespace CoMaNdO.MultipleOutputs
 
         private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            if (!CommandsRegistered) foreach (string command in dCommands.Keys) Commands.Add(extension, command, Command_Custom);
+            if (!CommandsRegistered) foreach (string command in dCommands.Keys) Commands.Add(extension, command, Command_Custom, Users.UserLevel.Normal, 0, 60);
 
-            Commands.Add(extension, "!multipleoutputs", Command_MultipleOutputs, 2, 0);
-            Commands.Add(extension, "!mcp", Command_MultipleOutputs, 2, 0);
+            Commands.Add(extension, "!multipleoutputs", Command_MultipleOutputs, Users.UserLevel.Mod);
+            Commands.Add(extension, "!mcp", Command_MultipleOutputs, Users.UserLevel.Mod);
 
             CommandsRegistered = true;
         }
 
-        private void Command_Custom(string user, Command cmd, string[] args)
+        private void Command_Custom(string user, Command cmd, string[] args, string origin)
         {
             try
             {
-                if (dCommands.ContainsKey(cmd.Cmd.ToLower()))
+                if (dCommands.ContainsKey(cmd.Trigger.ToLower()))
                 {
-                    if (dCommands[cmd.Cmd.ToLower()].Count == 0) return;
+                    if (dCommands[cmd.Trigger.ToLower()].Count == 0) return;
 
-                    Tuple<string, string, string> command = dCommands[cmd.Cmd.ToLower()][new Random().Next(0, dCommands[cmd.Cmd.ToLower()].Count)];
+                    Tuple<string, string, string> command = dCommands[cmd.Trigger.ToLower()][new Random().Next(0, dCommands[cmd.Trigger.ToLower()].Count)];
                     string output = command.Item3;
 
                     if (command.Item1 != "" && command.Item2 != "")
@@ -127,7 +127,7 @@ namespace CoMaNdO.MultipleOutputs
                                 {
                                     if (r["user"].ToString().ToLower() == user.ToLower() && r["type"].ToString() == command.Item1)
                                     {
-                                        foreach (Tuple<string, string, string> data in dCommands[cmd.Cmd.ToLower()])
+                                        foreach (Tuple<string, string, string> data in dCommands[cmd.Trigger.ToLower()])
                                         {
                                             if (data.Item2 == r["data"].ToString())
                                             {
@@ -156,12 +156,12 @@ namespace CoMaNdO.MultipleOutputs
             }
             catch(Exception e)
             {
-                Api.Log(extension, LogType.Error, e.ToString());
+                Logs.Log(extension, Logs.Type.Error, e.ToString());
                 Console.WriteLine("An error has occured in Multiple Command Outputs (Command_Custom).");
             }
         }
 
-        private void Command_MultipleOutputs(string user, Command cmd, string[] args)
+        private void Command_MultipleOutputs(string user, Command cmd, string[] args, string origin)
         {
             try
             {
@@ -179,13 +179,13 @@ namespace CoMaNdO.MultipleOutputs
 
                         using (SQLiteCommand query = new SQLiteCommand("DELETE FROM 'userdata' WHERE user = '" + args[1] + "' AND type = '" + id + "' COLLATE NOCASE;", DB)) query.ExecuteNonQuery();
 
-                        Chat.SendMessage(extension, "Cleared " + args[1] + "'s \"" + id + "\" data.", user + " cleared " + args[1] + "'s \"" + id + "\" data.");
+                        Chat.SendMessage(extension, "Cleared " + args[1] + "'s \"" + id + "\" data.", true, user + " cleared " + args[1] + "'s \"" + id + "\" data.");
                     }
                 }
             }
             catch (Exception e)
             {
-                Api.Log(extension, LogType.Error, e.ToString());
+                Logs.Log(extension, Logs.Type.Error, e.ToString());
                 Console.WriteLine("An error has occured in Multiple Command Outputs (Command_MultipleOutputs).");
             }
         }

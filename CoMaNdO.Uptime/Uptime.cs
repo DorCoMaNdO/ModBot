@@ -1,11 +1,9 @@
 ﻿using ModBot;
 using System;
-using System.ComponentModel.Composition;
 using System.Net;
 
 namespace CoMaNdO.Uptime
 {
-    [Export(typeof(IExtension))]
     public class Uptime : IExtension
     {
         private string LatestVersion;
@@ -17,10 +15,10 @@ namespace CoMaNdO.Uptime
 
         private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add(this, "!uptime", Command_Uptime, 0, 300);
+            Commands.Add(this, "!uptime", Command_Uptime, Users.UserLevel.Normal, 300, 900);
         }
 
-        private void Command_Uptime(string user, Command cmd, string[] args)
+        private void Command_Uptime(string user, Command cmd, string[] args, string origin)
         {
             if (Channel.IsStreaming)
             {
@@ -38,8 +36,8 @@ namespace CoMaNdO.Uptime
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Uptime"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.4"; } }
-        public int ApiVersion { get { return 0; } }
+        public string Version { get { return "0.0.5"; } }
+        public int ApiVersion { get { return 5; } }
         public int LoadPriority { get { return 2; } }
 
         public bool UpdateCheck()

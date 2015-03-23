@@ -1,12 +1,10 @@
 ﻿using ModBot;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Net;
 
 namespace CoMaNdO.Greetings
 {
-    [Export(typeof(IExtension))]
     public class Greetings : IExtension
     {
         private string LatestVersion, Message;
@@ -17,41 +15,38 @@ namespace CoMaNdO.Greetings
         {
             Events.Connected += Events_Connected;
             Events.Users.UserlistRefreshed += Events_UserlistRefreshed;
-            Events.UserAdded += Events_UserAdded;
+            Events.Users.Added += Events_UserAdded;
 
             Settings = new Settings(this, "Greetings.ini");
-            Settings.SetValue("Settings", "Message", Message = Settings.GetValue("Settings", "Message", "Hello @user! Welcome to the stream!"));
+            Settings.SetValue("Settings", "Message", Message = Settings.GetValue("Settings", "Message", "Hello {user}! Welcome to the stream!"));
             Settings.SetValue("Settings", "On", (On = (Settings.GetValue("Settings", "On", "0") == "1")) ? "1" : "0");
         }
 
         private void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add(this, "!modbot", Command_ModBot, 0, 0);
+            Commands.Add(this, "!modbot", Command_ModBot, Users.UserLevel.TrustedMod, 300);
         }
 
-        private void Events_UserlistRefreshed(List<string> joins, List<string> leaves, bool initial)
+        private void Events_UserlistRefreshed(List<string> joined, List<string> left, bool initial)
         {
             if (!initial && Channel.IsStreaming && On)
             {
-                string joined = "";
-                foreach (string user in joins)
+                string msg = "";
+                foreach (string user in joined)
                 {
-                    joined += (joined != "" ? ", " : "") + user;
-                    joins.Add(user);
+                    msg += (msg != "" ? ", " : "") + user;
+                    joined.Add(user);
                 }
-                if (joined != "" && Message != "")
-                {
-                    Chat.SendMessage(Message.Replace("@user", joined));
-                }
+                if (msg != "" && Message != "") Chat.SendMessage(Message.Replace("@user", msg).Replace("{user}", msg));
             }
         }
 
         private void Events_UserAdded(string user, bool initial, bool FromReload)
         {
-            if (!initial && !FromReload && Channel.IsStreaming && On) Chat.SendMessage(Message.Replace("@user", user));
+            if (!initial && !FromReload && Channel.IsStreaming && On) Chat.SendMessage(Message.Replace("@user", user).Replace("{user}", user));
         }
 
-        private void Command_ModBot(string user, Command cmd, string[] args)
+        private void Command_ModBot(string user, Command cmd, string[] args, string origin)
         {
             if (args.Length > 0)
             {
@@ -95,8 +90,8 @@ namespace CoMaNdO.Greetings
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Greetings"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.2"; } }
-        public int ApiVersion { get { return 0; } }
+        public string Version { get { return "0.0.3"; } }
+        public int ApiVersion { get { return 5; } }
         public int LoadPriority { get { return 2; } }
 
         public bool UpdateCheck()

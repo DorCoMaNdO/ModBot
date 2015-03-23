@@ -1,14 +1,13 @@
 ﻿using ModBot;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Linq;
 using System.Net;
 using System.Threading;
 
 namespace CoMaNdO.Gambling
 {
-    [Export(typeof(IExtension))]
+#warning implement ignoredusers
     public class Gambling : IExtension
     {
         private string LatestVersion;
@@ -23,8 +22,8 @@ namespace CoMaNdO.Gambling
         public string Author { get { return "CoMaNdO"; } }
         public string UniqueID { get { return "CoMaNdO.Gambling"; } }
         public string ContactInfo { get { return "CoMaNdO.ModBot@gmail.com"; } }
-        public string Version { get { return "0.0.2"; } }
-        public int ApiVersion { get { return 0; } }
+        public string Version { get { return "0.0.3"; } }
+        public int ApiVersion { get { return 5; } }
         public int LoadPriority { get { return 1; } }
 
         public bool UpdateCheck()
@@ -86,8 +85,8 @@ namespace CoMaNdO.Gambling
 
         private static void Events_Connected(string channel, string nick, bool partnered, bool subprogram)
         {
-            Commands.Add(extension, "!gamble", Command_Gamble, 2, 0);
-            Commands.Add(extension, "!bet", Command_Bet, 0, 0);
+            Commands.Add(extension, "!gamble", Command_Gamble, Users.UserLevel.Mod);
+            Commands.Add(extension, "!bet", Command_Bet, Users.UserLevel.Normal, 0, 0);
 
             if (BetQueue == null) BetQueue = new System.Threading.Timer(BetQueueHandler, null, Timeout.Infinite, Timeout.Infinite);
             BetQueue.Change(Timeout.Infinite, Timeout.Infinite);
@@ -275,59 +274,10 @@ namespace CoMaNdO.Gambling
 
         public static List<string> buildBetOptions(string[] temp, int index = 3)
         {
-            List<string> betOptions = new List<string>();
-            try
-            {
-                lock (betOptions)
-                {
-                    bool inQuote = false;
-                    string option = "";
-                    for (int i = index; i < temp.Length; i++)
-                    {
-                        if (temp[i].StartsWith("\""))
-                        {
-                            inQuote = true;
-                        }
-                        if (!inQuote)
-                        {
-                            option = temp[i];
-                        }
-                        if (inQuote)
-                        {
-                            option += temp[i] + " ";
-                        }
-                        if (temp[i].EndsWith("\""))
-                        {
-                            option = option.Substring(1, option.Length - 3);
-                            inQuote = false;
-                        }
-                        if (!inQuote && !option.StartsWith("#"))
-                        {
-                            bool exists = false;
-                            foreach (string optn in betOptions)
-                            {
-                                if (optn.ToLower() == option.ToLower())
-                                {
-                                    exists = true;
-                                    break;
-                                }
-                            }
-                            if (!exists)
-                            {
-                                betOptions.Add(option);
-                            }
-                            option = "";
-                        }
-                    }
-                }
-            }
-            catch
-            {
-            }
-            return betOptions;
+            return Commands.GetArgs(temp, index).ToList();
         }
 
-        private static void Command_Gamble(string user, Command cmd, string[] args)
+        private static void Command_Gamble(string user, Command cmd, string[] args, string origin)
         {
             if (args.Length > 0)
             {
@@ -350,7 +300,7 @@ namespace CoMaNdO.Gambling
                                             LastUsedHelp = Api.GetUnixTimeNow();
 
                                             CreatePool(min, max, reward, lOptions);
-                                            Chat.SendMessage("New Betting Pool opened! Min bet: " + MinBet + " " + Currency.Name + ", Max bet: " + MaxBet + " " + Currency.Name + ".");
+                                            Chat.SendMessage("New betting pool opened! Min bet: " + MinBet + " " + Currency.Name + ", Max bet: " + MaxBet + " " + Currency.Name + ".");
                                             string temp = "Betting open for: ";
                                             for (int i = 0; i < lOptions.Count; i++)
                                             {
@@ -390,7 +340,7 @@ namespace CoMaNdO.Gambling
                     }
                     else
                     {
-                        Chat.SendMessage("Betting Pool already opened. Close or cancel the current one before starting a new one.");
+                        Chat.SendMessage("Betting pool already opened. Close or cancel the current one before starting a new one.");
                     }
                 }
                 else if (args[0].ToLower() == "close")
@@ -420,28 +370,10 @@ namespace CoMaNdO.Gambling
                 {
                     if (Running && Locked)
                     {
-                        bool inQuote = false;
                         string option = "";
-                        for (int i = 1; i < args.Length; i++)
-                        {
-                            if (args[i].StartsWith("\""))
-                            {
-                                inQuote = true;
-                            }
-                            if (!inQuote)
-                            {
-                                option = args[i];
-                            }
-                            if (inQuote)
-                            {
-                                option += args[i] + " ";
-                            }
-                            if (args[i].EndsWith("\""))
-                            {
-                                option = option.Substring(1, option.Length - 3);
-                                inQuote = false;
-                            }
-                        }
+                        List<string> compiledargs = Commands.GetArgs(args, 1).ToList();
+                        if (compiledargs.Count > 0) option = compiledargs[0];
+
                         if (option.ToLower() == args[1].ToLower())
                         {
                             if (option.StartsWith("#"))
@@ -459,7 +391,7 @@ namespace CoMaNdO.Gambling
                             if (Options.Contains(option))
                             {
                                 closePool(option);
-                                Chat.SendMessage("Betting Pool closed! A total of " + getTotalBets() + " " + Currency.Name + " were bet.");
+                                Chat.SendMessage("Betting pool closed! A total of " + getTotalBets() + " " + Currency.Name + " were bet.");
                                 string output = "Bets for:";
                                 for (int i = 0; i < Options.Count; i++)
                                 {
@@ -470,18 +402,28 @@ namespace CoMaNdO.Gambling
                                 Chat.SendMessage(output);
                                 Dictionary<string, int> wins = Winners;
                                 output = "Winners:";
-                                if (wins.Count == 0) output += " No One!";
-
-                                for (int i = 0; i < wins.Count; i++)
+                                if (wins.Count == 0)
                                 {
-                                    Currency.Add(wins.ElementAt(i).Key, wins.ElementAt(i).Value);
-                                    string msg = " " + wins.ElementAt(i).Key + " - " + wins.ElementAt(i).Value + " (Bet " + bets[wins.ElementAt(i).Key].Value + ")";
-                                    if (output.Length + msg.Length > 996)
+                                    output = "No one won!";
+                                    //output += " No One!";
+                                }
+                                else if (wins.Count <= 20)
+                                {
+                                    for (int i = 0; i < wins.Count; i++)
                                     {
-                                        Chat.SendMessage(output);
-                                        output = "";
+                                        Currency.Add(wins.ElementAt(i).Key, wins.ElementAt(i).Value);
+                                        string msg = " " + wins.ElementAt(i).Key + " - " + wins.ElementAt(i).Value + " (Bet " + bets[wins.ElementAt(i).Key].Value + ")";
+                                        if (output.Length + msg.Length > 996)
+                                        {
+                                            Chat.SendMessage(output);
+                                            output = "Winners:";
+                                        }
+                                        output += msg;
                                     }
-                                    output += msg;
+                                }
+                                else
+                                {
+                                    output = wins.Count + " gamblers have won!";
                                 }
 
                                 Chat.SendMessage(output);
@@ -506,7 +448,7 @@ namespace CoMaNdO.Gambling
                     if (Running)
                     {
                         Cancel();
-                        Chat.SendMessage("Betting Pool canceled. All bets refunded");
+                        Chat.SendMessage("Betting pool canceled. All bets refunded");
                     }
                     else
                     {
@@ -516,7 +458,7 @@ namespace CoMaNdO.Gambling
             }
         }
 
-        private static void Command_Bet(string user, Command cmd, string[] args)
+        private static void Command_Bet(string user, Command cmd, string[] args, string origin)
         {
             if (Running)
             {
@@ -545,28 +487,9 @@ namespace CoMaNdO.Gambling
                     }
                     else if (!Locked && int.TryParse(args[0], out Value) && args.Length > 1)
                     {
-                        bool inQuote = false;
                         string option = "";
-                        for (int i = 1; i < args.Length; i++)
-                        {
-                            if (args[i].StartsWith("\""))
-                            {
-                                inQuote = true;
-                            }
-                            if (!inQuote)
-                            {
-                                option = args[i];
-                            }
-                            if (inQuote)
-                            {
-                                option += args[i] + " ";
-                            }
-                            if (args[i].EndsWith("\""))
-                            {
-                                option = option.Substring(1, option.Length - 3);
-                                inQuote = false;
-                            }
-                        }
+                        List<string> compiledargs = Commands.GetArgs(args, 1).ToList();
+                        if (compiledargs.Count > 0) option = compiledargs[0];
 
                         if (option.ToLower() == args[1].ToLower())
                         {
@@ -651,9 +574,12 @@ namespace CoMaNdO.Gambling
                 {
                     LastAnnouncedCost = Api.GetUnixTimeNow();
 
-                    string temp = "Betting open for: ";
-                    lock (Options) for (int i = 0; i < Options.Count; i++) temp += "(" + (i + 1).ToString() + ") " + Options[i] + (i + 1 < Options.Count ? ", " : "");
-                    Chat.SendMessage(temp + ".");
+                    if (!Locked)
+                    {
+                        string temp = "Betting open for: ";
+                        lock (Options) for (int i = 0; i < Options.Count; i++) temp += "(" + (i + 1).ToString() + ") " + Options[i] + (i + 1 < Options.Count ? ", " : "");
+                        Chat.SendMessage(temp + ".");
+                    }
                     Chat.SendMessage("Min bet: " + MinBet + " " + Currency.Name + ", Max bet: " + MaxBet + " " + Currency.Name + ".");
                 }
             }
